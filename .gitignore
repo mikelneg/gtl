@@ -1,0 +1,15 @@
+# ignore everything
+*
+
+# ... except for directories
+!*/
+
+# ... and the following file types:
+!CMakeLists.txt
+!README.md
+!LICENSE
+!.gitignore
+!*.cpp
+!*.h
+!*.hpp
+!*.hlsl
