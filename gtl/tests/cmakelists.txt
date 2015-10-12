@@ -1,0 +1,20 @@
+cmake_minimum_required(VERSION 3.0)
+
+project(gtl_tests)
+
+set(GTL_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../../)
+set(GTL_SRC_DIR ${GTL_DIR}/gtl/src)
+
+
+
+include_directories(${GTL_DIR})
+
+file(GLOB GTL_SOURCES ${GTL_SRC_DIR}/*.cpp)
+file(GLOB TEST_SOURCES *.cpp)
+list(REMOVE_ITEM TEST_SOURCES ${TEST_SOURCES}/catch.cpp)
+
+MESSAGE("Base path: " ${GTL_DIR})
+MESSAGE("Sources: " ${GTL_SOURCES})
+MESSAGE("Tests: " ${TEST_SOURCES})
+
+add_executable(gtl_test ${GTL_SOURCES} ${TEST_SOURCES} catch.cpp)
