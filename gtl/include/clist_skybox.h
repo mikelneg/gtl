@@ -18,12 +18,15 @@ namespace command_lists {
     void skybox_command_list(d3d::command_list& clist, 
                          d3d::direct_command_allocator& alloc, 
                          d3d::pipeline_state_object& pso, 
-                         d3d::root_signature& rsig, 
+                         d3d::cb_root_signature& rsig, 
                          D3D12_VIEWPORT const& viewport,
                          D3D12_RECT const& scissor_rect,
                          d3d::rtv_frame_resources& rtv,
                          d3d::swap_chain& swchain,
-                         d3d::rtv_descriptor_heap& rtvheap);
+                         d3d::rtv_descriptor_heap& rtvheap,
+                         d3d::resource& cbuf,                         
+                         d3d::cbv_descriptor_heap& cbvheap,
+                         d3d::sampler_descriptor_heap& smpheap);
 
 }}} // namespaces
 #endif

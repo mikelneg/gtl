@@ -112,6 +112,13 @@ namespace _12_0 {
         return desc;        
     }
 
+    void report_live_objects(device& dev) 
+    {
+        gtl::release_ptr<gtl::d3d::D3D12DebugDevice> debug_device;
+        dev->QueryInterface(__uuidof(gtl::d3d::D3D12DebugDevice),reinterpret_cast<void**>(&debug_device.expose_ptr()));        
+    
+        debug_device->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);            
+    }
 
      /*               
             

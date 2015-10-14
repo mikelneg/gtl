@@ -9,12 +9,15 @@ namespace command_lists {
 void skybox_command_list(d3d::command_list& clist, 
                          d3d::direct_command_allocator& alloc, 
                          d3d::pipeline_state_object& pso, 
-                         d3d::root_signature& rsig, 
+                         d3d::cb_root_signature& rsig, 
                          D3D12_VIEWPORT const& viewport,
                          D3D12_RECT const& scissor_rect,
                          d3d::rtv_frame_resources& rtv,
                          d3d::swap_chain& swchain,
-                         d3d::rtv_descriptor_heap& rtvheap)
+                         d3d::rtv_descriptor_heap& rtvheap,
+                         d3d::resource& cbuf,            
+                         d3d::cbv_descriptor_heap& cbvheap,
+                         d3d::sampler_descriptor_heap& smpheap)
 {    
 	// Command list allocators can only be reset when the associated 
 	// command lists have finished execution on the GPU; apps should use 
@@ -28,8 +31,16 @@ void skybox_command_list(d3d::command_list& clist,
 
 	// Set necessary state.
 	clist->SetGraphicsRootSignature(rsig.get());
+
+    ID3D12DescriptorHeap* ppHeaps[] = { cbvheap.get(), smpheap.get() };
+	clist->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);        
+    clist->SetGraphicsRootConstantBufferView(0, cbuf.get()->GetGPUVirtualAddress());
+    
+    clist->SetGraphicsRootDescriptorTable(1, smpheap.get()->GetGPUDescriptorHandleForHeapStart());
+    clist->SetGraphicsRootDescriptorTable(2, cbvheap.get()->GetGPUDescriptorHandleForHeapStart());
+
 	clist->RSSetViewports(1, &viewport);
-	clist->RSSetScissorRects(1, &scissor_rect);
+	clist->RSSetScissorRects(1, &scissor_rect);    
 
 	// Indicate that the back buffer will be used as a render target.
 	clist->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
@@ -56,7 +67,7 @@ void skybox_command_list(d3d::command_list& clist,
                                               D3D12_RESOURCE_STATE_RENDER_TARGET, 
                                               D3D12_RESOURCE_STATE_PRESENT));
 
-    throw_on_fail(clist->Close(),__func__);
+    throw_on_fail(clist->Close(),__func__);    
 }
 
 }}} // namespaces

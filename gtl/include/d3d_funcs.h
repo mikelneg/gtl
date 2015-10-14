@@ -27,6 +27,7 @@ namespace _12_0 {
         D3D12_DESCRIPTOR_HEAP_DESC rtv_descriptor_heap_desc();
         D3D12_DESCRIPTOR_HEAP_DESC cbv_descriptor_heap_desc();
 
+        void report_live_objects(class device&);
 }
 
 //using namespace gtl::d3d::default; 

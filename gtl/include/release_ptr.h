@@ -11,6 +11,7 @@
 
 #include <memory>
 #include <stdexcept>
+#include <iostream>
 
 namespace gtl {
     
@@ -52,7 +53,7 @@ namespace gtl {
     namespace detail {
         struct release_deleter {
             template <typename T>
-            void operator()(T* t) const { 
+            void operator()(T* t) const {
                 if (t) t->Release(); 
             }
         };

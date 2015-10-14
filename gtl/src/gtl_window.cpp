@@ -17,7 +17,7 @@ namespace win {
 
     namespace {
         static WNDCLASSEX default_wndclassex() noexcept;
-        static LRESULT wnd_proc(HWND, UINT, WPARAM, LPARAM);
+        static LRESULT CALLBACK wnd_proc(HWND, UINT, WPARAM, LPARAM);
         static void resize_window(HWND hwnd, size_t width, size_t height);
     }
     
@@ -58,7 +58,7 @@ namespace win {
     
     namespace {
 
-    static LRESULT wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
+    static LRESULT CALLBACK wnd_proc(HWND hwnd, UINT msg, WPARAM wparam, LPARAM lparam)
     {
         // CreateWindowEx() in Window ctor calls this function several times before 
         // returning (with WM_CREATE, WM_NCCREATE, WM_NCALCSIZE). When msg == WM_CREATE

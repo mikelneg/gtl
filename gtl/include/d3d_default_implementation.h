@@ -18,6 +18,7 @@ namespace   d3d {
     namespace _12_0 {
         using DXGIFactory              = IDXGIFactory4;
         using D3D12Device              = ID3D12Device;
+        using D3D12DebugDevice         = ID3D12DebugDevice;
         using DXGISwapChain            = IDXGISwapChain3;
         using DXGIAdapter              = IDXGIAdapter1;
         using D3D12CommandQueue        = ID3D12CommandQueue;
@@ -31,7 +32,7 @@ namespace   d3d {
         using D3D12GraphicsCommandList = ID3D12GraphicsCommandList;
         using D3D12Fence               = ID3D12Fence;
         using D3D12Viewport            = D3D12_VIEWPORT;
-        using D3D12ScissorRect         = D3D12_RECT;
+        using D3D12ScissorRect         = D3D12_RECT;                
 
         constexpr int frame_count() noexcept { return 2; }    
     }
