@@ -34,7 +34,9 @@ namespace   d3d {
         using D3D12Viewport            = D3D12_VIEWPORT;
         using D3D12ScissorRect         = D3D12_RECT;                
 
-        constexpr int frame_count() noexcept { return 2; }    
+        constexpr int frame_count() noexcept { return 3; }    
+        // Nice discussion, and suggests 3 as the minimum default buffer count (reasons in the video):    
+        // https://www.youtube.com/watch?v=E3wTajGZOsA
     }
           
 namespace default = _12_0;

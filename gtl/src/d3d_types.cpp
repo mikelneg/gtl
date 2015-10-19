@@ -125,10 +125,6 @@ namespace _12_0 {
 	    }                
     }
 
-    rtv_frame_resources::~rtv_frame_resources()
-    {        
-    }
-
     direct_command_allocator::direct_command_allocator(device& dev)
     {
         throw_on_fail(dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
@@ -166,7 +162,7 @@ namespace _12_0 {
 		
         ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
         ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);		        
-        rootParameters[0].InitAsConstantBufferView(0);
+        rootParameters[0].InitAsConstantBufferView(0);        
         rootParameters[1].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
         rootParameters[2].InitAsDescriptorTable(1, &ranges[1], D3D12_SHADER_VISIBILITY_PIXEL);
         
@@ -321,10 +317,10 @@ namespace _12_0 {
     
     fence::fence(device& dev)         
     {
-        throw_on_fail(dev->CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
+        throw_on_fail(dev->CreateFence(frame_count(), D3D12_FENCE_FLAG_NONE, __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
                       ,__func__);
 
-        fence_value.store(1);
+        fence_value.store(frame_count());
 
         event_handle = CreateEvent(nullptr, FALSE, FALSE, nullptr);
 		if (event_handle == nullptr)
@@ -335,20 +331,50 @@ namespace _12_0 {
         set_name(get(),L"fence");               
     }
 
-    void fence::wait_for_gpu(command_queue& cqueue_)
+    void fence::wait_for_frames(command_queue& cqueue_)
     {        
-	    auto const local_value = fence_value.load(std::memory_order_acquire);
-        throw_on_fail(cqueue_->Signal(get(),local_value)
-                      ,__func__);
-	    fence_value.fetch_add(1,std::memory_order_acq_rel);
-        
-	    if (get()->GetCompletedValue() < local_value)
-	    {
-	    	throw_on_fail( get()->SetEventOnCompletion(local_value, event_handle), __func__);
-	    	WaitForSingleObject(event_handle, INFINITE);
-	    }        
+	    //auto const local_value = fence_value.load(std::memory_order_acquire);
+        //throw_on_fail(cqueue_->Signal(get(),local_value)
+        //              ,__func__);
+        //
+        //if (local_value == std::numeric_limits<decltype(local_value)>::max()) {
+        //    fence_value.store(frame_count(),std::memory_order_release);
+        //} else {
+        //    fence_value.store(local_value+1,std::memory_order_release);
+        //}
+        //
+	    //if (get()->GetCompletedValue() < local_value-1)
+	    //{
+	    //	throw_on_fail( get()->SetEventOnCompletion(local_value-1, event_handle), __func__);
+	    //	WaitForSingleObject(event_handle, INFINITE);
+	    //}                
+        static uint64_t local_value{get()->GetCompletedValue()};
+
+        cqueue_->Signal(get(),local_value);
+
+        if (get()->GetCompletedValue() < local_value) {
+            //cqueue_->Wait(get(), local_value);                        
+            get()->SetEventOnCompletion(local_value, event_handle);
+            WaitForSingleObject(event_handle, INFINITE);
+        }
+
+        if (local_value == std::numeric_limits<decltype(local_value)>::max() - frame_count()) {
+            local_value = frame_count();
+        } else {
+            local_value++;
+        }
     }
 
+    void fence::wait_for_gpu(command_queue& cqueue_)
+    {         
+        uint64_t local_value{get()->GetCompletedValue()};
+        
+        cqueue_->Signal(get(),local_value+1);
+
+        get()->SetEventOnCompletion(local_value+1, event_handle);
+        WaitForSingleObject(event_handle, INFINITE);        
+    }
+        
     fence::~fence()
     {
         CloseHandle(event_handle);
@@ -387,7 +413,7 @@ namespace _12_0 {
     sampler::sampler(device& dev, sampler_descriptor_heap& smpheap)
     {
         D3D12_SAMPLER_DESC desc{};        	            
-        desc.Filter = D3D12_FILTER_ANISOTROPIC;
+        desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
         desc.AddressU = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
         desc.AddressV = D3D12_TEXTURE_ADDRESS_MODE_WRAP;
         desc.AddressW = D3D12_TEXTURE_ADDRESS_MODE_WRAP;

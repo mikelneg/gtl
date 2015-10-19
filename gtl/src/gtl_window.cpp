@@ -19,6 +19,22 @@ namespace win {
         static WNDCLASSEX default_wndclassex() noexcept;
         static LRESULT CALLBACK wnd_proc(HWND, UINT, WPARAM, LPARAM);
         static void resize_window(HWND hwnd, size_t width, size_t height);
+
+        static HWND CreateFullscreenWindow(HWND hwnd, HINSTANCE hinst, const char* class_name, const char* caption, void* sneaky)
+        {   // adapted from Raymond Chen: http://blogs.msdn.com/b/oldnewthing/archive/2005/05/05/414910.aspx
+            HMONITOR hmon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+            MONITORINFO mi = { sizeof(mi) };
+            if (!GetMonitorInfo(hmon, &mi)) return NULL;
+            return CreateWindow(class_name,
+                  caption,
+                  WS_POPUP | WS_VISIBLE,
+                  mi.rcMonitor.left,
+                  mi.rcMonitor.top,
+                  mi.rcMonitor.right - mi.rcMonitor.left,
+                  mi.rcMonitor.bottom - mi.rcMonitor.top,
+                  hwnd, NULL, hinst, sneaky);
+        }
+
     }
     
     window::window(HINSTANCE hinstance, size_t width_lpx, size_t height_lpx, const char* caption)
@@ -33,9 +49,11 @@ namespace win {
         if (RegisterClassEx(&style) == 0) { // failure returns 0
             throw std::runtime_error{__func__};
         }
-        
+
+        // hwnd = CreateFullscreenWindow(hwnd,hisntance,style.lpszClassName,caption,this);
+
         hwnd = CreateWindow(style.lpszClassName, caption, 
-                            WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME,
+                            WS_VISIBLE | WS_POPUP,
                             0, 0, // dummy positions, adjusted later with ResizeWindow()
                             0, 0, // dummy width and height, adjusted later with ResizeWindow()
                             nullptr, nullptr, // hWndParent and hMenu
@@ -46,7 +64,7 @@ namespace win {
         }        
 
         //SetCursor(NULL);
-        resize_window(hwnd, width_lpx, height_lpx);             
+        resize_window(hwnd, width_lpx, height_lpx);                     
     }    
         
     window::~window()

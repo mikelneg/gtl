@@ -6,6 +6,14 @@ namespace gtl {
 namespace d3d {
 namespace command_lists {
 
+static 
+void play_skybox_bundle(d3d::command_list& clist) {
+
+
+
+}
+
+
 void skybox_command_list(d3d::command_list& clist, 
                          d3d::direct_command_allocator& alloc, 
                          d3d::pipeline_state_object& pso, 

@@ -92,7 +92,6 @@ namespace _12_0 {
     public:
         rtv_frame_resources(swap_chain&, device&, rtv_descriptor_heap&);
         decltype(frames) const& get_frames() const { return frames; }
-        ~rtv_frame_resources();
     };
 
     class direct_command_allocator : public release_ptr<D3D12CommandAllocator> {
@@ -138,6 +137,7 @@ namespace _12_0 {
     public:
         fence(device&);
         void wait_for_gpu(command_queue&);
+        void wait_for_frames(command_queue&);
         ~fence();
     };
 

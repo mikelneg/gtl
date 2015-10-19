@@ -63,6 +63,7 @@ namespace _12_0 {
 
     DXGI_SWAP_CHAIN_DESC swchain_desc(HWND hwnd, size_t width, size_t height) 
     { 
+        // fullscreen independent flip         
         DXGI_SWAP_CHAIN_DESC desc{};        
         desc.BufferDesc.Width = static_cast<UINT>(width);
         desc.BufferDesc.Height = static_cast<UINT>(height);        
@@ -72,7 +73,7 @@ namespace _12_0 {
         desc.BufferCount = frame_count();        
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; 
         desc.SampleDesc.Count = 1;        
-        desc.Windowed = true;
+        desc.Windowed = true;        
         desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;            
         return desc;
     }
