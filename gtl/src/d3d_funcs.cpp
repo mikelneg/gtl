@@ -34,7 +34,7 @@ namespace _12_0 {
     release_ptr<DXGIFactory> get_dxgi_factory() 
     {  
         release_ptr<DXGIFactory> ptr;
-        win::throw_on_fail( CreateDXGIFactory2(0,__uuidof(DXGIFactory), reinterpret_cast<void**>(&ptr))
+        win::throw_on_fail(CreateDXGIFactory2(0,__uuidof(DXGIFactory), reinterpret_cast<void**>(&ptr))
                             ,__func__ );        
         return ptr;
     }
@@ -52,7 +52,7 @@ namespace _12_0 {
 		    	ptr.reset();
                 continue;
 		    }
-		    if (succ(D3D12CreateDevice(ptr.get(), D3D_FEATURE_LEVEL_12_0, __uuidof(D3D12Device), nullptr))) {
+		    if (win::succeeded(D3D12CreateDevice(ptr.get(), D3D_FEATURE_LEVEL_12_0, __uuidof(D3D12Device), nullptr))) {
 		    	return ptr;
 		    }
 	    }	    
@@ -61,20 +61,26 @@ namespace _12_0 {
         return ptr; // silence compiler warning
     }
 
-    DXGI_SWAP_CHAIN_DESC swchain_desc(HWND hwnd, size_t width, size_t height) 
-    { 
-        // fullscreen independent flip         
+    DXGI_SWAP_CHAIN_DESC create_swapchain_desc(tags::flipmodel_windowed, HWND hwnd, unsigned num_buffers, unsigned width, unsigned height) 
+    {           
+        // some preconditions.. 
+        if (num_buffers < 2 || num_buffers > 16) { throw std::logic_error{__func__}; }
+        if ((height % 4) != 0) { throw std::logic_error{__func__}; }
+
         DXGI_SWAP_CHAIN_DESC desc{};        
-        desc.BufferDesc.Width = static_cast<UINT>(width);
-        desc.BufferDesc.Height = static_cast<UINT>(height);        
+        desc.BufferDesc.Width = width;
+        desc.BufferDesc.Height = height;   // Rumor suggests this must be a multiple of 4..     
         desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;        
         desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;        
         desc.OutputWindow = hwnd;        
-        desc.BufferCount = frame_count();        
+        desc.BufferCount = num_buffers;    // Required to be 2-16
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; 
-        desc.SampleDesc.Count = 1;        
+        desc.SampleDesc.Count = 1;         // Required for flip-chain       
+        desc.SampleDesc.Quality = 0;       // Required for flip-chain
         desc.Windowed = true;        
-        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;            
+        //desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // Can't figure out which provides independent flip.. 
+        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+        desc.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;       
         return desc;
     }
 
@@ -104,7 +110,7 @@ namespace _12_0 {
         return desc;
     }
 
-    D3D12_DESCRIPTOR_HEAP_DESC cbv_descriptor_heap_desc() 
+    D3D12_DESCRIPTOR_HEAP_DESC resource_descriptor_heap_desc() 
     {       
         D3D12_DESCRIPTOR_HEAP_DESC desc{};
 		desc.NumDescriptors = 1;
@@ -119,6 +125,21 @@ namespace _12_0 {
         dev->QueryInterface(__uuidof(gtl::d3d::D3D12DebugDevice),reinterpret_cast<void**>(&debug_device.expose_ptr()));        
     
         debug_device->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);            
+    }
+
+
+    void wait_for_gpu(device& dev, command_queue& cqueue_)
+    {
+        gtl::d3d::fence fence_{dev};
+        gtl::win::waitable_handle handle_;
+                
+        fence_->SetEventOnCompletion(fence_->GetCompletedValue() + 1, handle_);
+        cqueue_->Signal(fence_.get(),fence_->GetCompletedValue() + 1);
+        WaitForSingleObject(handle_,INFINITE);
+        //auto value = fence_->GetCompletedValue() + 1;
+        //fence_->Signal(value);
+        //HRESULT result = cqueue_->Wait(fence_.get(), value);
+        //win::throw_on_fail(result,__func__);
     }
 
      /*               

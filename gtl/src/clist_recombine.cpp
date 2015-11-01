@@ -1,21 +1,13 @@
-#include "../include/clist_skybox.h"
+#include "../include/clist_recombine.h"
 
 #include <gtl/include/win_tools.h>
 
 namespace gtl {
 namespace d3d {
-namespace graphics_command_lists {
-
-static 
-void play_skybox_bundle(d3d::graphics_command_list& clist) {
+namespace command_lists {
 
 
-
-
-}
-
-
-void skybox_graphics_command_list(d3d::graphics_command_list& clist, 
+void recombine_command_list(d3d::command_list& clist, 
                          d3d::direct_command_allocator& alloc, 
                          d3d::pipeline_state_object& pso, 
                          d3d::cb_root_signature& rsig, 
@@ -49,14 +41,12 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
     clist->SetGraphicsRootDescriptorTable(1, smpheap.get()->GetGPUDescriptorHandleForHeapStart());
     clist->SetGraphicsRootDescriptorTable(2, cbvheap.get()->GetGPUDescriptorHandleForHeapStart());
 
-    // Split barriers currently cause the diagnostic tool to choke..
-
-    //clist->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-    //                                      target_resource.get(), 
-    //                                      D3D12_RESOURCE_STATE_PRESENT, 
-    //                                      D3D12_RESOURCE_STATE_COPY_DEST,
-    //                                      D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-    //                                      D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY));    
+    clist->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+                                          target_resource.get(), 
+                                          D3D12_RESOURCE_STATE_PRESENT, 
+                                          D3D12_RESOURCE_STATE_COPY_DEST,
+                                          D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+                                          D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY));    
 	
     clist->RSSetViewports(array_size(viewports), *viewports.begin());
 	clist->RSSetScissorRects(1, &scissor_rect);    
@@ -89,50 +79,19 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
     clist->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
                                           target_resource.get(), 
                                           D3D12_RESOURCE_STATE_PRESENT, 
-                                          D3D12_RESOURCE_STATE_COPY_DEST));
-                                          //D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
-                                          //D3D12_RESOURCE_BARRIER_FLAG_END_ONLY));    
-
-    CD3DX12_SUBRESOURCE_FOOTPRINT fdest{DXGI_FORMAT_R8G8B8A8_UNORM,300,200,1,300};
-    CD3DX12_SUBRESOURCE_FOOTPRINT fsrc{DXGI_FORMAT_R8G8B8A8_UNORM,300,200,1,300};
+                                          D3D12_RESOURCE_STATE_COPY_DEST,
+                                          D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
+                                          D3D12_RESOURCE_BARRIER_FLAG_END_ONLY));    
     
-    //UINT64 Offset;
-    //D3D12_SUBRESOURCE_FOOTPRINT Footprint;    
-    //D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint_dest{0,fdest};
-    //D3D12_PLACED_SUBRESOURCE_FOOTPRINT footprint_src{0,fdest};
-    //clist->CopyResource(target_resource.get(), rtv_srv_.get()); 
-    D3D12_TEXTURE_COPY_LOCATION dest{target_resource.get(), D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX};
-    dest.SubresourceIndex = 0;
-
-     auto calc = []( UINT MipSlice, UINT ArraySlice, UINT PlaneSlice, UINT MipLevels, UINT ArraySize )
-                        { 
-                            return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize; 
-                        };
-
-    CD3DX12_BOX box_a{0,0,200,134};
-    CD3DX12_BOX box_b{0,0,200,134};
-    
-    //ID3D12Resource *pResource;
-    //D3D12_TEXTURE_COPY_TYPE Type;
-    //union 
-    //    {
-    //    D3D12_PLACED_SUBRESOURCE_FOOTPRINT PlacedFootprint;
-    //    UINT SubresourceIndex;
-    //    } 	;
-    //} 	D3D12_TEXTURE_COPY_LOCATION;
-
-    //CD3DX12_TEXTURE_COPY_LOCATION bsrc_a{rtv_srv_.get(),1};
-
-    D3D12_TEXTURE_COPY_LOCATION bsrc{rtv_srv_.get(),D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX};
-    D3D12_TEXTURE_COPY_LOCATION bsrc_a{rtv_srv_.get(), D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX};
-    bsrc.SubresourceIndex = 0;//calc(0,0,0,1,2);
-    bsrc_a.SubresourceIndex = 1;//calc(0,0,1,1,2);
-    //CmdList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
-        
-    clist->CopyTextureRegion(&dest, 0, 0, 0, &bsrc_a, &box_a);
-    clist->CopyTextureRegion(&dest, 200, 0, 0, &bsrc, &box_b);
-    
-    //clist->CopyResource(target_resource.get(), rtv_srv_.get()); 
+    //CD3DX12_SUBRESOURCE_FOOTPRINT footprint{DXGI_FORMAT_R8
+    ////clist->CopyResource(target_resource.get(), rtv_srv_.get()); 
+    //CD3DX12_TEXTURE_COPY_LOCATION dest{target_resource.get(), 0};
+    //CD3DX12_TEXTURE_COPY_LOCATION src{rtv_srv_.get(), 0};
+    //CD3DX12_TEXTURE_COPY_LOCATION srca{rtv_srv_.get(), 1};
+    ////CmdList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
+    //
+    //clist->CopyTextureRegion(&dest, 0, 0, 0, &src, nullptr);
+    //clist->CopyTextureRegion(&dest, 400, 0, 0, &srca, nullptr);
     
     clist->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
                                           rtv_srv_.get(), 
@@ -147,7 +106,5 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 
     throw_on_fail(clist->Close(),__func__);    
 }
-
-
 
 }}} // namespaces

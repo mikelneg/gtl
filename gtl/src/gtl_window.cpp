@@ -50,7 +50,7 @@ namespace win {
             throw std::runtime_error{__func__};
         }
 
-        // hwnd = CreateFullscreenWindow(hwnd,hisntance,style.lpszClassName,caption,this);
+         //hwnd = CreateFullscreenWindow(hwnd,hinstance,style.lpszClassName,caption,this);
 
         hwnd = CreateWindow(style.lpszClassName, caption, 
                             WS_VISIBLE | WS_POPUP,
@@ -64,7 +64,7 @@ namespace win {
         }        
 
         //SetCursor(NULL);
-        resize_window(hwnd, width_lpx, height_lpx);                     
+        resize_window(hwnd, width_lpx, height_lpx);     // remove for fullscreen                
     }    
         
     window::~window()

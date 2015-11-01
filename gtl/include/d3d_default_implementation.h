@@ -8,12 +8,13 @@
     Does not need to be included directly 
 -----------------------------------------------------------------------------*/
 
+#include <Windows.h>
 #include <d3d12.h> 
 #include <d3dx12.h> // not supplied by the sdk currently
 #include <dxgi1_4.h>
 
 namespace   gtl {    
-namespace   d3d {    
+namespace   d3d {      
 
     namespace _12_0 {
         using DXGIFactory              = IDXGIFactory4;
@@ -32,7 +33,8 @@ namespace   d3d {
         using D3D12GraphicsCommandList = ID3D12GraphicsCommandList;
         using D3D12Fence               = ID3D12Fence;
         using D3D12Viewport            = D3D12_VIEWPORT;
-        using D3D12ScissorRect         = D3D12_RECT;                
+        using D3D12ScissorRect         = D3D12_RECT;         
+        using D3D12CommandList         = ID3D12CommandList;
 
         constexpr int frame_count() noexcept { return 3; }    
         // Nice discussion, and suggests 3 as the minimum default buffer count (reasons in the video):    
