@@ -24,8 +24,8 @@ namespace graphics_command_lists {
                          d3d::resource& target_resource,                         
                          rtv_srv_texture2D& rtv_srv_,                         
                          d3d::resource& cbuf,            
-                         d3d::resource_descriptor_heap& cbvheap,
-                         d3d::sampler_descriptor_heap& smpheap);
+                         d3d::resource_descriptor_heap& resource_heap,
+                         d3d::sampler_descriptor_heap& sampler_heap);
 
 
 

@@ -179,6 +179,10 @@ namespace _12_0 {
 
     cb_root_signature::cb_root_signature(device& dev)
     {
+        //
+        //  RootSig(Sampler, Table{SRV,2}, Table{SRV,2});
+        //           handler
+        
         std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
 		std::vector<CD3DX12_ROOT_PARAMETER> rootParameters; 
 		
@@ -229,7 +233,7 @@ namespace _12_0 {
                       ,__func__);        
     }
      
-    srv::srv(device& dev, resource_descriptor_heap& cbvheap, command_queue& cqueue_, std::wstring filename)
+    srv::srv(device& dev, resource_descriptor_heap& resource_heap, command_queue& cqueue_, std::wstring filename)
     {
         //throw_on_fail(dev->CreateCommittedResource(
         //                    &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -289,7 +293,7 @@ namespace _12_0 {
                 
         wait_for_gpu(dev,cqueue_);
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE handle(cbvheap->GetCPUDescriptorHandleForHeapStart());
+        CD3DX12_CPU_DESCRIPTOR_HANDLE handle(resource_heap->GetCPUDescriptorHandleForHeapStart());
          
         dev->CreateShaderResourceView(get(), &srvdesc, handle);               
 
@@ -360,7 +364,7 @@ namespace _12_0 {
         assert(this->get()->GetCompletedValue() == new_value);
     }
         
-    constant_buffer::constant_buffer(device& dev, resource_descriptor_heap& cbvheap, std::pair<char*,size_t> cbuf)    
+    constant_buffer::constant_buffer(device& dev, resource_descriptor_heap& resource_heap, std::pair<char*,size_t> cbuf)    
     {
         throw_on_fail(dev->CreateCommittedResource(
                             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
@@ -375,7 +379,7 @@ namespace _12_0 {
         D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 	    cbvDesc.BufferLocation = buffer.get()->GetGPUVirtualAddress();
 	    cbvDesc.SizeInBytes = (cbuf.second + 255) & ~255;	// CB size is required to be 256-byte aligned.
-	    dev->CreateConstantBufferView(&cbvDesc, cbvheap.get()->GetCPUDescriptorHandleForHeapStart());
+	    dev->CreateConstantBufferView(&cbvDesc, resource_heap.get()->GetCPUDescriptorHandleForHeapStart());
     
 		// Initialize and map the constant buffers. We don't unmap this until the
 		// app closes. Keeping things mapped for the lifetime of the resource is okay.
@@ -390,7 +394,7 @@ namespace _12_0 {
         std::memcpy(cbv_data_ptr, cbuf.first, cbuf.second);    	
     }
 
-    sampler::sampler(device& dev, sampler_descriptor_heap& smpheap)
+    sampler::sampler(device& dev, sampler_descriptor_heap& sampler_heap)
     {
         D3D12_SAMPLER_DESC desc{};        	            
         desc.Filter = D3D12_FILTER_MIN_MAG_MIP_LINEAR;
@@ -403,7 +407,7 @@ namespace _12_0 {
         desc.MaxAnisotropy = 1;
         desc.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 
-	    dev->CreateSampler(&desc, smpheap.get()->GetCPUDescriptorHandleForHeapStart());    	
+	    dev->CreateSampler(&desc, sampler_heap.get()->GetCPUDescriptorHandleForHeapStart());    	
         //set_name(get(),L"samplers");               
     }
 

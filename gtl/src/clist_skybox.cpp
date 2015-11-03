@@ -26,8 +26,8 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
                          //d3d::rtv_descriptor_heap& rtv_heap,
                          d3d::rtv_srv_texture2D& rtv_srv_,                         
                          d3d::resource& cbuf,            
-                         d3d::resource_descriptor_heap& cbvheap,
-                         d3d::sampler_descriptor_heap& smpheap)
+                         d3d::resource_descriptor_heap& resource_heap,
+                         d3d::sampler_descriptor_heap& sampler_heap)
 {    
 	// Command list allocators can only be reset when the associated 
 	// command lists have finished execution on the GPU; apps should use 
@@ -42,12 +42,12 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 	// Set necessary state.
 	clist->SetGraphicsRootSignature(rsig.get());
     
-    ID3D12DescriptorHeap* ppHeaps[] = { cbvheap.get(), smpheap.get() };
-	clist->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);        
+    ID3D12DescriptorHeap* ppHeaps[] = { sampler_heap.get(), resource_heap.get() };
+	//clist->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);        
     clist->SetGraphicsRootConstantBufferView(0, cbuf.get()->GetGPUVirtualAddress());
     
-    clist->SetGraphicsRootDescriptorTable(1, smpheap.get()->GetGPUDescriptorHandleForHeapStart());
-    clist->SetGraphicsRootDescriptorTable(2, cbvheap.get()->GetGPUDescriptorHandleForHeapStart());
+    clist->SetGraphicsRootDescriptorTable(1, sampler_heap.get()->GetGPUDescriptorHandleForHeapStart());
+    clist->SetGraphicsRootDescriptorTable(2, resource_heap.get()->GetGPUDescriptorHandleForHeapStart());
 
     // Split barriers currently cause the diagnostic tool to choke..
 

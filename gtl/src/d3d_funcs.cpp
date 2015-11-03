@@ -77,9 +77,8 @@ namespace _12_0 {
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; 
         desc.SampleDesc.Count = 1;         // Required for flip-chain       
         desc.SampleDesc.Quality = 0;       // Required for flip-chain
-        desc.Windowed = true;        
-        //desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // Can't figure out which provides independent flip.. 
-        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+        desc.Windowed = true;                
+        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD; // or _SEQUENTIAL -- 
         desc.Flags = DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT;       
         return desc;
     }
