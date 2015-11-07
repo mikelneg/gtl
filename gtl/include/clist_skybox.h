@@ -26,8 +26,11 @@ namespace graphics_command_lists {
                          d3d::resource& cbuf,            
                          d3d::resource_descriptor_heap& resource_heap,
                          d3d::sampler_descriptor_heap& sampler_heap);
-
-
+    
+    void skybox_graphics_command_list_second(d3d::graphics_command_list& clist,                                 
+                         d3d::resource& target_resource,                         
+                         d3d::uav_texture2D& rtv_srv_);
+    
 
     class skybox {
             

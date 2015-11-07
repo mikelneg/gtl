@@ -72,6 +72,7 @@ namespace _12_0 {
         desc.BufferDesc.Height = height;   // Rumor suggests this must be a multiple of 4..     
         desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;        
         desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;        
+        //desc.BufferDesc.Scaling = DXGI_MODE_SCALING_CENTERED;        
         desc.OutputWindow = hwnd;        
         desc.BufferCount = num_buffers;    // Required to be 2-16
         desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; 

@@ -57,6 +57,13 @@ namespace _12_0 {
         device(device&&) = default;
     };    
                 
+    class cpu_handle {
+        CpuDescriptorHandle handle_;
+    public:
+        cpu_handle(CpuDescriptorHandle h) : handle_(h) {}
+        CpuDescriptorHandle& get() { return handle_; }
+    };
+
     class command_queue : public release_ptr<D3D12CommandQueue> {        
     public:
         command_queue(device&);
@@ -116,7 +123,13 @@ namespace _12_0 {
     class direct_command_allocator : public release_ptr<D3D12CommandAllocator> {
     public:
         direct_command_allocator(device&);
-        ~direct_command_allocator();
+        //~direct_command_allocator();
+    };
+    
+    class compute_command_allocator : public release_ptr<D3D12CommandAllocator> {
+    public:
+        compute_command_allocator(device&);
+        //~compute_command_allocator();
     };
 
     class root_signature : public release_ptr<D3D12RootSignature> {
@@ -127,6 +140,12 @@ namespace _12_0 {
     class cb_root_signature : public release_ptr<D3D12RootSignature> {
     public:
         cb_root_signature(device&);
+        cb_root_signature(device&,int);
+    };
+
+    class cs_root_signature : public release_ptr<D3D12RootSignature> {
+    public:
+        cs_root_signature(device&);
     };
 
     class vertex_shader : public release_ptr<D3DBlob> {
@@ -138,18 +157,25 @@ namespace _12_0 {
     public:
         pixel_shader(std::wstring path);
     };
+    
+    class compute_shader : public release_ptr<D3DBlob> {
+    public:
+        compute_shader(std::wstring path);
+    };
 
     class pipeline_state_object : public release_ptr<D3D12PipelineState> {
     public:
         pipeline_state_object(device&, cb_root_signature&, vertex_shader&, pixel_shader&);
+        pipeline_state_object(device&, cb_root_signature&, compute_shader&);
     };
 
     class graphics_command_list : public release_ptr<D3D12GraphicsCommandList> {
     public:
         graphics_command_list(device&, direct_command_allocator&, pipeline_state_object&);
+        graphics_command_list(device&, compute_command_allocator&, pipeline_state_object&);       
         graphics_command_list(device&, direct_command_allocator&);       
     };
-    
+     
     class fence : public release_ptr<D3D12Fence> {                
     public:
         fence(D3D12Device&);
@@ -169,12 +195,12 @@ namespace _12_0 {
 
     class srv : public release_ptr<D3D12Resource> {
     public:
-        srv(device&,resource_descriptor_heap&,command_queue&,std::wstring);
+        srv(device&,std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>,command_queue&,std::wstring);
     };
 
     class sampler : public release_ptr<D3D12Resource> {
     public:
-        sampler(device&,sampler_descriptor_heap&);
+        sampler(device&,D3D12_CPU_DESCRIPTOR_HANDLE);
     };
 
     class rtv_srv_texture2D : public release_ptr<D3D12Resource> {
@@ -185,6 +211,18 @@ namespace _12_0 {
 
         resource_descriptor_heap& srv_heap() { return srv_heap_; }
         rtv_descriptor_heap& rtv_heap() { return rtv_heap_; }
+    };
+
+    class uav_texture2D : public release_ptr<D3D12Resource> {
+        //resource_descriptor_heap uav_heap_;
+        //resource_descriptor_heap srv_heap_;        
+        //rtv_descriptor_heap rtv_heap_;        
+    public:
+        uav_texture2D(swap_chain&, D3D12_CPU_DESCRIPTOR_HANDLE&);
+
+        //resource_descriptor_heap& srv_heap() { return srv_heap_; }
+        //resource_descriptor_heap& uav_heap() { return uav_heap_; }
+        //rtv_descriptor_heap& rtv_heap() { return rtv_heap_; }
     };
 
     //class device : public detail::simple_ptr_base<D3D12Device> {            
