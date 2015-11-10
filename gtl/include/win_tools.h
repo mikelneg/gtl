@@ -29,6 +29,9 @@ namespace win {
     template <typename R = UINT, typename T>
     constexpr R array_size(std::initializer_list<T> list) { return static_cast<R>(list.size()); }
 
+    template <typename R = UINT, typename T>
+    constexpr R array_size(T const& obj) { return static_cast<R>(obj.size()); }
+
     class waitable_handle { 
         HANDLE handle_;
     public:        

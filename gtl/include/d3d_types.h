@@ -30,22 +30,39 @@ namespace _12_0 {
         struct shader_visible{};
         struct not_shader_visible{};
     }
+        
+
+    //
+    //      device
+    //      debug_layer
+    //      swap_chain
+    //
+    //      command_queue
+    //      command_allocator
+    //      command_list
+    //      
+    //      descriptor_heap
+    //      descriptor
+    //
+    //      root_signature
+    //
+    //      pipeline_state_object
+    //      v_shader
+    //      p_shader
+    //      c_shader
+    //
+    //      resources
+    //      
+    //      fences
+    //
     
-    /////////////////////////////
-    namespace detail {  
-        template <typename T>
-        class simple_ptr_base {                                
-            release_ptr<T> ptr;
-        protected:
-            release_ptr<T>& expose_ptr() noexcept { return ptr; }
-        public:
-            using resource_type = T;
-            T& get() const noexcept { return *ptr; }
-            T* operator->() const noexcept { return ptr.get(); }
-        };
-    }
-    /////////////////////////////
-    
+
+
+    class dxgi_factory : public release_ptr<DXGIFactory> {
+    public:
+        dxgi_factory();
+    };
+
     class debug_layer : public release_ptr<D3D12Debug> {
     public:
         debug_layer();
@@ -57,37 +74,36 @@ namespace _12_0 {
         device(device&&) = default;
     };    
                 
-    class cpu_handle {
-        CpuDescriptorHandle handle_;
-    public:
-        cpu_handle(CpuDescriptorHandle h) : handle_(h) {}
-        CpuDescriptorHandle& get() { return handle_; }
-    };
-
     class command_queue : public release_ptr<D3D12CommandQueue> {        
     public:
         command_queue(device&);
     };
 
     class rtv_descriptor_heap : public release_ptr<D3D12DescriptorHeap> {
-        unsigned int increment_;
+        unsigned increment_;
+        unsigned const size_;
     public:
-        rtv_descriptor_heap(device&, unsigned num_descriptors, tags::not_shader_visible);       
+        rtv_descriptor_heap(device&, unsigned num_descriptors);       
         auto increment_value() const noexcept { return increment_; }
+        auto size() const noexcept { return size_; }
     };
 
     class resource_descriptor_heap : public release_ptr<D3D12DescriptorHeap> {
-        unsigned int increment_;
+        unsigned increment_;
+        unsigned const size_;
     public:
         resource_descriptor_heap(device&, unsigned num_descriptors, tags::shader_visible);
         auto increment_value() const noexcept { return increment_; }
+        auto size() const noexcept { return size_; }
     };
 
     class sampler_descriptor_heap : public release_ptr<D3D12DescriptorHeap> {
-        unsigned int increment_;
+        unsigned increment_;
+        unsigned const size_;
     public:
-        sampler_descriptor_heap(device&);
+        sampler_descriptor_heap(device&, unsigned num_descriptors);
         auto increment_value() const noexcept { return increment_; }
+        auto size() const noexcept { return size_; }
     };
 
     class resource : public release_ptr<D3D12Resource> {
@@ -96,58 +112,29 @@ namespace _12_0 {
     };
     
     class swap_chain : public release_ptr<DXGISwapChain> {                
-        std::vector<resource> frame_resources;
-        rtv_descriptor_heap rtv_heap;                
-
+        std::vector<resource> frames_;
+        rtv_descriptor_heap rtv_heap_;                
     public:
-        swap_chain(gtl::window&, command_queue&, unsigned num_buffers);        
-        resource& get_current_resource() { return frame_resources[get()->GetCurrentBackBufferIndex()]; }
-        HANDLE get_waitable_object() { return get()->GetFrameLatencyWaitableObject(); }
-        rtv_descriptor_heap& get_rtv_heap() { return rtv_heap; }        
-        auto get_current_frame_index() const { return get()->GetCurrentBackBufferIndex(); }   
-        auto get_handle_to_current_resource() { 
-            CD3DX12_CPU_DESCRIPTOR_HANDLE handle(rtv_heap->GetCPUDescriptorHandleForHeapStart(), 
-                                                 get_current_frame_index(), 
-                                                 rtv_heap.increment_value());
-            return handle;
-        }
+        swap_chain(gtl::window&, command_queue&, unsigned num_buffers); 
+        resource& get_current_resource() { return frames_[get()->GetCurrentBackBufferIndex()]; }        
+        rtv_descriptor_heap& get_rtv_heap() { return rtv_heap_; }                        
     };    
-
-    //class swapchain_rtv_heap {
-    //    std::vector<resource> frames;
-    //public:
-    //    swapchain_rtv_heap(swap_chain&, device&, rtv_descriptor_heap&);
-    //    decltype(frames) const& get_frames() const { return frames; }
-    //};
-
+    
     class direct_command_allocator : public release_ptr<D3D12CommandAllocator> {
     public:
         direct_command_allocator(device&);
-        //~direct_command_allocator();
     };
     
     class compute_command_allocator : public release_ptr<D3D12CommandAllocator> {
     public:
-        compute_command_allocator(device&);
-        //~compute_command_allocator();
+        compute_command_allocator(device&);        
     };
 
     class root_signature : public release_ptr<D3D12RootSignature> {
     public:
-        root_signature(device&);
+        root_signature(device&, release_ptr<D3DBlob> signature);        
     };
     
-    class cb_root_signature : public release_ptr<D3D12RootSignature> {
-    public:
-        cb_root_signature(device&);
-        cb_root_signature(device&,int);
-    };
-
-    class cs_root_signature : public release_ptr<D3D12RootSignature> {
-    public:
-        cs_root_signature(device&);
-    };
-
     class vertex_shader : public release_ptr<D3DBlob> {
     public:
         vertex_shader(std::wstring path);
@@ -165,8 +152,8 @@ namespace _12_0 {
 
     class pipeline_state_object : public release_ptr<D3D12PipelineState> {
     public:
-        pipeline_state_object(device&, cb_root_signature&, vertex_shader&, pixel_shader&);
-        pipeline_state_object(device&, cb_root_signature&, compute_shader&);
+        pipeline_state_object(device&, root_signature&, vertex_shader&, pixel_shader&);
+        pipeline_state_object(device&, root_signature&, compute_shader&);
     };
 
     class graphics_command_list : public release_ptr<D3D12GraphicsCommandList> {
@@ -204,25 +191,25 @@ namespace _12_0 {
     };
 
     class rtv_srv_texture2D : public release_ptr<D3D12Resource> {
-        rtv_descriptor_heap rtv_heap_;
+        rtv_descriptor_heap rtv_heap__;
         resource_descriptor_heap srv_heap_;
     public:
         rtv_srv_texture2D(swap_chain&, unsigned num_buffers, tags::shader_visible);
 
         resource_descriptor_heap& srv_heap() { return srv_heap_; }
-        rtv_descriptor_heap& rtv_heap() { return rtv_heap_; }
+        rtv_descriptor_heap& rtv_heap_() { return rtv_heap__; }
     };
 
     class uav_texture2D : public release_ptr<D3D12Resource> {
         //resource_descriptor_heap uav_heap_;
         //resource_descriptor_heap srv_heap_;        
-        //rtv_descriptor_heap rtv_heap_;        
+        //rtv_descriptor_heap rtv_heap__;        
     public:
         uav_texture2D(swap_chain&, D3D12_CPU_DESCRIPTOR_HANDLE&);
 
         //resource_descriptor_heap& srv_heap() { return srv_heap_; }
         //resource_descriptor_heap& uav_heap() { return uav_heap_; }
-        //rtv_descriptor_heap& rtv_heap() { return rtv_heap_; }
+        //rtv_descriptor_heap& rtv_heap_() { return rtv_heap__; }
     };
 
     //class device : public detail::simple_ptr_base<D3D12Device> {            
@@ -253,10 +240,10 @@ namespace _12_0 {
     //    resource() = default;
     //};
     //
-    //class swapchain_rtv_heap {
+    //class swapchain_rtv_heap_ {
     //    std::array<resource,frame_count()> frames;
     //public:
-    //    swapchain_rtv_heap(swap_chain&, device&, rtv_descriptor_heap&);
+    //    swapchain_rtv_heap_(swap_chain&, device&, rtv_descriptor_heap&);
     //};
 
 

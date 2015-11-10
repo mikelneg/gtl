@@ -122,11 +122,9 @@ namespace _12_0 {
     void report_live_objects(device& dev) 
     {
         gtl::release_ptr<gtl::d3d::D3D12DebugDevice> debug_device;
-        dev->QueryInterface(__uuidof(gtl::d3d::D3D12DebugDevice),reinterpret_cast<void**>(&debug_device.expose_ptr()));        
-    
+        dev->QueryInterface(__uuidof(gtl::d3d::D3D12DebugDevice),reinterpret_cast<void**>(&debug_device.expose_ptr()));            
         debug_device->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);            
     }
-
 
     void wait_for_gpu(device& dev, command_queue& cqueue_)
     {
@@ -135,24 +133,92 @@ namespace _12_0 {
                 
         fence_->SetEventOnCompletion(fence_->GetCompletedValue() + 1, handle_);
         cqueue_->Signal(fence_.get(),fence_->GetCompletedValue() + 1);
-        WaitForSingleObject(handle_,INFINITE);
-        //auto value = fence_->GetCompletedValue() + 1;
-        //fence_->Signal(value);
-        //HRESULT result = cqueue_->Wait(fence_.get(), value);
-        //win::throw_on_fail(result,__func__);
+        WaitForSingleObject(handle_,INFINITE);        
     }
+    
+    release_ptr<D3DBlob> dummy_rootsig_1() 
+    {        
+        std::vector<CD3DX12_DESCRIPTOR_RANGE> table1_, table2_;
+		std::vector<CD3DX12_ROOT_PARAMETER> params_; 
+		
+        table1_.resize(1);     
+        table2_.resize(3);
+        
+        table1_[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);   // 1 descriptor, register 0     
+        
+        table2_[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);		  // 1 descriptor, register 0
+        table2_[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);    // 1 desc, reg 0, space 1
+        table2_[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);       // 1 desc, reg 0
+        
+        params_.resize(3);
+        params_[0].InitAsConstantBufferView(0); 
+        params_[1].InitAsDescriptorTable(array_size(table1_), table1_.data(), D3D12_SHADER_VISIBILITY_PIXEL);
+        params_[2].InitAsDescriptorTable(array_size(table2_), table2_.data(), D3D12_SHADER_VISIBILITY_ALL);
+                
+		D3D12_ROOT_SIGNATURE_FLAGS flags_ =
+			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;			
+
+		CD3DX12_ROOT_SIGNATURE_DESC desc;
+		desc.Init(array_size(params_), params_.data(), 0, nullptr, flags_);    
+
+        release_ptr<D3DBlob> signature_;
+        release_ptr<D3DBlob> error_; // not currently using
+        throw_on_fail(D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, 
+                                                  &(signature_.expose_ptr()), &(error_.expose_ptr()))
+                                                  ,__func__);
+        return signature_;        
+    }
+
+    release_ptr<D3DBlob> dummy_rootsig_2() 
+    {
+        std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
+		std::vector<CD3DX12_ROOT_PARAMETER> params_; 
+		
+        ranges.resize(3); 
+        params_.resize(2);                
+                
+        ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);        
+        ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
+        ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
+        params_[0].InitAsDescriptorTable(2, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);                
+        params_[1].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_ALL);                        
+                
+		// Allow input layout and deny uneccessary access to certain pipeline stages.
+		D3D12_ROOT_SIGNATURE_FLAGS flags_ =
+	//		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+			//D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+
+		CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+		rootSignatureDesc.Init(static_cast<UINT>(params_.size()), params_.data(), 0, nullptr, 
+                                flags_);
+
+        release_ptr<D3DBlob> signature;
+        release_ptr<D3DBlob> error;
+
+		throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
+                      ,__func__);
+		
+        return signature;
+    }
+
 
      /*               
             
 
         
-    swapchain_ = CreateSwapChainForHwnd(hwnd, device.get_device(), desc, GetDefault<SWAP_CHAIN_FULLSCREEN_DESC>());
+    swapchain_ = CreateSwapChainForHwnd(hwnd, device.get_device_from(), desc, GetDefault<SWAP_CHAIN_FULLSCREEN_DESC>());
     
     if (swapchain_ == nullptr) {
         throw std::runtime_error{"Unable to initialize D3D window."};
     }   
     
-    disable_alt_enter(hwnd,device.get_device());
+    disable_alt_enter(hwnd,device.get_device_from());
 
     // create everything else
     release_ptr<ID3D11Texture2D> dstexture_ptr_;
@@ -165,7 +231,7 @@ namespace _12_0 {
     auto rtview_desc = GetDefault<RENDER_TARGET_VIEW_DESC>();
 
     swapchain_->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&screenbuffer_ptr_));
-    device.get_device().CreateRenderTargetView(screenbuffer_ptr_, &rtview_desc, &screenbufferview_ptr_);
+    device.get_device_from().CreateRenderTargetView(screenbuffer_ptr_, &rtview_desc, &screenbufferview_ptr_);
     if (screenbufferview_ptr_ == nullptr) {
         throw std::runtime_error{"Unable to initialize D3D window."};
     }
@@ -183,9 +249,9 @@ namespace _12_0 {
     
     depthstenciltext_desc_.SampleDesc = desc.SampleDesc;
 
-    device.get_device().CreateTexture2D(&depthstenciltext_desc_, nullptr, &(dstexture_ptr_.expose_ptr()));
-    device.get_device().CreateDepthStencilView(dstexture_ptr_, nullptr, &dsview_ptr_);
-    device.get_device().CreateDepthStencilState(&depthstencil_desc_, &dsstate_ptr_);
+    device.get_device_from().CreateTexture2D(&depthstenciltext_desc_, nullptr, &(dstexture_ptr_.expose_ptr()));
+    device.get_device_from().CreateDepthStencilView(dstexture_ptr_, nullptr, &dsview_ptr_);
+    device.get_device_from().CreateDepthStencilState(&depthstencil_desc_, &dsstate_ptr_);
     
     // TODO : change this to use expose_ptr() interface..
 

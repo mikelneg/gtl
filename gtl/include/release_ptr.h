@@ -29,9 +29,9 @@ namespace gtl {
         release_ptr(release_ptr&& other) noexcept : ptr_{other.release()} {}        
         release_ptr& operator=(release_ptr&& other) noexcept { this->reset(other.release()); return *this; }
 
-        ~release_ptr() { if (ptr_) { Deleter{}(ptr_); } }
+        ~release_ptr() { Deleter{}(ptr_); }
         
-        void reset(T* t = nullptr) noexcept { if (ptr_) { Deleter{}(ptr_); } ptr_ = t; }        
+        void reset(T* t = nullptr) noexcept { Deleter{}(ptr_); ptr_ = t; }        
 
         T* release() noexcept { T* tmp = ptr_; ptr_ = nullptr; return tmp; }
         T* get() const noexcept { return ptr_; }
@@ -41,7 +41,7 @@ namespace gtl {
         T*const* operator&() const noexcept { return std::addressof(ptr_); }
         //
 
-        T*& expose_ptr() noexcept { this->reset(); return ptr_; } 
+        T*& expose_ptr() noexcept { reset(); return ptr_; } 
         
         T& operator*() const noexcept { return *ptr_; }
         T* operator->() const noexcept { return ptr_; }

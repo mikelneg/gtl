@@ -37,14 +37,16 @@ namespace _12_0 {
         void wait_for_gpu(device&,command_queue&);
 
         template <typename T>
-        device get_device(T& t) { 
+        device get_device_from(T& t) { 
             device dev;
-            win::throw_on_fail( 
-                t->GetDevice(__uuidof(device::type),reinterpret_cast<void**>(&dev.expose_ptr()))
-                ,__func__);                        
+            win::throw_on_fail(t->GetDevice(__uuidof(device::type),reinterpret_cast<void**>(&dev.expose_ptr()))
+                               ,__func__);                        
             return dev;
         }
 
+
+        release_ptr<D3DBlob> dummy_rootsig_1();
+        release_ptr<D3DBlob> dummy_rootsig_2();
         
 }
 

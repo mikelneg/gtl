@@ -18,7 +18,7 @@ namespace graphics_command_lists {
     void skybox_graphics_command_list(d3d::graphics_command_list& clist, 
                          d3d::direct_command_allocator& alloc, 
                          d3d::pipeline_state_object& pso, 
-                         d3d::cb_root_signature& rsig, 
+                         d3d::root_signature& rsig, 
                          std::initializer_list<D3D12_VIEWPORT*> viewport,                         
                          D3D12_RECT const& scissor_rect,                             
                          d3d::resource& target_resource,                         

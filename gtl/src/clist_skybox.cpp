@@ -18,12 +18,12 @@ void play_skybox_bundle(d3d::graphics_command_list& clist) {
 void skybox_graphics_command_list(d3d::graphics_command_list& clist, 
                          d3d::direct_command_allocator& alloc, 
                          d3d::pipeline_state_object& pso, 
-                         d3d::cb_root_signature& rsig, 
+                         d3d::root_signature& rsig, 
                          std::initializer_list<D3D12_VIEWPORT*> viewports,                         
                          D3D12_RECT const& scissor_rect,                         
-    //d3d::swapchain_rtv_heap& rtv,
+    //d3d::swapchain_rtv_heap_& rtv,
                          d3d::resource& target_resource,
-                         //d3d::rtv_descriptor_heap& rtv_heap,
+                         //d3d::rtv_descriptor_heap& rtv_heap_,
                          d3d::rtv_srv_texture2D& rtv_srv_,                         
                          d3d::resource& cbuf,            
                          d3d::resource_descriptor_heap& resource_heap,
@@ -66,7 +66,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
     //                                    target_resource.get(), 
     //                                    D3D12_RESOURCE_STATE_PRESENT, 
     //                                    D3D12_RESOURCE_STATE_RENDER_TARGET));    
-	//CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtv_heap->GetCPUDescriptorHandleForHeapStart(), 
+	//CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtv_heap_->GetCPUDescriptorHandleForHeapStart(), 
     //                                            static_cast<int>(swchain.get_frame_index()), 
     //                                            static_cast<UINT>(rtvheap.size()));	
 
@@ -78,7 +78,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 	//clist->DrawInstanced(3, 1, 0, 0);
     // previous: context_.Draw(14, 0);   
     
-    clist->OMSetRenderTargets(2, &rtv_srv_.rtv_heap()->GetCPUDescriptorHandleForHeapStart(), TRUE, nullptr);    
+    clist->OMSetRenderTargets(2, &rtv_srv_.rtv_heap_()->GetCPUDescriptorHandleForHeapStart(), TRUE, nullptr);    
     clist->DrawInstanced(14, 1, 0, 0);
 
     clist->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
@@ -177,7 +177,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 //    //                                    target_resource.get(), 
 //    //                                    D3D12_RESOURCE_STATE_PRESENT, 
 //    //                                    D3D12_RESOURCE_STATE_RENDER_TARGET));    
-//	//CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtv_heap->GetCPUDescriptorHandleForHeapStart(), 
+//	//CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtv_heap_->GetCPUDescriptorHandleForHeapStart(), 
 //    //                                            static_cast<int>(swchain.get_frame_index()), 
 //    //                                            static_cast<UINT>(rtvheap.size()));	
 //
@@ -189,7 +189,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 //	//clist->DrawInstanced(3, 1, 0, 0);
 //    // previous: context_.Draw(14, 0);   
 //    
-//    clist->OMSetRenderTargets(2, &rtv_srv_.rtv_heap()->GetCPUDescriptorHandleForHeapStart(), TRUE, nullptr);    
+//    clist->OMSetRenderTargets(2, &rtv_srv_.rtv_heap_()->GetCPUDescriptorHandleForHeapStart(), TRUE, nullptr);    
 //    clist->DrawInstanced(14, 1, 0, 0);
 //
 //    clist->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
@@ -264,9 +264,9 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 //                         d3d::cb_root_signature& rsig,                         
 //                         std::initializer_list<D3D12_VIEWPORT*> viewports,                         
 //                         D3D12_RECT const& scissor_rect,                         
-//    //d3d::swapchain_rtv_heap& rtv,
+//    //d3d::swapchain_rtv_heap_& rtv,
 //                         d3d::resource& target_resource,
-//                         //d3d::rtv_descriptor_heap& rtv_heap,
+//                         //d3d::rtv_descriptor_heap& rtv_heap_,
 //                         d3d::uav_texture2D& rtv_srv_,                         
 //                         d3d::resource& cbuf,            
 //                         d3d::resource_descriptor_heap& resource_heap,
@@ -303,7 +303,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 //    //                                    target_resource.get(), 
 //    //                                    D3D12_RESOURCE_STATE_PRESENT, 
 //    //                                    D3D12_RESOURCE_STATE_RENDER_TARGET));    
-//	//CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtv_heap->GetCPUDescriptorHandleForHeapStart(), 
+//	//CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(rtv_heap_->GetCPUDescriptorHandleForHeapStart(), 
 //    //                                            static_cast<int>(swchain.get_frame_index()), 
 //    //                                            static_cast<UINT>(rtvheap.size()));	
 //
@@ -315,7 +315,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 //	//clist->DrawInstanced(3, 1, 0, 0);
 //    // previous: context_.Draw(14, 0);   
 //    
-//    clist->OMSetRenderTargets(2, &rtv_srv_.rtv_heap()->GetCPUDescriptorHandleForHeapStart(), TRUE, nullptr);    
+//    clist->OMSetRenderTargets(2, &rtv_srv_.rtv_heap_()->GetCPUDescriptorHandleForHeapStart(), TRUE, nullptr);    
 //    clist->DrawInstanced(14, 1, 0, 0);
 //
 //}
@@ -369,8 +369,7 @@ void skybox_graphics_command_list_second(d3d::graphics_command_list& clist,
     //CmdList->CopyTextureRegion(&Dst, 0, 0, 0, &Src, nullptr);
         
     //clist->CopyTextureRegion(&dest, 0, 0, 0, &bsrc_a, &box_a);
-    //clist->CopyTextureRegion(&dest, 200, 0, 0, &bsrc, &box_b);
-    
+    //clist->CopyTextureRegion(&dest, 200, 0, 0, &bsrc, &box_b);    
     clist->CopyResource(target_resource.get(), rtv_srv_.get()); 
     
     clist->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(

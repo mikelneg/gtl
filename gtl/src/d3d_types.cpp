@@ -34,6 +34,11 @@ namespace _12_0 {
         t->SetName(name);
     }
 
+    dxgi_factory::dxgi_factory()
+    {          
+        throw_on_fail(CreateDXGIFactory2(0,__uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
+                            ,__func__ );                
+    }
 
     debug_layer::debug_layer()
     {
@@ -54,258 +59,187 @@ namespace _12_0 {
         D3D12_COMMAND_QUEUE_DESC cq_desc{};
         cq_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
         cq_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-
         throw_on_fail(dev->CreateCommandQueue(&cq_desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
                       ,__func__);    
-        set_name(get(),L"command_queue");               
+        set_name(get(),L"cqueue");               
     }
 
-    swap_chain::swap_chain(gtl::window& win, command_queue& cqueue, unsigned const num_buffers_) 
-        :   frame_resources(num_buffers_),
-            rtv_heap{get_device(cqueue), num_buffers_, tags::not_shader_visible{}}     
+    rtv_descriptor_heap::rtv_descriptor_heap(device& dev, unsigned num_descriptors) 
+        : size_{num_descriptors}
+    {        
+        D3D12_DESCRIPTOR_HEAP_DESC desc{};
+		desc.NumDescriptors = num_descriptors;
+		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;       
+        throw_on_fail(dev->CreateDescriptorHeap(&desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
+                      ,__func__);
+        increment_ = dev->GetDescriptorHandleIncrementSize(desc.Type);         
+        set_name(get(),L"rtv_heap_");              
+    }  
+    
+    resource_descriptor_heap::resource_descriptor_heap(device& dev, unsigned num_descriptors, tags::shader_visible) 
+        : size_{num_descriptors}
+    {
+        D3D12_DESCRIPTOR_HEAP_DESC desc{};
+		desc.NumDescriptors = num_descriptors;
+		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
+		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;                
+        throw_on_fail(dev->CreateDescriptorHeap(&desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
+                      ,__func__);
+        increment_ = dev->GetDescriptorHandleIncrementSize(desc.Type);
+        set_name(get(),L"res_heap");               
+    }
+
+    sampler_descriptor_heap::sampler_descriptor_heap(device& dev, unsigned num_descriptors) 
+        : size_{num_descriptors}
+    {
+        D3D12_DESCRIPTOR_HEAP_DESC desc{};
+		desc.NumDescriptors = num_descriptors;
+		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
+		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;		        
+        throw_on_fail(dev->CreateDescriptorHeap(&desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
+                      ,__func__);
+        increment_ = dev->GetDescriptorHandleIncrementSize(desc.Type);
+        set_name(get(),L"samp_heap");               
+    }
+
+    swap_chain::swap_chain(gtl::window& win, command_queue& cqueue, unsigned num_buffers_) 
+        :   frames_(num_buffers_),
+            rtv_heap_{get_device_from(cqueue), num_buffers_}     
     {
         RECT client_area{};
         if (!GetClientRect(get_hwnd(win), &client_area)) { throw std::runtime_error{__func__}; }        
-        auto desc = create_swapchain_desc(tags::flipmodel_windowed{}, get_hwnd(win), num_buffers_, width(client_area), height(client_area));                
-  
-        release_ptr<IDXGISwapChain> tmp_ptr;  // We must first initialize an IDXGISwapChain* and then 
-                                              // use QueryInterface() to "upcast" to our desired type,
-                                              // in this case IDXGISwapChain3 (ie., DXGISwapChain)
-        throw_on_fail(get_dxgi_factory()->CreateSwapChain(cqueue.get(), &desc, &tmp_ptr),__func__);             
-        throw_on_fail(tmp_ptr->QueryInterface(__uuidof(type),reinterpret_cast<void**>(&expose_ptr())),__func__); 
-        
-        CD3DX12_CPU_DESCRIPTOR_HANDLE handle{rtv_heap->GetCPUDescriptorHandleForHeapStart()};        
-
-        device dev{get_device(cqueue)};
-
-        for (UINT idx = 0; idx < frame_resources.size(); ++idx) {
-            throw_on_fail(this->get()->GetBuffer(idx,__uuidof(resource::type),
-                              reinterpret_cast<void**>(&frame_resources[idx])),__func__);
-            dev->CreateRenderTargetView(frame_resources[idx], nullptr, handle);
-            handle.Offset(1, rtv_heap.increment_value());			
-            set_name(frame_resources[idx].get(),L"swchn_rtv");                       
+        auto desc = create_swapchain_desc(tags::flipmodel_windowed{}, get_hwnd(win), num_buffers_, width(client_area), height(client_area));                  
+        release_ptr<IDXGISwapChain> tmp_ptr;  // We first get a generic IDXGISwapChain* and then 
+                                              //  use QueryInterface() to "upcast" to our desired type,
+                                              //  in this case IDXGISwapChain3 (ie., DXGISwapChain)
+        throw_on_fail(dxgi_factory{}->CreateSwapChain(cqueue.get(), &desc, &tmp_ptr),__func__);             
+        throw_on_fail(tmp_ptr->QueryInterface(__uuidof(type),reinterpret_cast<void**>(&expose_ptr())),__func__);         
+        CD3DX12_CPU_DESCRIPTOR_HANDLE handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};        
+        device dev{get_device_from(cqueue)};
+        for (unsigned i = 0; i < frames_.size(); ++i) {
+            throw_on_fail(get()->GetBuffer(i, __uuidof(resource::type),reinterpret_cast<void**>(&frames_[i])),__func__);
+            dev->CreateRenderTargetView(frames_[i], nullptr, handle);
+            handle.Offset(1, rtv_heap_.increment_value());			
+            set_name(frames_[i].get(),L"swchn_rtv");                       
 	    }          
-
         get()->SetMaximumFrameLatency(num_buffers_);                  
     }
-
-    
-    rtv_descriptor_heap::rtv_descriptor_heap(device& dev, unsigned num_descriptors, tags::not_shader_visible) 
-    {        
-        D3D12_DESCRIPTOR_HEAP_DESC dh_desc{};
-		dh_desc.NumDescriptors = num_descriptors;
-		dh_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
-		dh_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;    // We only use these as targets       
-        throw_on_fail(dev->CreateDescriptorHeap(&dh_desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
-                      ,__func__);
-        increment_ = dev->GetDescriptorHandleIncrementSize(dh_desc.Type);        
-        set_name(get(),L"rtv");              
-    }    
-
-    resource_descriptor_heap::resource_descriptor_heap(device& dev, unsigned num_descriptors, tags::shader_visible) 
-    {
-        D3D12_DESCRIPTOR_HEAP_DESC dh_desc{};
-		dh_desc.NumDescriptors = num_descriptors;
-		dh_desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-		dh_desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;        
-        
-        throw_on_fail(dev->CreateDescriptorHeap(&dh_desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
-                      ,__func__);
-
-        increment_ = dev->GetDescriptorHandleIncrementSize(dh_desc.Type);
-        set_name(get(),L"cbv");               
-    }
-
-    sampler_descriptor_heap::sampler_descriptor_heap(device& dev) 
-    {
-        D3D12_DESCRIPTOR_HEAP_DESC desc{};
-		desc.NumDescriptors = 1;
-		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
-		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;		
-        
-        throw_on_fail(dev->CreateDescriptorHeap(&desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
-                      ,__func__);
-
-        increment_ = dev->GetDescriptorHandleIncrementSize(desc.Type);
-        set_name(get(),L"sdh");               
-    }
- 
- 
-    //swapchain_rtv_heap::swapchain_rtv_heap(swap_chain& swchain, device& dev, rtv_descriptor_heap& rtvheap) 
-    //{
-    //    DXGI_SWAP_CHAIN_DESC1 swchain_desc;
-    //    throw_on_fail(swchain->GetDesc1(&swchain_desc),__func__);        
-    //    frames.resize(swchain_desc.BufferCount);
-    //    CD3DX12_CPU_DESCRIPTOR_HANDLE handle(rtvheap->GetCPUDescriptorHandleForHeapStart());
-	//	
-	//	for (UINT i = 0; i < frames.size(); ++i) {
-    //        throw_on_fail(swchain->GetBuffer(i, __uuidof(resource::type), 
-    //                      reinterpret_cast<void**>(&frames[i]))
-    //                      ,__func__);
-    //        dev->CreateRenderTargetView(frames[i], nullptr, handle);
-    //        handle.Offset(1,rtvheap.increment_value());			
-    //        set_name(frames[i].get(),L"rtv_swchn");               
-	//    }                
-    //}
 
     direct_command_allocator::direct_command_allocator(device& dev)
     {
         throw_on_fail(dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
                       ,__func__);              
-        set_name(get(),L"dca");               
+        set_name(get(),L"dc_alloc");               
     }
 
     compute_command_allocator::compute_command_allocator(device& dev)
     {
         throw_on_fail(dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COMPUTE, __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
                       ,__func__);              
-        set_name(get(),L"cca");               
+        set_name(get(),L"cc_alloc");               
     }
     
-    root_signature::root_signature(device& dev)
-    {
-        CD3DX12_ROOT_SIGNATURE_DESC desc{};
-		desc.Init(0, nullptr, 0, nullptr, D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT);        
-
-        release_ptr<D3DBlob> signature;
-        release_ptr<D3DBlob> error;
-        
-        HRESULT res1, res2;
-
-        throw_on_fail(res1 = D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
-                      ,__func__);       
-        throw_on_fail(res2 = dev->CreateRootSignature(0, signature->GetBufferPointer(),                                                           signature->GetBufferSize(), 
-                                        __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
-                      ,__func__);	            
-        set_name(get(),L"rootsig");               
-    }
-
-    cb_root_signature::cb_root_signature(device& dev)
-    {
-        //
-        //  RootSig(Sampler, Table{SRV,2}, Table{SRV,2});
-        //           handler
-        
-        std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
-		std::vector<CD3DX12_ROOT_PARAMETER> rootParameters; 
-		
-        ranges.resize(4); 
-        rootParameters.resize(3);
-
-        ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
-        ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);		        
-        ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);
-        ranges[3].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
-        rootParameters[0].InitAsConstantBufferView(0);        
-        rootParameters[1].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_PIXEL);
-        rootParameters[2].InitAsDescriptorTable(3, &ranges[1], D3D12_SHADER_VISIBILITY_ALL);
-                
-		// Allow input layout and deny uneccessary access to certain pipeline stages.
-		D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
-			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-			//D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
-
-		CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-		rootSignatureDesc.Init(static_cast<UINT>(rootParameters.size()), rootParameters.data(), 0, nullptr, 
-                                rootSignatureFlags);
-
-        release_ptr<D3DBlob> signature;
-        release_ptr<D3DBlob> error;
-
-		throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
-                      ,__func__);
-		throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), 
-                                                __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
-                      ,__func__);
-        set_name(get(),L"cbsig");               
+    root_signature::root_signature(device& dev, release_ptr<D3DBlob> signature_)
+    {        
+        release_ptr<D3DBlob> error_; // not currently using		
+		throw_on_fail(dev->CreateRootSignature(0, signature_->GetBufferPointer(), signature_->GetBufferSize(),__uuidof(type), reinterpret_cast<void**>(&expose_ptr())),__func__);
+        set_name(get(),L"root_sig");             
     }
     
-    cb_root_signature::cb_root_signature(device& dev,int)
-    {
-        //
-        //  RootSig(Sampler, Table{SRV,2}, Table{SRV,2});
-        //           handler
-        
-              //
-        //  RootSig(Sampler, Table{SRV,2}, Table{SRV,2});
-        //           handler
-        
-        std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
-		std::vector<CD3DX12_ROOT_PARAMETER> rootParameters; 
-		
-        ranges.resize(3); 
-        rootParameters.resize(2);                
-                
-        ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);        
-        ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
-        ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
-        rootParameters[0].InitAsDescriptorTable(2, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);                
-        rootParameters[1].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_ALL);                        
-                
-		// Allow input layout and deny uneccessary access to certain pipeline stages.
-		D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
-	//		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-			//D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
 
-		CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-		rootSignatureDesc.Init(static_cast<UINT>(rootParameters.size()), rootParameters.data(), 0, nullptr, 
-                                rootSignatureFlags);
-
-        release_ptr<D3DBlob> signature;
-        release_ptr<D3DBlob> error;
-
-		throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
-                      ,__func__);
-		throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), 
-                                                __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
-                      ,__func__);
-        set_name(get(),L"cbsig"); 
-    }
-
-    cs_root_signature::cs_root_signature(device& dev)
-    {
-        //
-        //  RootSig(Sampler, Table{SRV,2}, Table{SRV,2});
-        //           handler
-        
-        std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
-		std::vector<CD3DX12_ROOT_PARAMETER> rootParameters; 
-		
-        ranges.resize(1); 
-        rootParameters.resize(1);                
-
-        ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
-        rootParameters[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
-        //rootParameters[0].InitAsUnorderedAccessView(0);
-                
-		// Allow input layout and deny uneccessary access to certain pipeline stages.
-		D3D12_ROOT_SIGNATURE_FLAGS rootSignatureFlags =
-	//		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-			//D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
-
-		CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-		rootSignatureDesc.Init(static_cast<UINT>(rootParameters.size()), rootParameters.data(), 0, nullptr, 
-                                rootSignatureFlags);
-
-        release_ptr<D3DBlob> signature;
-        release_ptr<D3DBlob> error;
-
-		throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
-                      ,__func__);
-		throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), 
-                                                __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
-                      ,__func__);
-        set_name(get(),L"cbsig");               
-    }
+  //  cb_root_signature::cb_root_signature(device& dev)
+  //  {
+  //      //
+  //      //  RootSig(Sampler, Table{SRV,2}, Table{SRV,2});
+  //      //           handler
+  //           
+  //      set_name(get(),L"cbsig");               
+  //  }
+  //  
+  //  cb_root_signature::cb_root_signature(device& dev,int)
+  //  {
+  //      //
+  //      //  RootSig(Sampler, Table{SRV,2}, Table{SRV,2});
+  //      //           handler
+  //      
+  //            //
+  //      //  RootSig(Sampler, Table{SRV,2}, Table{SRV,2});
+  //      //           handler
+  //      
+  //      std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
+	//	std::vector<CD3DX12_ROOT_PARAMETER> params_; 
+	//	
+  //      ranges.resize(3); 
+  //      params_.resize(2);                
+  //              
+  //      ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);        
+  //      ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
+  //      ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
+  //      params_[0].InitAsDescriptorTable(2, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);                
+  //      params_[1].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_ALL);                        
+  //              
+	//	// Allow input layout and deny uneccessary access to certain pipeline stages.
+	//	D3D12_ROOT_SIGNATURE_FLAGS flags_ =
+	////		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+	//		//D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+  //
+	//	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+	//	rootSignatureDesc.Init(static_cast<UINT>(params_.size()), params_.data(), 0, nullptr, 
+  //                              flags_);
+  //
+  //      release_ptr<D3DBlob> signature;
+  //      release_ptr<D3DBlob> error;
+  //
+	//	throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
+  //                    ,__func__);
+	//	throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), 
+  //                                              __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
+  //                    ,__func__);
+  //      set_name(get(),L"cbsig"); 
+  //  }
+  //
+  //  cs_root_signature::cs_root_signature(device& dev)
+  //  {
+  //      //
+  //      //  RootSig(Sampler, Table{SRV,2}, Table{SRV,2});
+  //      //           handler
+  //      
+  //      std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
+	//	std::vector<CD3DX12_ROOT_PARAMETER> params_; 
+	//	
+  //      ranges.resize(1); 
+  //      params_.resize(1);                
+  //
+  //      ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);        
+  //      params_[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);        
+  //      //params_[0].InitAsUnorderedAccessView(0);
+  //              
+	//	// Allow input layout and deny uneccessary access to certain pipeline stages.
+	//	D3D12_ROOT_SIGNATURE_FLAGS flags_ =
+	////		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+	//		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
+	//		//D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
+  //
+	//	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
+	//	rootSignatureDesc.Init(static_cast<UINT>(params_.size()), params_.data(), 0, nullptr, 
+  //                              flags_);
+  //
+  //      release_ptr<D3DBlob> signature;
+  //      release_ptr<D3DBlob> error;
+  //
+	//	throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
+  //                    ,__func__);
+	//	throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), 
+  //                                              __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
+  //                    ,__func__);
+  //      set_name(get(),L"cbsig");               
+  //  }
 
 
 
@@ -394,7 +328,7 @@ namespace _12_0 {
         set_name(get(),L"srv");               
     }
 
-    pipeline_state_object::pipeline_state_object(device& dev, cb_root_signature& rsig, 
+    pipeline_state_object::pipeline_state_object(device& dev, root_signature& rsig, 
                                                  vertex_shader& vs, pixel_shader& ps)
     {        	    
         D3D12_STREAM_OUTPUT_DESC sodesc{};
@@ -405,8 +339,19 @@ namespace _12_0 {
 		desc.VS = { reinterpret_cast<UINT8*>(vs->GetBufferPointer()), vs->GetBufferSize() };
 		desc.PS = { reinterpret_cast<UINT8*>(ps->GetBufferPointer()), ps->GetBufferSize() };        
 		desc.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-		desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-		desc.DepthStencilState.DepthEnable = FALSE;
+		
+        //  
+        desc.BlendState = CD3DX12_BLEND_DESC(D3D12_DEFAULT);        
+        desc.BlendState.RenderTarget[0].BlendEnable = true;        
+        desc.BlendState.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD; 
+        desc.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_BLEND_FACTOR;        
+        //desc.BlendState.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_BLEND_FACTOR;
+        desc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_INV_BLEND_FACTOR;
+        //desc.BlendState.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_INV_BLEND_FACTOR;        
+       
+		//
+        
+        desc.DepthStencilState.DepthEnable = FALSE;
 		desc.DepthStencilState.StencilEnable = FALSE;
 		desc.SampleMask = UINT_MAX;        
         //desc.StreamOutput = sodesc;
@@ -420,7 +365,7 @@ namespace _12_0 {
         set_name(get(),L"pso-graphics");               
     }
 
-    pipeline_state_object::pipeline_state_object(device& dev, cb_root_signature& rsig, compute_shader& cs)
+    pipeline_state_object::pipeline_state_object(device& dev, root_signature& rsig, compute_shader& cs)
     {        	                    
         D3D12_COMPUTE_PIPELINE_STATE_DESC desc{};
 		//desc.InputLayout = { nullptr, 0};
@@ -473,7 +418,7 @@ namespace _12_0 {
 
     void fence::synchronized_set(uint64_t new_value, command_queue& cqueue)
     {
-        fence tmp_fence_{ get_device(cqueue) };
+        fence tmp_fence_{ get_device_from(cqueue) };
         gtl::win::waitable_handle handle;        
         tmp_fence_->SetEventOnCompletion(tmp_fence_->GetCompletedValue()+1, handle);        
         cqueue->Signal(this->get(),new_value);
@@ -530,13 +475,13 @@ namespace _12_0 {
     }
 
     rtv_srv_texture2D::rtv_srv_texture2D(swap_chain& swchain, unsigned num_buffers, tags::shader_visible)
-        :   rtv_heap_{ get_device(swchain), num_buffers, tags::not_shader_visible{}},
-            srv_heap_{ get_device(swchain), 1, tags::shader_visible{}}
+        :   rtv_heap__{ get_device_from(swchain), num_buffers},
+            srv_heap_{ get_device_from(swchain), 1, tags::shader_visible{}}
     {
         DXGI_SWAP_CHAIN_DESC swchaindesc_{};
         swchain->GetDesc(&swchaindesc_);
 
-        device dev{get_device(swchain)};
+        device dev{get_device_from(swchain)};
 
         D3D12_TEXTURE_LAYOUT layout{};
 
@@ -554,7 +499,7 @@ namespace _12_0 {
                                                    __uuidof(type),
                                                    reinterpret_cast<void**>(&expose_ptr()));
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap__->GetCPUDescriptorHandleForHeapStart()};
         CD3DX12_CPU_DESCRIPTOR_HANDLE srv_handle{srv_heap_->GetCPUDescriptorHandleForHeapStart()};                    
 
         dev->CreateShaderResourceView(get(), nullptr, srv_handle);
@@ -577,7 +522,7 @@ namespace _12_0 {
         for (UINT i = 0; i < num_buffers; ++i) {            
             rtv_desc.Texture2DArray.FirstArraySlice = i;
             dev->CreateRenderTargetView(get(), &rtv_desc, rtv_handle);
-            rtv_handle.Offset(1, rtv_heap_.increment_value());
+            rtv_handle.Offset(1, rtv_heap__.increment_value());
             
         }
 
@@ -587,12 +532,12 @@ namespace _12_0 {
 
 
     uav_texture2D::uav_texture2D(swap_chain& swchain, D3D12_CPU_DESCRIPTOR_HANDLE& uav_handle)
-     //: rtv_heap_{ get_device(swchain), 1, tags::not_shader_visible{}}
+     //: rtv_heap__{ get_device_from(swchain), 1, tags::not_shader_visible{}}
     {
         DXGI_SWAP_CHAIN_DESC swchaindesc_{};
         swchain->GetDesc(&swchaindesc_);
 
-        device dev{get_device(swchain)};
+        device dev{get_device_from(swchain)};
 
         D3D12_TEXTURE_LAYOUT layout{};
 
@@ -600,7 +545,8 @@ namespace _12_0 {
                                                   swchaindesc_.BufferDesc.Width, 
                                                   swchaindesc_.BufferDesc.Height, 
                                                   1, 0, 1, 0, 
-                                                  D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS);
+                                                  D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS |
+                                                  D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
         dev->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
                                                    D3D12_HEAP_FLAG_NONE,                                    
@@ -612,7 +558,7 @@ namespace _12_0 {
 
         //CD3DX12_CPU_DESCRIPTOR_HANDLE uav_handle{uav_heap_->GetCPUDescriptorHandleForHeapStart()};        
         //CD3DX12_CPU_DESCRIPTOR_HANDLE srv_handle{srv_heap_->GetCPUDescriptorHandleForHeapStart()};        
-        //CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};        
+        //CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap__->GetCPUDescriptorHandleForHeapStart()};        
 
         //dev->CreateShaderResourceView(get(), nullptr, srv_handle);
       
@@ -631,7 +577,7 @@ namespace _12_0 {
      
         //uav_desc.Texture2DArray.FirstArraySlice = i; // i: 0 -> numbuffers
         dev->CreateUnorderedAccessView(get(), nullptr, &uav_desc, uav_handle);        
-        //uav_handle.Offset(1, rtv_heap_.increment_value());         
+        //uav_handle.Offset(1, rtv_heap__.increment_value());         
 
         //D3D12_RENDER_TARGET_VIEW_DESC rtv_desc{};
         //
