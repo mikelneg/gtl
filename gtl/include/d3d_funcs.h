@@ -38,12 +38,11 @@ namespace _12_0 {
 
         template <typename T>
         device get_device_from(T& t) { 
-            device dev;
+            device dev {gtl::tags::uninitialized{}};
             win::throw_on_fail(t->GetDevice(__uuidof(device::type),reinterpret_cast<void**>(&dev.expose_ptr()))
                                ,__func__);                        
             return dev;
         }
-
 
         release_ptr<D3DBlob> dummy_rootsig_1();
         release_ptr<D3DBlob> dummy_rootsig_2();

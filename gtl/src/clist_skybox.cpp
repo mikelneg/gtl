@@ -32,12 +32,12 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 	// Command list allocators can only be reset when the associated 
 	// command lists have finished execution on the GPU; apps should use 
 	// fences to determine GPU execution progress.
-    throw_on_fail(alloc->Reset(),__func__);
+    win::throw_on_fail(alloc->Reset(),__func__);
 
 	// However, when ExecuteCommandList() is called on a particular command 
 	// list, that command list can then be reset at any time and must be before 
 	// re-recording.
-	throw_on_fail(clist->Reset(alloc.get(), pso.get()),__func__);
+	win::throw_on_fail(clist->Reset(alloc.get(), pso.get()),__func__);
 
 	// Set necessary state.
 	clist->SetGraphicsRootSignature(rsig.get());
@@ -58,7 +58,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
     //                                      D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
     //                                      D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY));    
 	
-    clist->RSSetViewports(array_size(viewports), *viewports.begin());
+    clist->RSSetViewports(win::array_size(viewports), *viewports.begin());
 	clist->RSSetScissorRects(1, &scissor_rect);    
 
 	// Indicate that the back buffer will be used as a render target.
@@ -145,7 +145,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
                                               D3D12_RESOURCE_STATE_COPY_DEST, 
                                               D3D12_RESOURCE_STATE_PRESENT));
 
-    throw_on_fail(clist->Close(),__func__);    
+    win::throw_on_fail(clist->Close(),__func__);    
 }
 
 //void cs_list(d3d::graphics_command_list& clist, 
@@ -169,7 +169,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 //    //                                      D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 //    //                                      D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY));    
 //	
-//    clist->RSSetViewports(array_size(viewports), *viewports.begin());
+//    clist->RSSetViewports(win::array_size(viewports), *viewports.begin());
 //	clist->RSSetScissorRects(1, &scissor_rect);    
 //
 //	// Indicate that the back buffer will be used as a render target.
@@ -256,7 +256,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 //                                              D3D12_RESOURCE_STATE_COPY_DEST, 
 //                                              D3D12_RESOURCE_STATE_PRESENT));
 //
-//    throw_on_fail(clist->Close(),__func__);    
+//    win::throw_on_fail(clist->Close(),__func__);    
 //}
 
 
@@ -295,7 +295,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 //    //                                      D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 //    //                                      D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY));    
 //	
-//    clist->RSSetViewports(array_size(viewports), *viewports.begin());
+//    clist->RSSetViewports(win::array_size(viewports), *viewports.begin());
 //	clist->RSSetScissorRects(1, &scissor_rect);    
 //
 //	// Indicate that the back buffer will be used as a render target.
@@ -383,7 +383,7 @@ void skybox_graphics_command_list_second(d3d::graphics_command_list& clist,
                                               D3D12_RESOURCE_STATE_COPY_DEST, 
                                               D3D12_RESOURCE_STATE_PRESENT));
 
-    throw_on_fail(clist->Close(),__func__);    
+    win::throw_on_fail(clist->Close(),__func__);    
 }
 
 

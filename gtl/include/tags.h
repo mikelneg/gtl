@@ -11,9 +11,13 @@
 namespace gtl {
 namespace tags {
 
+    struct no_initialization {};
+    struct uninitialized {};
+    struct debug {};
+    struct release {};
 
-struct no_initialization {};
-
+    struct contiguous {};
+    struct discontiguous {};
 
 }} // namespaces
 #endif

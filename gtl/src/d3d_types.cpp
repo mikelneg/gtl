@@ -29,49 +29,73 @@ namespace _12_0 {
 
     using namespace gtl::win;
         
-    static void set_name(ID3D12Object* t, wchar_t const* name) 
+    static 
+    void set_name(ID3D12Object* t, wchar_t const* name) 
     {   
         t->SetName(name);
     }
 
+    static
+    void enable_debug()
+    {
+        release_ptr<D3D12Debug> debug_;
+        win::throw_on_fail(D3D12GetDebugInterface(__uuidof(D3D12Debug),reinterpret_cast<void**>(&debug_.expose_ptr())),__func__);      
+        debug_->EnableDebugLayer();
+    }
+
+
     dxgi_factory::dxgi_factory()
     {          
-        throw_on_fail(CreateDXGIFactory2(0,__uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
+        win::throw_on_fail(CreateDXGIFactory2(0,__uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
                             ,__func__ );                
     }
-
-    debug_layer::debug_layer()
-    {
-        throw_on_fail(D3D12GetDebugInterface(__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
-                      ,__func__);     	
-    	get()->EnableDebugLayer();        
-    }
-
-    device::device() 
-    {   
-        throw_on_fail(D3D12CreateDevice(nullptr,D3D_FEATURE_LEVEL_12_0,__uuidof(type),
+    
+    device::device(gtl::tags::debug) 
+    {  
+        enable_debug();    
+        win::throw_on_fail(D3D12CreateDevice(nullptr,D3D_FEATURE_LEVEL_12_0,__uuidof(type),
                                         reinterpret_cast<void**>(&expose_ptr()))
                       ,__func__);        
     }
     
+    device::device(gtl::tags::release) 
+    {   
+        win::throw_on_fail(D3D12CreateDevice(nullptr,D3D_FEATURE_LEVEL_12_0,__uuidof(type),
+                                        reinterpret_cast<void**>(&expose_ptr()))
+                      ,__func__);        
+    }
+
     command_queue::command_queue(device& dev)
     {        
         D3D12_COMMAND_QUEUE_DESC cq_desc{};
         cq_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
         cq_desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-        throw_on_fail(dev->CreateCommandQueue(&cq_desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
+        win::throw_on_fail(dev->CreateCommandQueue(&cq_desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
                       ,__func__);    
         set_name(get(),L"cqueue");               
     }
+
+    rtv_descriptor_heap::rtv_descriptor_heap(device& dev, std::vector<resource>& resources_) 
+        : size_{static_cast<unsigned>(resources_.size())}
+    {        
+        D3D12_DESCRIPTOR_HEAP_DESC desc{};
+		desc.NumDescriptors = size_;
+		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
+		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;       
+        win::throw_on_fail(dev->CreateDescriptorHeap(&desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
+                      ,__func__);
+        increment_ = dev->GetDescriptorHandleIncrementSize(desc.Type);         
+        set_name(get(),L"rtv_heap_");              
+    }  
 
     rtv_descriptor_heap::rtv_descriptor_heap(device& dev, unsigned num_descriptors) 
         : size_{num_descriptors}
     {        
         D3D12_DESCRIPTOR_HEAP_DESC desc{};
-		desc.NumDescriptors = num_descriptors;
+		desc.NumDescriptors = size_;
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;       
-        throw_on_fail(dev->CreateDescriptorHeap(&desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
+        win::throw_on_fail(dev->CreateDescriptorHeap(&desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
                       ,__func__);
         increment_ = dev->GetDescriptorHandleIncrementSize(desc.Type);         
         set_name(get(),L"rtv_heap_");              
@@ -84,7 +108,7 @@ namespace _12_0 {
 		desc.NumDescriptors = num_descriptors;
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;                
-        throw_on_fail(dev->CreateDescriptorHeap(&desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
+        win::throw_on_fail(dev->CreateDescriptorHeap(&desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
                       ,__func__);
         increment_ = dev->GetDescriptorHandleIncrementSize(desc.Type);
         set_name(get(),L"res_heap");               
@@ -97,45 +121,45 @@ namespace _12_0 {
 		desc.NumDescriptors = num_descriptors;
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_SAMPLER;
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;		        
-        throw_on_fail(dev->CreateDescriptorHeap(&desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
+        win::throw_on_fail(dev->CreateDescriptorHeap(&desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
                       ,__func__);
         increment_ = dev->GetDescriptorHandleIncrementSize(desc.Type);
         set_name(get(),L"samp_heap");               
     }
 
-    swap_chain::swap_chain(gtl::window& win, command_queue& cqueue, unsigned num_buffers_) 
-        :   frames_(num_buffers_),
-            rtv_heap_{get_device_from(cqueue), num_buffers_}     
+    swap_chain::swap_chain(gtl::win::window& win, device& dev_, unsigned num_buffers_) 
+        :   frames_(num_buffers_)
+            //rtv_heap_{dev_, num_buffers_}     
     {
         RECT client_area{};
         if (!GetClientRect(get_hwnd(win), &client_area)) { throw std::runtime_error{__func__}; }        
-        auto desc = create_swapchain_desc(tags::flipmodel_windowed{}, get_hwnd(win), num_buffers_, width(client_area), height(client_area));                  
+        auto desc = create_swapchain_desc(tags::flipmodel_windowed{}, get_hwnd(win), num_buffers_, width(client_area), height(client_area));                          
+        command_queue cqueue_{dev_};
         release_ptr<IDXGISwapChain> tmp_ptr;  // We first get a generic IDXGISwapChain* and then 
                                               //  use QueryInterface() to "upcast" to our desired type,
                                               //  in this case IDXGISwapChain3 (ie., DXGISwapChain)
-        throw_on_fail(dxgi_factory{}->CreateSwapChain(cqueue.get(), &desc, &tmp_ptr),__func__);             
-        throw_on_fail(tmp_ptr->QueryInterface(__uuidof(type),reinterpret_cast<void**>(&expose_ptr())),__func__);         
-        CD3DX12_CPU_DESCRIPTOR_HANDLE handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};        
-        device dev{get_device_from(cqueue)};
-        for (unsigned i = 0; i < frames_.size(); ++i) {
-            throw_on_fail(get()->GetBuffer(i, __uuidof(resource::type),reinterpret_cast<void**>(&frames_[i])),__func__);
-            dev->CreateRenderTargetView(frames_[i], nullptr, handle);
-            handle.Offset(1, rtv_heap_.increment_value());			
-            set_name(frames_[i].get(),L"swchn_rtv");                       
-	    }          
+        win::throw_on_fail(dxgi_factory{}->CreateSwapChain(cqueue_.get(), &desc, &tmp_ptr),__func__);             
+        win::throw_on_fail(tmp_ptr->QueryInterface(__uuidof(type),reinterpret_cast<void**>(&expose_ptr())),__func__);         
+        //CD3DX12_CPU_DESCRIPTOR_HANDLE handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};                
+        //for (unsigned i = 0; i < frames_.size(); ++i) {
+        //    win::throw_on_fail(get()->GetBuffer(i, __uuidof(resource::type),reinterpret_cast<void**>(&frames_[i])),__func__);
+        //    dev_->CreateRenderTargetView(frames_[i], nullptr, handle);
+        //    handle.Offset(1, rtv_heap_.increment_value());			
+        //    set_name(frames_[i].get(),L"swchn_rtv");                       
+	    //}          
         get()->SetMaximumFrameLatency(num_buffers_);                  
     }
 
     direct_command_allocator::direct_command_allocator(device& dev)
     {
-        throw_on_fail(dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
+        win::throw_on_fail(dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
                       ,__func__);              
         set_name(get(),L"dc_alloc");               
     }
 
     compute_command_allocator::compute_command_allocator(device& dev)
     {
-        throw_on_fail(dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COMPUTE, __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
+        win::throw_on_fail(dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COMPUTE, __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
                       ,__func__);              
         set_name(get(),L"cc_alloc");               
     }
@@ -143,7 +167,7 @@ namespace _12_0 {
     root_signature::root_signature(device& dev, release_ptr<D3DBlob> signature_)
     {        
         release_ptr<D3DBlob> error_; // not currently using		
-		throw_on_fail(dev->CreateRootSignature(0, signature_->GetBufferPointer(), signature_->GetBufferSize(),__uuidof(type), reinterpret_cast<void**>(&expose_ptr())),__func__);
+		win::throw_on_fail(dev->CreateRootSignature(0, signature_->GetBufferPointer(), signature_->GetBufferSize(),__uuidof(type), reinterpret_cast<void**>(&expose_ptr())),__func__);
         set_name(get(),L"root_sig");             
     }
     
@@ -194,9 +218,9 @@ namespace _12_0 {
   //      release_ptr<D3DBlob> signature;
   //      release_ptr<D3DBlob> error;
   //
-	//	throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
+	//	win::throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
   //                    ,__func__);
-	//	throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), 
+	//	win::throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), 
   //                                              __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
   //                    ,__func__);
   //      set_name(get(),L"cbsig"); 
@@ -233,9 +257,9 @@ namespace _12_0 {
   //      release_ptr<D3DBlob> signature;
   //      release_ptr<D3DBlob> error;
   //
-	//	throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
+	//	win::throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
   //                    ,__func__);
-	//	throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), 
+	//	win::throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(), 
   //                                              __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
   //                    ,__func__);
   //      set_name(get(),L"cbsig");               
@@ -245,25 +269,25 @@ namespace _12_0 {
 
     vertex_shader::vertex_shader(std::wstring path) 
     {                                
-        throw_on_fail(D3DReadFileToBlob(path.c_str(),&expose_ptr())
+        win::throw_on_fail(D3DReadFileToBlob(path.c_str(),&expose_ptr())
                       ,__func__);        
     }
     
     pixel_shader::pixel_shader(std::wstring path) 
     {                        
-        throw_on_fail(D3DReadFileToBlob(path.c_str(),&expose_ptr())
+        win::throw_on_fail(D3DReadFileToBlob(path.c_str(),&expose_ptr())
                       ,__func__);        
     }
     
     compute_shader::compute_shader(std::wstring path) 
     {                        
-        throw_on_fail(D3DReadFileToBlob(path.c_str(),&expose_ptr())
+        win::throw_on_fail(D3DReadFileToBlob(path.c_str(),&expose_ptr())
                       ,__func__);        
     }
      
     srv::srv(device& dev, std::vector<D3D12_CPU_DESCRIPTOR_HANDLE> handles_, command_queue& cqueue_, std::wstring filename)
     {
-        //throw_on_fail(dev->CreateCommittedResource(
+        //win::throw_on_fail(dev->CreateCommittedResource(
         //                    &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
         //                    D3D12_HEAP_FLAG_NONE,
         //                    &CD3DX12_RESOURCE_DESC::Buffer(1024 * 64),
@@ -277,7 +301,7 @@ namespace _12_0 {
         D3D12_SHADER_RESOURCE_VIEW_DESC srvdesc{};        
         
         HRESULT result = DirectX::CreateDDSTextureFromFile(dev,filename.c_str(),&texture.expose_ptr(),&srvdesc);
-        throw_on_fail(result,__func__);
+        win::throw_on_fail(result,__func__);
 
         D3D12_RESOURCE_DESC desc = texture->GetDesc();
 
@@ -288,7 +312,7 @@ namespace _12_0 {
                                                    nullptr,
                                                    __uuidof(type),
                                                    reinterpret_cast<void**>(&expose_ptr()));
-        throw_on_fail(result2,__func__);
+        win::throw_on_fail(result2,__func__);
             
         D3D12_RESOURCE_BARRIER barrierDesc{};
 
@@ -361,7 +385,7 @@ namespace _12_0 {
         desc.RTVFormats[1] = DXGI_FORMAT_R8G8B8A8_UNORM;
 		desc.SampleDesc.Count = 1;              
 		HRESULT result = dev->CreateGraphicsPipelineState(&desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()));
-        throw_on_fail(result,__func__);
+        win::throw_on_fail(result,__func__);
         set_name(get(),L"pso-graphics");               
     }
 
@@ -373,7 +397,7 @@ namespace _12_0 {
 		desc.CS = { reinterpret_cast<UINT8*>(cs->GetBufferPointer()), cs->GetBufferSize() };				
         //D3D12_PIPELINE_STATE_FLAG_TOOL_DEBUG          
         HRESULT result = dev->CreateComputePipelineState(&desc,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()));
-        throw_on_fail(result,__func__);
+        win::throw_on_fail(result,__func__);
         set_name(get(),L"pso-compute");               
     }
 
@@ -381,37 +405,37 @@ namespace _12_0 {
 
     graphics_command_list::graphics_command_list(device& dev, direct_command_allocator& alloc, pipeline_state_object& pso)
     {
-        throw_on_fail(dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, alloc.get(), 
+        win::throw_on_fail(dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, alloc.get(), 
                                 pso.get(),__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
                      ,__func__);
 
-        throw_on_fail(get()->Close(),__func__);
+        win::throw_on_fail(get()->Close(),__func__);
         set_name(get(),L"clpsod");               
 	}
 
     graphics_command_list::graphics_command_list(device& dev, compute_command_allocator& alloc, pipeline_state_object& pso)
     {
-        throw_on_fail(dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_COMPUTE, alloc.get(), 
+        win::throw_on_fail(dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_COMPUTE, alloc.get(), 
                                 pso.get(),__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
                      ,__func__);
 
-        throw_on_fail(get()->Close(),__func__);
+        win::throw_on_fail(get()->Close(),__func__);
         set_name(get(),L"clpsoc");               
 	}
 
     graphics_command_list::graphics_command_list(device& dev, direct_command_allocator& alloc)
     {
-        throw_on_fail(dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, alloc.get(), 
+        win::throw_on_fail(dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, alloc.get(), 
                                 nullptr,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()))
                      ,__func__);
 
-        throw_on_fail(get()->Close(),__func__);
+        win::throw_on_fail(get()->Close(),__func__);
         set_name(get(),L"cl");               
 	}
         
     fence::fence(D3D12Device& dev)         
     {
-        throw_on_fail(dev.CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
+        win::throw_on_fail(dev.CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
                       ,__func__); 
         set_name(get(),L"fence");               
     }
@@ -427,9 +451,9 @@ namespace _12_0 {
         assert(this->get()->GetCompletedValue() == new_value);
     }
         
-    constant_buffer::constant_buffer(device& dev, resource_descriptor_heap& resource_heap, std::pair<char*,size_t> cbuf)    
+    constant_buffer::constant_buffer(device& dev, resource_descriptor_heap& resource_heap, std::pair<char*,unsigned> cbuf)    
     {
-        throw_on_fail(dev->CreateCommittedResource(
+        win::throw_on_fail(dev->CreateCommittedResource(
                             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
                             D3D12_HEAP_FLAG_NONE,
                             &CD3DX12_RESOURCE_DESC::Buffer(1024 * 64),
@@ -446,13 +470,13 @@ namespace _12_0 {
     
 		// Initialize and map the constant buffers. We don't unmap this until the
 		// app closes. Keeping things mapped for the lifetime of the resource is okay.
-        throw_on_fail(buffer.get()->Map(0, nullptr, reinterpret_cast<void**>(&cbv_data_ptr))
+        win::throw_on_fail(buffer.get()->Map(0, nullptr, reinterpret_cast<void**>(&cbv_data_ptr))
                       ,__func__);
         set_name(buffer.get(),L"cbuf");                       
         this->update(cbuf);                
 	}
     
-    void constant_buffer::update(std::pair<char*,size_t> cbuf) 
+    void constant_buffer::update(std::pair<char*,unsigned> cbuf) 
     {
         std::memcpy(cbv_data_ptr, cbuf.first, cbuf.second);    	
     }

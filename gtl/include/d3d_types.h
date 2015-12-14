@@ -11,6 +11,7 @@
 
 #include "d3d_default_implementation.h"
 
+#include <gtl/include/tags.h>
 #include <gtl/include/release_ptr.h>
 #include <gtl/include/gtl_window.h>
 #include <gtl/include/win_tools.h>
@@ -28,7 +29,7 @@ namespace _12_0 {
     
     namespace tags {
         struct shader_visible{};
-        struct not_shader_visible{};
+        struct not_shader_visible{};                
     }
         
 
@@ -55,23 +56,35 @@ namespace _12_0 {
     //      
     //      fences
     //
+    //
+    //
+    //          stage a,b,c; present(a,b,c); 
+    //
+    //
+    //
+    //    
+    //
+    //
+    //
+    //
+
+    class resource : public release_ptr<D3D12Resource> {
+    public:        
+        resource() = default;
+    };
     
-
-
     class dxgi_factory : public release_ptr<DXGIFactory> {
     public:
         dxgi_factory();
     };
-
-    class debug_layer : public release_ptr<D3D12Debug> {
-    public:
-        debug_layer();
-    };
-
+    
     class device : public release_ptr<D3D12Device> {            
-    public:
-        device();
+    public:        
+        device(gtl::tags::uninitialized) {}
+        device(gtl::tags::debug);
+        device(gtl::tags::release);
         device(device&&) = default;
+        device& operator=(device&&) = delete;
     };    
                 
     class command_queue : public release_ptr<D3D12CommandQueue> {        
@@ -84,8 +97,9 @@ namespace _12_0 {
         unsigned const size_;
     public:
         rtv_descriptor_heap(device&, unsigned num_descriptors);       
+        rtv_descriptor_heap(device&, std::vector<resource>&);       
         auto increment_value() const noexcept { return increment_; }
-        auto size() const noexcept { return size_; }
+        auto size() const noexcept { return size_; }        
     };
 
     class resource_descriptor_heap : public release_ptr<D3D12DescriptorHeap> {
@@ -106,18 +120,12 @@ namespace _12_0 {
         auto size() const noexcept { return size_; }
     };
 
-    class resource : public release_ptr<D3D12Resource> {
-    public:        
-        resource() = default;
-    };
     
     class swap_chain : public release_ptr<DXGISwapChain> {                
-        std::vector<resource> frames_;
-        rtv_descriptor_heap rtv_heap_;                
+        std::vector<resource> frames_;        
     public:
-        swap_chain(gtl::window&, command_queue&, unsigned num_buffers); 
-        resource& get_current_resource() { return frames_[get()->GetCurrentBackBufferIndex()]; }        
-        rtv_descriptor_heap& get_rtv_heap() { return rtv_heap_; }                        
+        swap_chain(gtl::win::window&, device&, unsigned num_buffers); 
+        resource& get_current_resource() { return frames_[get()->GetCurrentBackBufferIndex()]; }                
     };    
     
     class direct_command_allocator : public release_ptr<D3D12CommandAllocator> {
@@ -175,8 +183,8 @@ namespace _12_0 {
         resource buffer;                
         unsigned char* cbv_data_ptr{};
     public:
-        constant_buffer(device&,resource_descriptor_heap&,std::pair<char*,size_t>);
-        void update(std::pair<char*,size_t>);
+        constant_buffer(device&,resource_descriptor_heap&,std::pair<char*,unsigned>);
+        void update(std::pair<char*,unsigned>);
         resource& resource() { return buffer; }
     };
 
@@ -223,13 +231,13 @@ namespace _12_0 {
     //};
     //
     //class swap_chain : public detail::simple_ptr_base<DXGISwapChain> {        
-    //    size_t frame_index;
+    //    unsigned frame_index;
     //public:
     //    swap_chain(gtl::window&, command_queue&);                        
     //};    
     //
     //class rtv_descriptor_heap : public detail::simple_ptr_base<D3D12DescriptorHeap> {
-    //    size_t increment;
+    //    unsigned increment;
     //public:
     //    rtv_descriptor_heap(device&);
     //    auto size() const noexcept { return increment; }

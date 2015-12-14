@@ -152,8 +152,8 @@ namespace _12_0 {
         
         params_.resize(3);
         params_[0].InitAsConstantBufferView(0); 
-        params_[1].InitAsDescriptorTable(array_size(table1_), table1_.data(), D3D12_SHADER_VISIBILITY_PIXEL);
-        params_[2].InitAsDescriptorTable(array_size(table2_), table2_.data(), D3D12_SHADER_VISIBILITY_ALL);
+        params_[1].InitAsDescriptorTable(win::array_size(table1_), table1_.data(), D3D12_SHADER_VISIBILITY_PIXEL);
+        params_[2].InitAsDescriptorTable(win::array_size(table2_), table2_.data(), D3D12_SHADER_VISIBILITY_ALL);
                 
 		D3D12_ROOT_SIGNATURE_FLAGS flags_ =
 			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
@@ -162,11 +162,11 @@ namespace _12_0 {
 			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;			
 
 		CD3DX12_ROOT_SIGNATURE_DESC desc;
-		desc.Init(array_size(params_), params_.data(), 0, nullptr, flags_);    
+		desc.Init(win::array_size(params_), params_.data(), 0, nullptr, flags_);    
 
         release_ptr<D3DBlob> signature_;
         release_ptr<D3DBlob> error_; // not currently using
-        throw_on_fail(D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, 
+        win::throw_on_fail(D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, 
                                                   &(signature_.expose_ptr()), &(error_.expose_ptr()))
                                                   ,__func__);
         return signature_;        
@@ -201,7 +201,7 @@ namespace _12_0 {
         release_ptr<D3DBlob> signature;
         release_ptr<D3DBlob> error;
 
-		throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
+		win::throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
                       ,__func__);
 		
         return signature;
