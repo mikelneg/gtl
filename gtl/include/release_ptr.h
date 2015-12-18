@@ -17,7 +17,7 @@ namespace gtl {
     
     namespace detail { struct release_deleter; }
 
-    template <typename T, typename Deleter = detail::release_deleter>
+    template <typename T, typename Deleter = ::gtl::detail::release_deleter>
     class release_ptr {        
         T* ptr_{};
     public:

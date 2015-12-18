@@ -7,23 +7,29 @@
     class gtl::window;           
 -----------------------------------------------------------------------------*/
 
-#include <cstddef>
 #include <windows.h>
-#include <utility>
-#include <gtl/include/event.h>
+#include <gtl/include/gtl_window_wndproc.h>
 
 namespace gtl {
 namespace win {
     
     class window {                                               
-                
-        HWND hwnd;
-        std::pair<unsigned,unsigned> px_dims;        
-                
+
+        using wndproc_type = LRESULT(CALLBACK*)(HWND,UINT,WPARAM,LPARAM);
+
+        HWND hwnd;                        
+        std::pair<unsigned,unsigned> px_dims;
+        
+        window(HINSTANCE, unsigned, unsigned, const char*, wndproc_type, void*);
+
     public:                                                
         
-        window(HINSTANCE hinstance, unsigned width_px, unsigned height_px, 
-               const char* caption, std::vector<gtl::event>& event_queue);
+        template <typename T>
+        window(HINSTANCE inst, unsigned w_px, unsigned h_px, const char* cap, T& msg_handler) 
+        :   window(inst, w_px, h_px, cap, 
+                   std::addressof(detail::wndproc_impl<T>), 
+                   std::addressof(msg_handler)) 
+        {}
         
         window(window&&) = delete;
         window& operator=(window&&) = delete;
@@ -39,9 +45,6 @@ namespace win {
         friend unsigned height(window& w) noexcept { return w.px_dims.second; }
         friend HWND get_hwnd(window& w) noexcept { return w.hwnd; }
     };    
-
-
-
 
 }} // namespaces
 #endif
