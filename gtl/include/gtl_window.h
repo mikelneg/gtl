@@ -8,7 +8,10 @@
 -----------------------------------------------------------------------------*/
 
 #include <windows.h>
-#include <gtl/include/gtl_window_wndproc.h>
+#include <vector>
+#include <iostream> // TODO debugging
+#include <thread>
+#include <gtl/include/events.h>
 
 namespace gtl {
 namespace win {
@@ -18,19 +21,22 @@ namespace win {
         using wndproc_type = LRESULT(CALLBACK*)(HWND,UINT,WPARAM,LPARAM);
 
         HWND hwnd;                        
+        MSG msg;
         std::pair<unsigned,unsigned> px_dims;
-        
-        window(HINSTANCE, unsigned, unsigned, const char*, wndproc_type, void*);
+        std::vector<gtl::event> event_queue;        
+
+        void pump_messages() {
+            event_queue.clear();
+            // the wndproc function is emplacing events in event_queue            
+            while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
+                TranslateMessage(&msg);
+                DispatchMessage(&msg);
+            }                                                        
+        }
 
     public:                                                
-        
-        template <typename T>
-        window(HINSTANCE inst, unsigned w_px, unsigned h_px, const char* cap, T& msg_handler) 
-        :   window(inst, w_px, h_px, cap, 
-                   std::addressof(detail::wndproc_impl<T>), 
-                   std::addressof(msg_handler)) 
-        {}
-        
+                
+        window(HINSTANCE inst, unsigned w_px, unsigned h_px, const char* caption);                
         window(window&&) = delete;
         window& operator=(window&&) = delete;
         
@@ -39,7 +45,25 @@ namespace win {
         void post_close_message() const
         { 
             PostMessage(hwnd, WM_CLOSE, 0, 0); 
+        }        
+
+        void process_messages_and_swap_queues(std::vector<gtl::event>& swap_queue) {                                    
+            pump_messages();
+            swap_queue.swap(event_queue);            
         }
+        
+        ~window() {            
+            if (*this) {
+                std::cout << "Exited early..\n";
+                post_close_message();
+                while (*this) { 
+                    pump_messages();
+                    std::this_thread::yield();
+                }
+            }
+        }
+
+        operator bool () const { return msg.message != WM_QUIT; }
 
         friend unsigned width(window& w) noexcept { return w.px_dims.first; }
         friend unsigned height(window& w) noexcept { return w.px_dims.second; }

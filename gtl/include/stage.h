@@ -12,19 +12,31 @@
 #include <gtl/include/sync_object.h>
 #include <gtl/include/gtl_window.h>
 
+#include <boost/coroutine/asymmetric_coroutine.hpp>
+//#include <gtl/include/scenes.h>
+#include <gtl/include/scene_graph.h>
+#include <gtl/include/events.h>
+
 namespace gtl {
 
-
-class stage {    
+class stage {
+       
     gtl::d3d::swap_chain& swchain_; 
     gtl::d3d::command_queue cqueue_;    
     gtl::d3d::sync_object sync_;
-
     unsigned num_buffers_;
+        
+    using coro = boost::coroutines::asymmetric_coroutine<gtl::event>;    
+    void handle_events(coro::pull_type&);
+    
+    gtl::scene_graph scenes_;    
 
 public:
     stage(gtl::d3d::swap_chain&, unsigned num_buffers, unsigned max_desync);    
-    void render();
+    //stage();
+    void draw(float);
+    
+    coro::push_type make_event_handler();                    
 };
 
 

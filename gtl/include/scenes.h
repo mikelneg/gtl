@@ -1,0 +1,132 @@
+#ifndef IWOIWBZLWAFWEF_GTL_SCENES_H_
+#define IWOIWBZLWAFWEF_GTL_SCENES_H_
+
+/*-----------------------------------------------------------------------------
+    Mikel Negugogor (http://github.com/mikelneg)                              
+    
+    namespace gtl::scenes
+    
+    "scenes" are states the stage can be in 
+-----------------------------------------------------------------------------*/
+
+#include <boost/variant.hpp>
+#include <boost/functional/hash.hpp>
+#include <gtl/include/events.h>
+
+#include <vn/include/boost_utilities.h>
+#include <vn/include/type_list.h>
+#include <vn/include/has_equality_operator.h>
+
+//#include <gtl/include/intro_scene.h>
+//#include <gtl/include/main_scene.h>
+
+#include <utility>
+
+#include <chrono>
+#include <cassert>
+
+namespace gtl {
+    
+    namespace scenes {                                
+                            
+        //class intro_scene;
+        //class main_scene;
+        
+        namespace detail { 
+            struct empty_scene { // we are using a custom empty_scene for the variant, so no need for boost::blank cases in visitors.. 
+                empty_scene() = default; 
+                empty_scene(empty_scene const&) = default; 
+                empty_scene(empty_scene&&) = default; 
+                empty_scene& operator=(empty_scene&&) = default; 
+                void draw(float) const {} 
+                template <typename YieldType> gtl::event handle_events(YieldType&) const { return gtl::events::exit_state{0}; }                                                 
+            };
+            
+            static_assert(boost::has_nothrow_copy<empty_scene>::value,"empty_scene() must satisfy boost::has_nothrow_copy");
+            static_assert(boost::has_nothrow_constructor<empty_scene>::value,"empty_scene() must satisfy boost::has_nothrow_constructor");
+            
+            template <typename>
+            class transition_scene; 
+        } 
+                
+        template <typename ...Ts>
+        using scene_variant = typename boost::make_recursive_variant<
+                                             detail::empty_scene,
+                                             Ts...,
+                                             detail::transition_scene<boost::recursive_variant_>>::type;                   
+                
+        template <typename VariantType>
+        bool has_same_type(VariantType const& lhs, VariantType const& rhs) {
+            return apply_visitor(vn::visitors::same_type{},lhs,rhs);
+        }
+        
+        namespace detail {  
+            template <typename T>
+            class transition_scene {    // currently defined here (instead of transition_scene.h) -- might relocate..
+                T first_, second_;        
+                std::chrono::high_resolution_clock::duration transition_duration_;
+                std::chrono::high_resolution_clock::time_point begin_timepoint_;
+                std::chrono::high_resolution_clock::time_point mutable current_timepoint_;
+            
+            public:        
+
+                transition_scene(T&& s1, T&& s2, std::chrono::milliseconds t)
+                :   first_{std::move(s1)}, second_{std::move(s2)}, 
+                    transition_duration_{t},
+                    begin_timepoint_{std::chrono::high_resolution_clock::now()}
+                    { assert(t.count() > 0); }
+                
+                //transition_scene() = default;                        
+                transition_scene(transition_scene&&) = default;                
+                transition_scene& operator=(transition_scene&&) = default;               
+            
+                template <typename YieldType>
+                gtl::event handle_events(YieldType& yield) const {                
+                    std::chrono::high_resolution_clock::time_point const end_time_ = begin_timepoint_ + transition_duration_;        
+                    while ((current_timepoint_ = std::chrono::high_resolution_clock::now()) < end_time_)
+                    {
+                        if (same_type(yield.get(),gtl::event{gtl::events::exit_immediately{}})) {
+                            return yield.get();
+                        }
+                        yield();            
+                    }        
+                    return gtl::events::exit_state{0};
+                }
+            
+                void draw(float) const {
+                    float r = (current_timepoint_ - begin_timepoint_).count() / static_cast<float>(transition_duration_.count());            
+                    if (r < 0.0f) { r = 0.0f; } else if (r > 1.0f) { r = 1.0f; }        
+                    boost::apply_visitor([&](auto& v){ v.draw(1.0f-r); },first_);
+                    boost::apply_visitor([&](auto& v){ v.draw(r); },second_);
+                }
+
+                T const& first() const { return first_; }
+                T const& second() const { return second_; }
+
+                T&& swap_first(T&& t) { using std::swap; swap(t,first_); return std::move(t); }
+                T&& swap_second(T&& t) { using std::swap; swap(t,second_); return std::move(t); }
+            };
+
+
+            template <typename V>
+            struct variant_hash : boost::static_visitor<std::size_t> {
+                template <typename T>
+                inline std::size_t operator()(T const&) const { return boost::hash<int>{}( vn::index_of<T,vn::mpl_sequence_to_list<V>>::value ); }                                        
+
+                template <typename T>
+                inline std::size_t operator()(transition_scene<T> const& t) const { std::size_t s = 0;
+                                                                                    //boost::hash<int>{}( vn::index_of<transition_scene<T>, vn::mpl_sequence_to_list<V>>::value); 
+                                                                                    boost::hash_combine(s,apply_visitor(*this,t.first())); 
+                                                                                    boost::hash_combine(s,apply_visitor(*this,t.second())); 
+                                                                                    return s; }
+            };                       
+        }   
+        
+    } // namespace
+
+    //template <typename ...Ts>
+    //using scene = scenes::scene_variant<Ts...>;
+
+} // namespace gtl
+
+#endif

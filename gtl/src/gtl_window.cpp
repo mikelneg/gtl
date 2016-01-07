@@ -2,6 +2,7 @@
 #include "../include/keyboard_enum.h"
 #include "../include/system_caps.h"
 
+#include <gtl/include/gtl_window_wndproc.h>
 //#include <iostream> // debugging
 //#include <thread>
 #include <utility>
@@ -36,13 +37,13 @@ namespace {
     }
 }
     
-window::window(HINSTANCE hinstance, unsigned width_px, unsigned height_px, const char* caption, 
-               window::wndproc_type wndproc_ptr, void* wndproc_obj)
-: px_dims{width_px,height_px}, 
-  hwnd{}
-{
+window::window(HINSTANCE hinstance, unsigned width_px, unsigned height_px, const char* caption)
+:   px_dims{width_px,height_px}, 
+    hwnd{},
+    msg{WM_NULL}
+{  
   auto style = default_wndclassex();
-  auto func = wndproc_ptr;
+  auto func = &gtl::win::detail::wndproc_impl<decltype(event_queue)>;
   style.lpfnWndProc = func;
   style.hInstance = hinstance;        
   style.lpszClassName = u8"window";    
@@ -57,7 +58,7 @@ window::window(HINSTANCE hinstance, unsigned width_px, unsigned height_px, const
                       0, 0, // dummy width and height, adjusted later with ResizeWindow()
                       nullptr, nullptr, // hWndParent and hMenu
                       hinstance,      
-                      wndproc_obj); // smuggle into wndproc()
+                      std::addressof(event_queue)); // smuggle into wndproc()
   if (!hwnd) {
       throw std::runtime_error{__func__};   
   }          
