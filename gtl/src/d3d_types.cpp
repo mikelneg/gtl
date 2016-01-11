@@ -127,26 +127,26 @@ namespace _12_0 {
         set_name(get(),L"samp_heap");               
     }
 
-    swap_chain::swap_chain(gtl::win::window& win, device& dev_, unsigned num_buffers_) 
-        :   frames_(num_buffers_)
-            //rtv_heap_{dev_, num_buffers_}     
+    swap_chain::swap_chain(gtl::win::window& win, device& dev_, command_queue& cqueue_, unsigned num_buffers_) 
+        :   frames_(num_buffers_),
+            rtv_heap_{dev_, num_buffers_}     
     {
         RECT client_area{};
         if (!GetClientRect(get_hwnd(win), &client_area)) { throw std::runtime_error{__func__}; }        
-        auto desc = create_swapchain_desc(tags::flipmodel_windowed{}, get_hwnd(win), num_buffers_, width(client_area), height(client_area));                          
-        command_queue cqueue_{dev_};
+        auto desc = create_swapchain_desc(tags::flipmodel_windowed{}, get_hwnd(win), num_buffers_, width(client_area), height(client_area));                                  
         release_ptr<IDXGISwapChain> tmp_ptr;  // We first get a generic IDXGISwapChain* and then 
                                               //  use QueryInterface() to "upcast" to our desired type,
                                               //  in this case IDXGISwapChain3 (ie., DXGISwapChain)
         win::throw_on_fail(dxgi_factory{}->CreateSwapChain(cqueue_.get(), &desc, &tmp_ptr),__func__);             
-        win::throw_on_fail(tmp_ptr->QueryInterface(__uuidof(type),reinterpret_cast<void**>(&expose_ptr())),__func__);         
-        //CD3DX12_CPU_DESCRIPTOR_HANDLE handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};                
-        //for (unsigned i = 0; i < frames_.size(); ++i) {
-        //    win::throw_on_fail(get()->GetBuffer(i, __uuidof(resource::type),reinterpret_cast<void**>(&frames_[i])),__func__);
-        //    dev_->CreateRenderTargetView(frames_[i], nullptr, handle);
-        //    handle.Offset(1, rtv_heap_.increment_value());			
-        //    set_name(frames_[i].get(),L"swchn_rtv");                       
-	    //}          
+        win::throw_on_fail(tmp_ptr->QueryInterface(__uuidof(type),reinterpret_cast<void**>(&expose_ptr())),__func__);                 
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};                
+        for (unsigned i = 0; i < frames_.size(); ++i) {
+            win::throw_on_fail(get()->GetBuffer(i, __uuidof(resource::type),reinterpret_cast<void**>(&frames_[i])),__func__);
+            dev_->CreateRenderTargetView(frames_[i], nullptr, handle);
+            handle.Offset(1, rtv_heap_.increment_value());			
+            set_name(frames_[i].get(),L"swchn_rtv");                       
+	    }          
         get()->SetMaximumFrameLatency(num_buffers_);                  
     }
 
@@ -297,18 +297,27 @@ namespace _12_0 {
         //                    reinterpret_cast<void**>(&buffer.expose_ptr()))            
         //             ,__func__);
 
+        // From docs on CreateDDSTextureFromFile...
+        //Device->CreateCommittedResource(
+        //&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+        //D3D12_HEAP_FLAG_NONE,
+        //&exampleResourceDesc,
+        //D3D12_RESOURCE_STATE_COMMON,
+        //nullptr,
+        //IID_PPV_ARGS(exampleTexture.GetAddressOf()));
+
         release_ptr<D3D12Resource> texture;        
         D3D12_SHADER_RESOURCE_VIEW_DESC srvdesc{};        
         
-        HRESULT result = DirectX::CreateDDSTextureFromFile(dev,filename.c_str(),&texture.expose_ptr(),&srvdesc);
+        HRESULT result = DirectX::CreateDDSTextureFromFile(dev,filename.c_str(),std::addressof(texture.expose_ptr()),&srvdesc);
         win::throw_on_fail(result,__func__);
 
         D3D12_RESOURCE_DESC desc = texture->GetDesc();
 
-        HRESULT result2 = dev->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+        HRESULT result2 = dev->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),        
                                                    D3D12_HEAP_FLAG_NONE,
                                                    &desc,
-                                                   D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE,
+                                                   D3D12_RESOURCE_STATE_COMMON,
                                                    nullptr,
                                                    __uuidof(type),
                                                    reinterpret_cast<void**>(&expose_ptr()));

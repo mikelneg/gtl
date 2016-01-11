@@ -22,7 +22,7 @@ namespace gtl {
 class stage {
        
     gtl::d3d::swap_chain& swchain_; 
-    gtl::d3d::command_queue cqueue_;    
+    gtl::d3d::command_queue& cqueue_;    
     gtl::d3d::sync_object sync_;
     unsigned num_buffers_;
         
@@ -32,7 +32,7 @@ class stage {
     gtl::scene_graph scenes_;    
 
 public:
-    stage(gtl::d3d::swap_chain&, unsigned num_buffers, unsigned max_desync);    
+    stage(gtl::d3d::swap_chain&, gtl::d3d::command_queue&, unsigned num_buffers, unsigned max_desync);    
     //stage();
     void draw(float);
     

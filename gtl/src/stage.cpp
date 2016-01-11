@@ -24,14 +24,13 @@
 /*-----------------------------------------------------------------------------
     Mikel Negugogor (http://github.com/mikelneg)    
 -----------------------------------------------------------------------------*/
-                                  
 
 namespace gtl {
 
 
-stage::stage(gtl::d3d::swap_chain& swchain, unsigned num_buffers, unsigned max_desync)       
+stage::stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, unsigned num_buffers, unsigned max_desync)       
     :   swchain_{swchain},
-        cqueue_{get_device_from(swchain)},
+        cqueue_{cqueue_},
         sync_{cqueue_,gtl::d3d::fence{get_device_from(swchain)},num_buffers-1,max_desync},
         num_buffers_{num_buffers},
         scenes_{}
@@ -67,7 +66,7 @@ void stage::handle_events(coro::pull_type& yield)
     //    apply_visitor(visit,scenes_.current_scene());
     //}
       
-    scenes_.transition_scene(yield);
+    scenes_.transition_scene(yield, gtl::d3d::get_device_from(swchain_), cqueue_, swchain_ );
 
     //for (;;) {
         //std::cout << "beginning stage handler..\n";  

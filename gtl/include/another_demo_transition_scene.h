@@ -1,12 +1,9 @@
-#ifndef UTWOWOPQRRR_GTL_SCENES_SWIRL_EFFECT_TRANSITION_SCENE_H_
-#define UTWOWOPQRRR_GTL_SCENES_SWIRL_EFFECT_TRANSITION_SCENE_H_
+#ifndef BXCVCVBOIWWR_GTL_SCENES_DEMO_TRANSITION_H_
+#define BXCVCVBOIWWR_GTL_SCENES_DEMO_TRANSITION_H_
 
 /*-----------------------------------------------------------------------------
     Mikel Negugogor (http://github.com/mikelneg)                              
-    
-    namespace gtl::scenes::transitions::
-    
-    class swirl_effect;
+        
 -----------------------------------------------------------------------------*/
 
 #include <gtl/include/events.h>
@@ -25,6 +22,8 @@
 //#include <gtl/include/synchronized.h>
 #include <gtl/include/clist_skybox.h>
 
+#include <gtl/include/swirl_effect_transition_scene.h>
+
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
@@ -36,67 +35,8 @@ namespace scenes {
 namespace transitions {
 
  
-inline float const& pi() 
-{   
-    static float const value{static_cast<float>(std::atan2(0, -1))};
-    return value; 
-}
 
-inline float to_radians(float degrees) 
-{ 
-    return (degrees * (pi() / 180.f));  
-}
-
-inline float to_degrees(float radians) 
-{ 
-    return (radians * (180.0f / pi())); 
-}
-
-inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, float z_near, float z_far)
-{
-    
-    float s = 1.0f / std::tan(fov_y * 0.5f);
-    Eigen::Matrix4f matrix_;
-
-    //  f(z,near,far) = [ z * (1/(far-near)) + (-near/(far-near)) ] / z
-    //  maps z between near and far to [0...1]
-    //  recommended that you graph this with your near/far values to examine
-    //  the scale
-
-    matrix_ << s/aspect_ratio, 0.0f, 0.0f, 0.0f,
-               0.0f, s, 0.0f, 0.0f,
-               0.0f, 0.0f, 1.0f/(z_far-z_near), 1.0f,
-               0.0f, 0.0f, -z_near/(z_far-z_near), 0.0f;
-    return matrix_;
-}
-
-    template <typename T> // TODO garbage, change this..
-    void update(T& cb) {
-        using namespace Eigen;
-        static Quaternionf orientation_{Quaternionf::Identity()};
-        static Quaternionf rot_{Quaternionf::FromTwoVectors(Vector3f{0.0f,0.0f,1.0f},
-                                                            Vector3f{0.00001f,0.000001f,1.0f}.normalized()
-                                                           ).normalized()};     
-        
-        static auto const proj_mat = makeProjectionMatrix(to_radians(30.0f), 960/540.0f, 0.0001f, 1.0f);
-    
-        orientation_ = orientation_ * rot_;
-        Affine3f transform_{Affine3f::Identity()};
-        transform_.rotate(orientation_.toRotationMatrix());
-    
-        cb.view_matrix = transform_.matrix() * proj_mat;
-    };
-
-    struct cbuffer {
-        Eigen::Matrix4f view_matrix;
-
-        cbuffer() {
-            update(*this);
-        }
-
-    };       
-
-    class swirl_effect {        
+    class twinkle_effect {        
         
         constexpr static std::size_t frame_count = 3; // TODO place elsewhere..
 
@@ -146,7 +86,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
         //gtl::d3d::synchronized sync_;
 
     public:
-        //swirl_effect() = default;        
+        //twinkle_effect() = default;        
         template <typename T>
         void load_text(T idx) const {        
                                  std::initializer_list<D3D12_VIEWPORT*> viewports{&viewport_};                                 
@@ -230,7 +170,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                                  ////clist_[idx]->SetGraphicsRootDescriptorTable(2, cbheap_.get()->GetGPUDescriptorHandleForHeapStart());                                                                                                   
                                  //clist_[idx]->SetGraphicsRootDescriptorTable(2, cbheap_[idx]->GetGPUDescriptorHandleForHeapStart());     
                                  
-                                 cs_list_[idx]->Dispatch(120,68,1);                                    
+                                 cs_list_[idx]->Dispatch(4,68,1);                                    
                                  cs_list_[idx]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
                                           ubuffers[idx].get(), 
                                           D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 
@@ -247,7 +187,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                                  return false;                 
                                  }
 
-        swirl_effect(gtl::d3d::device& dev_, gtl::d3d::command_queue& cqueue_, gtl::d3d::swap_chain& swchain_) // TODO temporary effect..
+        twinkle_effect(gtl::d3d::device& dev_, gtl::d3d::command_queue& cqueue_, gtl::d3d::swap_chain& swchain_) // TODO temporary effect..
             :   dev_{dev_}, 
                 cqueue_{cqueue_}, 
                 swchain_{swchain_},
@@ -290,16 +230,16 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             dev_->CreateRenderTargetView(ubuffers[0].get(), nullptr, uav_rtv->GetCPUDescriptorHandleForHeapStart());                                
             load_text(0);
             wait_for_gpu(dev_,cqueue_);
-            std::cout << "new swirl_effect..\n";
+            std::cout << "new twinkle_effect...\n";
             //single_pass(0);                                   
             //wait_for_gpu(dev_,cqueue_);
         }
 
-        swirl_effect& operator=(swirl_effect&&) { std::cout << "swirl_effect operator= called..\n"; return *this; }
-        swirl_effect(swirl_effect&&) = default;
+        twinkle_effect& operator=(twinkle_effect&&) { return *this; }
+        twinkle_effect(twinkle_effect&&) = default;
 
-        ~swirl_effect() {
-            std::cout << "~swirl_effect()\n";
+        ~twinkle_effect() {
+            std::cout << "~twinkle_effect()\n";
         }
 
         void draw(float f) const {
@@ -315,14 +255,14 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             while (!same_type(yield().get(),ev::exit_immediately{})){                   
                 if (same_type(yield.get(),ev::keydown{})){ 
                     if ( boost::get<ev::keydown>( yield.get().value() ).key == gtl::keyboard::Q) {
-                        std::cout << "swirl_effect(): q pressed, exiting A from route 0 (none == " << count << ")\n";                                                                
+                        std::cout << "twinkle_effect(): q pressed, exiting A from route 0 (none == " << count << ")\n";                                                                
                         return gtl::events::exit_state{0};
                     } else 
                     if ( boost::get<ev::keydown>( yield.get().value() ).key == gtl::keyboard::K) {
-                        std::cout << "swirl_effect(): k pressed, throwing (none == " << count << ")\n";                                                
+                        std::cout << "twinkle_effect(): k pressed, throwing (none == " << count << ")\n";                                                
                         throw std::runtime_error{__func__};
                         //return 1;
-                    } else { std::cout << "swirl_effect(): some key pressed..\n"; }
+                    } else { std::cout << "twinkle_effect(): some key pressed..\n"; }
                 } else if (same_type(yield.get(),ev::none{})) {
                     count++;
                  }

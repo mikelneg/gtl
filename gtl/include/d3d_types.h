@@ -123,8 +123,9 @@ namespace _12_0 {
     
     class swap_chain : public release_ptr<DXGISwapChain> {                
         std::vector<resource> frames_;        
+        rtv_descriptor_heap rtv_heap_;
     public:
-        swap_chain(gtl::win::window&, device&, unsigned num_buffers); 
+        swap_chain(gtl::win::window&, device&, command_queue&, unsigned num_buffers); 
         resource& get_current_resource() { return frames_[get()->GetCurrentBackBufferIndex()]; }                
     };    
     
