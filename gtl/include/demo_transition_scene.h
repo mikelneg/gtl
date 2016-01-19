@@ -1,268 +1,150 @@
-#ifndef BXCVCVBOIWWR_GTL_SCENES_DEMO_TRANSITION_H_
-#define BXCVCVBOIWWR_GTL_SCENES_DEMO_TRANSITION_H_
+#ifndef UTWOWOPQRRR_GTL_SCENES_TWINKLE_EFFECT_TRANSITION_SCENE_H_
+#define UTWOWOPQRRR_GTL_SCENES_TWINKLE_EFFECT_TRANSITION_SCENE_H_
 
 /*-----------------------------------------------------------------------------
     Mikel Negugogor (http://github.com/mikelneg)                              
-        
+    
+    namespace gtl::scenes::transitions::
+    
+    class twinkle_effect;
 -----------------------------------------------------------------------------*/
-
-#include <gtl/include/events.h>
-#include <gtl/include/keyboard_enum.h>
-
-#include <Windows.h>
-
-#include <cstddef>
-#include <array>
-#include <utility>
-
-#include <gtl/include/gtl_window.h>
-#include <gtl/include/d3d_types.h>
-#include <gtl/include/d3d_funcs.h>
-
-//#include <gtl/include/synchronized.h>
-#include <gtl/include/clist_skybox.h>
 
 #include <gtl/include/swirl_effect_transition_scene.h>
 
-#include <Eigen/Dense>
-#include <Eigen/Geometry>
-#include <Eigen/StdVector>
-
-#include <cmath>
+#include <gtl/include/font_atlas.h>
 
 namespace gtl {
 namespace scenes {
 namespace transitions {
 
  
-
     class twinkle_effect {        
         
         constexpr static std::size_t frame_count = 3; // TODO place elsewhere..
 
         gtl::d3d::device& dev_;
         gtl::d3d::command_queue& cqueue_;
+        gtl::d3d::root_signature& root_sig_;
         gtl::d3d::swap_chain& swchain_;
 
-        std::array<gtl::d3d::resource_descriptor_heap,frame_count> mutable cbheap_;
-        gtl::d3d::sampler_descriptor_heap sampler_heap_;
-        
-        std::array<gtl::d3d::direct_command_allocator,frame_count> mutable calloc_;             
-        std::array<gtl::d3d::direct_command_allocator,frame_count> mutable cs_alloc_;             
-
-        gtl::d3d::root_signature root_sig_;
-        gtl::d3d::root_signature cs_root_sig_;
         gtl::d3d::vertex_shader vshader_;
         gtl::d3d::pixel_shader pshader_;
-        gtl::d3d::compute_shader cshader_;
-        gtl::d3d::vertex_shader csvshader_;
-        gtl::d3d::pixel_shader cspshader_;
-        gtl::d3d::pipeline_state_object pso_;
-        gtl::d3d::pipeline_state_object cs_pso_;
-        
-        std::array<gtl::d3d::graphics_command_list,frame_count> mutable clist_;       
-        std::array<gtl::d3d::graphics_command_list,frame_count> mutable cs_list_;
-                
-        gtl::d3d::D3D12Viewport mutable viewport_;
-        gtl::d3d::D3D12ScissorRect scissor_;    
-                      
-        gtl::d3d::D3D12Viewport mutable viewport1_;
-        gtl::d3d::D3D12Viewport mutable viewport2_;
-
-        cbuffer mutable cbuf_;
-                
-        std::pair<char*,unsigned> mutable cbuf_data;        
-
-        std::array<gtl::d3d::constant_buffer,frame_count> mutable cbuffer_;
-                                                     
-        std::array<gtl::d3d::CpuDescriptorHandle,frame_count> mutable handles;
-                
-        gtl::d3d::srv texture_;
-        
-        std::array<gtl::d3d::uav_texture2D, 3> mutable ubuffers;
        
-        gtl::d3d::rtv_descriptor_heap uav_rtv;
+        std::array<gtl::d3d::resource_descriptor_heap,frame_count> cbheap_;
+
+        cbuffer mutable cbuf_;                            
+        std::array<gtl::d3d::constant_buffer, frame_count> mutable cbuffer_;       
+
+        gtl::d3d::pipeline_state_object pso_;
+
+        std::array<gtl::d3d::direct_command_allocator,frame_count> mutable calloc_;
+        std::array<gtl::d3d::graphics_command_list,frame_count> mutable clist_;
+        std::array<gtl::d3d::graphics_command_list,frame_count> mutable font_clist_;
+        
+        gtl::d3d::D3D12Viewport mutable viewport_;//{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f};
+        gtl::d3d::D3D12ScissorRect mutable scissor_;//{0,0,960,540};    
+
+
+        gtl::d3d::resource_descriptor_heap resource_heap_;
+        gtl::d3d::srv texture_;
+
+        gtl::d3d::sampler_descriptor_heap sampler_heap_;
         gtl::d3d::sampler sampler_;
-        //gtl::d3d::synchronized sync_;
+                
+        gtl::d3d::font_atlas font_;
 
     public:
-        //twinkle_effect() = default;        
-        template <typename T>
-        void load_text(T idx) const {        
-                                 std::initializer_list<D3D12_VIEWPORT*> viewports{&viewport_};                                 
-                                 calloc_[idx]->Reset(); 
-                                 clist_[idx]->Reset(calloc_[idx].get(), pso_.get());
-
-                                 clist_[idx]->SetGraphicsRootSignature(cs_root_sig_.get());                                                                  
-                                  
-                                 ID3D12DescriptorHeap* ppHeaps[] = { sampler_heap_.get(), cbheap_[idx].get() };
-	                             clist_[idx]->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);        
-
-                                 //clist_[idx]->SetComputeRootDescriptorTable(0, cbheap_[idx].get()->GetGPUDescriptorHandleForHeapStart());                                                                  
-                                 clist_[idx]->SetGraphicsRootDescriptorTable(0, cbheap_[idx].get()->GetGPUDescriptorHandleForHeapStart());
-                                 clist_[idx]->SetGraphicsRootDescriptorTable(1, sampler_heap_.get()->GetGPUDescriptorHandleForHeapStart());
-                                 clist_[idx]->RSSetViewports(1, *viewports.begin());
-	                             clist_[idx]->RSSetScissorRects(1, &scissor_);    
-
-	                             clist_[idx]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-	                             
-                                 std::initializer_list<D3D12_CPU_DESCRIPTOR_HANDLE> dhandles{uav_rtv->GetCPUDescriptorHandleForHeapStart()};
-
-                                 clist_[idx]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                          ubuffers[idx].get(), 
-                                          D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 
-                                          D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-                                 //float blend[]{0.1f,0.1f,0.1f,0.1f};
-                                 float blend[]{0.9f,0.0f,0.9f,0.9f};
-                                 float col[]{1.0f,1.0f,1.0f,1.0f};
-
-                                 clist_[idx]->ClearRenderTargetView(uav_rtv->GetCPUDescriptorHandleForHeapStart(),col,0,nullptr);
-
-                                 clist_[idx]->OMSetRenderTargets(1, dhandles.begin(), TRUE, nullptr);    
-                                 
-                                 clist_[idx]->OMSetBlendFactor(blend);
-                                 
-                                 clist_[idx]->DrawInstanced(3, 1, 0, 0);                                 
-
-                                 clist_[idx]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                          ubuffers[idx].get(), 
-                                          D3D12_RESOURCE_STATE_RENDER_TARGET, 
-                                          D3D12_RESOURCE_STATE_UNORDERED_ACCESS));
-
-                                 //clist_[idx]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                 //         ubuffers[idx].get(), 
-                                 //         D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 
-                                 //         D3D12_RESOURCE_STATE_COPY_SOURCE));
-                                 //
-                                 //clist_[idx]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                 //         swchain_.get_current_resource(), 
-                                 //         D3D12_RESOURCE_STATE_RENDER_TARGET, 
-                                 //         D3D12_RESOURCE_STATE_COPY_DEST));
-                                 //
-                                 //
-                                 //clist_[idx]->CopyResource(swchain_.get_current_resource(), ubuffers[idx].get());
-                                 //
-                                 //clist_[idx]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                 //         swchain_.get_current_resource(), 
-                                 //         D3D12_RESOURCE_STATE_COPY_DEST, 
-                                 //         D3D12_RESOURCE_STATE_PRESENT));                                 
-                                 //
-                                 clist_[idx]->Close();
-
-                                 std::initializer_list<ID3D12CommandList*> clists{clist_[idx].get()};                                                                          
-                                 cqueue_->ExecuteCommandLists(gtl::win::array_size(clists), clists.begin()); 
-                                 //swchain_->Present(0,0);
-                                 }
-
-        template <typename T>
-        bool single_pass(T idx) const {        
-                                 cs_alloc_[idx]->Reset(); 
-                                 cs_list_[idx]->Reset(cs_alloc_[idx].get(), cs_pso_.get());
-
-                                 cs_list_[idx]->SetComputeRootSignature(cs_root_sig_.get());                                                                  
-                                  
-                                 ID3D12DescriptorHeap* ppHeaps[] = { sampler_heap_.get(), cbheap_[idx].get() };
-	                             cs_list_[idx]->SetDescriptorHeaps(_countof(ppHeaps), ppHeaps);        
-
-                                 //clist_[idx]->SetComputeRootDescriptorTable(0, cbheap_[idx].get()->GetGPUDescriptorHandleForHeapStart());                                                                  
-                                 cs_list_[idx]->SetComputeRootDescriptorTable(0, cbheap_[idx].get()->GetGPUDescriptorHandleForHeapStart());
-                                 ////clist_[idx]->SetGraphicsRootDescriptorTable(2, cbheap_.get()->GetGPUDescriptorHandleForHeapStart());                                                                                                   
-                                 //clist_[idx]->SetGraphicsRootDescriptorTable(2, cbheap_[idx]->GetGPUDescriptorHandleForHeapStart());     
-                                 
-                                 cs_list_[idx]->Dispatch(4,68,1);                                    
-                                 cs_list_[idx]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                          ubuffers[idx].get(), 
-                                          D3D12_RESOURCE_STATE_UNORDERED_ACCESS, 
-                                          D3D12_RESOURCE_STATE_COPY_SOURCE));
-                                 gtl::d3d::graphics_command_lists::skybox_graphics_command_list_second(
-                                     cs_list_[idx],swchain_.get_current_resource(), ubuffers[idx]);                                 
-
-                                 std::initializer_list<ID3D12CommandList*> clists{cs_list_[idx].get()};                                         
-                                 if (WaitForSingleObject(swchain_->GetFrameLatencyWaitableObject(),0) == WAIT_OBJECT_0) {                                                         	                    
-                                     cqueue_->ExecuteCommandLists(gtl::win::array_size(clists), clists.begin());
-                                     swchain_->Present(0,0);
-                                     return true;
-                                 }            
-                                 return false;                 
-                                 }
-
-        twinkle_effect(gtl::d3d::device& dev_, gtl::d3d::command_queue& cqueue_, gtl::d3d::swap_chain& swchain_) // TODO temporary effect..
+        twinkle_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, gtl::d3d::root_signature& root_sig_) // TODO temporary effect..
             :   dev_{dev_}, 
-                cqueue_{cqueue_}, 
+                cqueue_{cqueue_},
+                root_sig_{root_sig_},
                 swchain_{swchain_},
-                cbheap_{{{dev_,2,gtl::d3d::tags::shader_visible{}},
-                         {dev_,2,gtl::d3d::tags::shader_visible{}},
-                         {dev_,2,gtl::d3d::tags::shader_visible{}}}},
-                sampler_heap_{dev_,1},
-                calloc_{{{dev_},{dev_},{dev_}}},
-                cs_alloc_{{{dev_},{dev_},{dev_}}},             
-                root_sig_{dev_, gtl::d3d::dummy_rootsig_1()},
-                cs_root_sig_{dev_, gtl::d3d::dummy_rootsig_2()},
                 vshader_{L"skybox_vs.cso"},
-                pshader_{L"skybox_ps.cso"},            
-                cshader_{L"demo_cs_cs.cso"},
-                csvshader_{L"demo_cs_vs.cso"},
-                cspshader_{L"demo_cs_ps.cso"},
-                pso_{dev_, cs_root_sig_, csvshader_, cspshader_},
-                cs_pso_{dev_, cs_root_sig_, cshader_},            
-                clist_{{{dev_,calloc_[0],pso_},{dev_,calloc_[1],pso_},{dev_,calloc_[2],pso_}}},            
-                cs_list_{{{dev_,cs_alloc_[0],cs_pso_},{dev_,cs_alloc_[1],cs_pso_},{dev_,cs_alloc_[2],cs_pso_}}},
+                pshader_{L"skybox_ps.cso"},
+                cbheap_{{{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}}}},                                                     
+                cbuf_{},                
+                cbuffer_{{{dev_,cbheap_[0],sizeof(cbuf_)},{dev_,cbheap_[1],sizeof(cbuf_)},{dev_,cbheap_[2],sizeof(cbuf_)}}},                        
+                pso_{dev_, root_sig_, vshader_, pshader_},
+                calloc_{{{dev_},{dev_},{dev_}}},
+                clist_{{{dev_,calloc_[0],pso_},{dev_,calloc_[1],pso_},{dev_,calloc_[2],pso_}}},
+                font_clist_{{{dev_,calloc_[0]},{dev_,calloc_[1]},{dev_,calloc_[2]}}},
                 viewport_{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f},
-                scissor_{0,0,960,540},                          
-                viewport1_{0.0f,0.0f,320.0f, 240.0f, 0.0f, 1.0f},
-                viewport2_{322.0f,0.0f,960.0f,240.0f, 0.0f, 1.0f},
-                cbuf_{},
-                cbuf_data{reinterpret_cast<char*>(&cbuf_), static_cast<unsigned>(sizeof(cbuf_))},
-                cbuffer_{{{dev_,cbheap_[0],cbuf_data},{dev_,cbheap_[0],cbuf_data},{dev_,cbheap_[0],cbuf_data}}},
-                handles{{   {cbheap_[0]->GetCPUDescriptorHandleForHeapStart(),0,cbheap_[0].increment_value()},
-                            {cbheap_[1]->GetCPUDescriptorHandleForHeapStart(),0,cbheap_[1].increment_value()},
-                            {cbheap_[2]->GetCPUDescriptorHandleForHeapStart(),0,cbheap_[2].increment_value()} }},        
-                    
-                texture_{dev_,{handles[0],handles[1],handles[2]},cqueue_,L"D:\\images\\skyboxes\\Nightsky.dds"},                
-                ubuffers{{{swchain_,handles[0].Offset(1, cbheap_[1].increment_value())},
-                          {swchain_,handles[1].Offset(1, cbheap_[1].increment_value())},
-                          {swchain_,handles[2].Offset(1, cbheap_[1].increment_value())}}},      
-                uav_rtv{dev_,1},            
-                sampler_{dev_,sampler_heap_->GetCPUDescriptorHandleForHeapStart()}
-                //sync_{cqueue_,gtl::d3d::fence{dev_}, 2, 2}; // framecount - 1
-        {
-            dev_->CreateRenderTargetView(ubuffers[0].get(), nullptr, uav_rtv->GetCPUDescriptorHandleForHeapStart());                                
-            load_text(0);
-            wait_for_gpu(dev_,cqueue_);
-            std::cout << "new twinkle_effect...\n";
-            //single_pass(0);                                   
-            //wait_for_gpu(dev_,cqueue_);
+                scissor_{0,0,960,540},
+                resource_heap_{dev_,1,gtl::d3d::tags::shader_visible{}},
+                texture_{dev_,{resource_heap_->GetCPUDescriptorHandleForHeapStart()},cqueue_,L"D:\\images\\skyboxes\\Grimmnight.dds"},
+                sampler_heap_{dev_,1},
+                sampler_{dev_,sampler_heap_->GetCPUDescriptorHandleForHeapStart()},        
+                font_{dev_, cqueue_, root_sig_, L"D:\\images\\fonts\\liberation\\bold-sdf\\font.fnt", gtl::d3d::tags::xml_format{}} 
+        {            
+            // cbuffer_[idx].update() -- 
+            std::cout << "twinkle_effect()\n";                     
         }
 
-        twinkle_effect& operator=(twinkle_effect&&) { return *this; }
+        twinkle_effect& operator=(twinkle_effect&&) { std::cout << "twinkle_effect operator= called..\n"; return *this; } // TODO throw? assert false?
         twinkle_effect(twinkle_effect&&) = default;
 
-        ~twinkle_effect() {
-            std::cout << "~twinkle_effect()\n";
-        }
+        ~twinkle_effect() { std::cout << "~twinkle_effect()\n"; }
 
-        void draw(float f) const {
-            single_pass(0);
-            wait_for_gpu(dev_,cqueue_);
+        std::vector<ID3D12CommandList*> draw(int idx, float f, gtl::d3d::rtv_descriptor_heap& rtv_heap_) const {            
+            update(cbuf_);
+            cbuffer_[idx].update(reinterpret_cast<const char*>(&cbuf_),sizeof(cbuf_));
+            //            
+            std::vector<ID3D12CommandList*> v;
+            calloc_[idx]->Reset();
+            clist_[idx]->Reset(calloc_[idx].get(),pso_.get());
+            //
+            gtl::d3d::graphics_command_list const& cl = clist_[idx];            
+            
+            cl->SetGraphicsRootSignature(root_sig_.get());
+            auto heaps = { sampler_heap_.get(), resource_heap_.get() };
+        	cl->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());                    
+            cl->SetGraphicsRootConstantBufferView(0, (cbuffer_[idx].resource())->GetGPUVirtualAddress());
+            cl->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
+            cl->SetGraphicsRootDescriptorTable(2, resource_heap_->GetGPUDescriptorHandleForHeapStart());
+                                                                    
+            auto viewports = { std::addressof(viewport_) };
+            cl->RSSetViewports(static_cast<unsigned>(viewports.size()),*viewports.begin());
+            cl->RSSetScissorRects(1, std::addressof(scissor_));            
+            cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+
+            float blendvalues[]{f,f,f,f};
+            cl->OMSetBlendFactor(blendvalues);
+
+            CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
+            rtv_handle.Offset(idx, rtv_heap_.increment_value());
+            cl->OMSetRenderTargets(1, &rtv_handle, TRUE, nullptr);
+            cl->DrawInstanced(14, 1, 0, 0);             
+
+            clist_[idx]->Close();
+            font_clist_[idx]->Reset(calloc_[idx].get(),nullptr);      
+            font_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());
+            font_(idx,font_clist_[idx],viewport_,scissor_,rtv_handle);
+            font_clist_[idx]->Close();
+
+            v.emplace_back(clist_[idx].get());
+            v.emplace_back(font_clist_[idx].get());
+            return v;
         }
         
         template <typename YieldType>
-        gtl::event handle_events(YieldType& yield) const {
-            // TODO this will probably never be called, but it needs to be sorted out how the transition handler works with regards to transition effects..             
+        gtl::event handle_events(YieldType& yield) const {            
             namespace ev = gtl::events;
+            namespace k = gtl::keyboard;
             int count{};
             while (!same_type(yield().get(),ev::exit_immediately{})){                   
                 if (same_type(yield.get(),ev::keydown{})){ 
-                    if ( boost::get<ev::keydown>( yield.get().value() ).key == gtl::keyboard::Q) {
-                        std::cout << "twinkle_effect(): q pressed, exiting A from route 0 (none == " << count << ")\n";                                                                
-                        return gtl::events::exit_state{0};
-                    } else 
-                    if ( boost::get<ev::keydown>( yield.get().value() ).key == gtl::keyboard::K) {
-                        std::cout << "twinkle_effect(): k pressed, throwing (none == " << count << ")\n";                                                
-                        throw std::runtime_error{__func__};
-                        //return 1;
-                    } else { std::cout << "twinkle_effect(): some key pressed..\n"; }
+                    
+                    switch( boost::get<ev::keydown>( yield.get().value() ).key ) {
+                        case k::Q : std::cout << "twinkle_effect(): q pressed, exiting A from route 0 (none == " << count << ")\n";                                                                
+                                    return gtl::events::exit_state{0}; break;
+                        case k::K : std::cout << "twinkle_effect(): k pressed, throwing (none == " << count << ")\n";                                                
+                                    throw std::runtime_error{__func__}; break;                    
+                        case k::R : std::cout << "twinkle_effect() : r pressed, resizing swapchain..\n"; 
+                                    swchain_.resize(100,100); 
+                                    break;
+                        default : std::cout << "twinkle_effect() : unknown key pressed\n"; 
+                    }
+                                   
                 } else if (same_type(yield.get(),ev::none{})) {
                     count++;
                  }

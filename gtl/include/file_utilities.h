@@ -14,15 +14,17 @@
 #include <gtl/include/tags.h>
 
 namespace gtl {
-namespace file {
-    
-    using tags::no_initialization;
+namespace file {    
 
     using blob_type           = std::vector<char>;
     using efficient_blob_type = std::vector<char,::gtl::allocators::no_trivial_value_initialization<char>>; 
 
-    blob_type get_file_blob(std::string const& full_path_filename);
-    efficient_blob_type get_file_blob(no_initialization, std::string const& full_path_filename);    
+    blob_type get_file_blob(std::string full_path_filename);
+    efficient_blob_type get_file_blob(tags::no_initialization, std::string full_path_filename);        
     
+    blob_type get_file_blob(std::wstring full_path_filename);
+    efficient_blob_type get_file_blob(tags::no_initialization, std::wstring full_path_filename);        
+    
+
 }} // namespaces                    
 #endif

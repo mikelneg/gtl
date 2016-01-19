@@ -1,6 +1,9 @@
 #include "../include/d3d_types.h"
 #include "../include/d3d_funcs.h"
 
+#include <iostream>
+#include <cstddef>
+
 #include <gtl/include/gtl_window.h>
 #include <gtl/include/release_ptr.h>
 #include <gtl/include/win_tools.h>
@@ -27,7 +30,7 @@ namespace gtl {
 namespace d3d { 
 namespace _12_0 {
 
-    using namespace gtl::win;
+    using namespace gtl::win;    
         
     static 
     void set_name(ID3D12Object* t, wchar_t const* name) 
@@ -101,7 +104,7 @@ namespace _12_0 {
         set_name(get(),L"rtv_heap_");              
     }  
     
-    resource_descriptor_heap::resource_descriptor_heap(device& dev, unsigned num_descriptors, tags::shader_visible) 
+    resource_descriptor_heap::resource_descriptor_heap(device& dev, unsigned num_descriptors, d3d::tags::shader_visible) 
         : size_{num_descriptors}
     {
         D3D12_DESCRIPTOR_HEAP_DESC desc{};
@@ -127,10 +130,10 @@ namespace _12_0 {
         set_name(get(),L"samp_heap");               
     }
 
-    swap_chain::swap_chain(gtl::win::window& win, device& dev_, command_queue& cqueue_, unsigned num_buffers_) 
+    swap_chain::swap_chain(gtl::win::window& win, command_queue& cqueue_, unsigned num_buffers_) 
         :   frames_(num_buffers_),
-            rtv_heap_{dev_, num_buffers_}     
-    {
+            rtv_heap_{get_device_from(cqueue_), num_buffers_}     
+    {        
         RECT client_area{};
         if (!GetClientRect(get_hwnd(win), &client_area)) { throw std::runtime_error{__func__}; }        
         auto desc = create_swapchain_desc(tags::flipmodel_windowed{}, get_hwnd(win), num_buffers_, width(client_area), height(client_area));                                  
@@ -141,6 +144,7 @@ namespace _12_0 {
         win::throw_on_fail(tmp_ptr->QueryInterface(__uuidof(type),reinterpret_cast<void**>(&expose_ptr())),__func__);                 
 
         CD3DX12_CPU_DESCRIPTOR_HANDLE handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};                
+        auto dev_ = get_device_from(cqueue_);        
         for (unsigned i = 0; i < frames_.size(); ++i) {
             win::throw_on_fail(get()->GetBuffer(i, __uuidof(resource::type),reinterpret_cast<void**>(&frames_[i])),__func__);
             dev_->CreateRenderTargetView(frames_[i], nullptr, handle);
@@ -410,6 +414,12 @@ namespace _12_0 {
         set_name(get(),L"pso-compute");               
     }
 
+    pipeline_state_object::pipeline_state_object(device& dev, D3D12_GRAPHICS_PIPELINE_STATE_DESC const& desc_)
+    {
+        HRESULT result = dev->CreateGraphicsPipelineState(&desc_,__uuidof(type),reinterpret_cast<void**>(&expose_ptr()));
+        win::throw_on_fail(result,__func__);
+        set_name(get(),L"pso-g-desc");               
+    }
 
 
     graphics_command_list::graphics_command_list(device& dev, direct_command_allocator& alloc, pipeline_state_object& pso)
@@ -444,8 +454,8 @@ namespace _12_0 {
         
     fence::fence(D3D12Device& dev)         
     {
-        win::throw_on_fail(dev.CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(type), reinterpret_cast<void**>(&expose_ptr()))
-                      ,__func__); 
+        auto result = dev.CreateFence(0, D3D12_FENCE_FLAG_NONE, __uuidof(type), reinterpret_cast<void**>(&expose_ptr()));
+        win::throw_on_fail(result,__func__); 
         set_name(get(),L"fence");               
     }
 
@@ -459,14 +469,17 @@ namespace _12_0 {
         wait(handle);
         assert(this->get()->GetCompletedValue() == new_value);
     }
-        
-    constant_buffer::constant_buffer(device& dev, resource_descriptor_heap& resource_heap, std::pair<char*,unsigned> cbuf)    
-    {
+            
+
+    constant_buffer::constant_buffer(device& dev, D3D12_CPU_DESCRIPTOR_HANDLE& descriptor_handle, std::size_t cbuf_size)    
+    {        
         win::throw_on_fail(dev->CreateCommittedResource(
                             &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
                             D3D12_HEAP_FLAG_NONE,
-                            &CD3DX12_RESOURCE_DESC::Buffer(1024 * 64),
+                            //D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS,
+                            &CD3DX12_RESOURCE_DESC::Buffer((cbuf_size + 255) & ~255),
 	                        D3D12_RESOURCE_STATE_GENERIC_READ,
+                            //D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
 	                        nullptr,
                             __uuidof(resource::type),
                             reinterpret_cast<void**>(&buffer.expose_ptr()))            
@@ -474,20 +487,31 @@ namespace _12_0 {
 
         D3D12_CONSTANT_BUFFER_VIEW_DESC cbvDesc = {};
 	    cbvDesc.BufferLocation = buffer.get()->GetGPUVirtualAddress();
-	    cbvDesc.SizeInBytes = (cbuf.second + 255) & ~255;	// CB size is required to be 256-byte aligned.
-	    dev->CreateConstantBufferView(&cbvDesc, resource_heap.get()->GetCPUDescriptorHandleForHeapStart());
+	    cbvDesc.SizeInBytes = (cbuf_size + 255) & ~255;	// CB size is required to be 256-byte aligned.
+	    //dev->CreateConstantBufferView(&cbvDesc, resource_heap.get()->GetCPUDescriptorHandleForHeapStart());
+        dev->CreateConstantBufferView(&cbvDesc, descriptor_handle);
     
 		// Initialize and map the constant buffers. We don't unmap this until the
 		// app closes. Keeping things mapped for the lifetime of the resource is okay.
         win::throw_on_fail(buffer.get()->Map(0, nullptr, reinterpret_cast<void**>(&cbv_data_ptr))
                       ,__func__);
-        set_name(buffer.get(),L"cbuf");                       
-        this->update(cbuf);                
+        set_name(buffer.get(),L"cbuf");                               
 	}
+
+    constant_buffer::constant_buffer(device& dev, gtl::d3d::resource_descriptor_heap& rheap, std::size_t cbuf_size)    
+        : constant_buffer(dev, rheap->GetCPUDescriptorHandleForHeapStart(),cbuf_size)
+    { 
+        // empty 
+    }
     
-    void constant_buffer::update(std::pair<char*,unsigned> cbuf) 
+    void constant_buffer::update(std::pair<char*,size_t> cbuf) 
     {
-        std::memcpy(cbv_data_ptr, cbuf.first, cbuf.second);    	
+        std::memcpy(reinterpret_cast<void*>(cbv_data_ptr), reinterpret_cast<void*>(cbuf.first), cbuf.second);    	
+    }
+
+    void constant_buffer::update(char const* src,std::size_t size_)
+    {
+        std::memcpy(reinterpret_cast<void*>(cbv_data_ptr), reinterpret_cast<void const*>(src), size_);    	
     }
 
     sampler::sampler(device& dev, D3D12_CPU_DESCRIPTOR_HANDLE handle_)
@@ -507,9 +531,15 @@ namespace _12_0 {
         //set_name(get(),L"samplers");               
     }
 
-    rtv_srv_texture2D::rtv_srv_texture2D(swap_chain& swchain, unsigned num_buffers, tags::shader_visible)
+    sampler::sampler(device& dev, D3D12_SAMPLER_DESC const& desc, D3D12_CPU_DESCRIPTOR_HANDLE handle_)
+    {
+        dev->CreateSampler(&desc, handle_);    	
+        //set_name(get(),L"samplers");               
+    }
+
+    rtv_srv_texture2D::rtv_srv_texture2D(swap_chain& swchain, unsigned num_buffers, d3d::tags::shader_visible)
         :   rtv_heap__{ get_device_from(swchain), num_buffers},
-            srv_heap_{ get_device_from(swchain), 1, tags::shader_visible{}}
+            srv_heap_{ get_device_from(swchain), 1, d3d::tags::shader_visible{}}
     {
         DXGI_SWAP_CHAIN_DESC swchaindesc_{};
         swchain->GetDesc(&swchaindesc_);

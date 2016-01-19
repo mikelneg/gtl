@@ -30,8 +30,9 @@ namespace scenes {
         //intro_scene(intro_scene const&) = default;
         intro_scene& operator=(intro_scene&&) = default;
 
-        void draw(float f) const {
+        std::vector<ID3D12GraphicsCommandList*> draw(int, float f) const {
             std::cout << std::fixed << "intro_scene(" << f << ")";
+            return {};
         }
         
         template <typename YieldType>

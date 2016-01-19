@@ -9,31 +9,50 @@
 -----------------------------------------------------------------------------*/
 
 #include <gtl/include/d3d_types.h>
-#include <gtl/include/sync_object.h>
-#include <gtl/include/gtl_window.h>
+#include <gtl/include/synchronization_object.h>
+//#include <gtl/include/gtl_window.h>
 
 #include <boost/coroutine/asymmetric_coroutine.hpp>
-//#include <gtl/include/scenes.h>
+
 #include <gtl/include/scene_graph.h>
 #include <gtl/include/events.h>
+
+#include <vector>
+#include <array>
 
 namespace gtl {
 
 class stage {
-       
+
+    using coro = boost::coroutines::asymmetric_coroutine<gtl::event>;        
+
+    gtl::d3d::device dev_;
     gtl::d3d::swap_chain& swchain_; 
     gtl::d3d::command_queue& cqueue_;    
-    gtl::d3d::sync_object sync_;
     unsigned num_buffers_;
-        
-    using coro = boost::coroutines::asymmetric_coroutine<gtl::event>;    
-    void handle_events(coro::pull_type&);
+    gtl::d3d::synchronization_object synchronizer_;    
+
+    gtl::d3d::D3D12Viewport viewport_;
+    gtl::d3d::D3D12ScissorRect scissor_;
+
+    gtl::d3d::root_signature root_sig_;
     
+    struct resource_object {
+        gtl::d3d::direct_command_allocator calloc_;
+        gtl::d3d::graphics_command_list clist_before_;
+        gtl::d3d::graphics_command_list clist_after_;
+        resource_object(gtl::d3d::device& dev) : calloc_{dev}, clist_before_{dev,calloc_}, clist_after_{dev,calloc_} {}
+        resource_object(resource_object&&) = default;
+        resource_object& operator=(resource_object&&) = default;
+    };
+
+    std::vector<resource_object> buffered_resource_;    
     gtl::scene_graph scenes_;    
 
+    void handle_events(coro::pull_type&);    
+
 public:
-    stage(gtl::d3d::swap_chain&, gtl::d3d::command_queue&, unsigned num_buffers, unsigned max_desync);    
-    //stage();
+    stage(gtl::d3d::swap_chain&, gtl::d3d::command_queue&, unsigned num_buffers, unsigned max_desync);        
     void draw(float);
     
     coro::push_type make_event_handler();                    

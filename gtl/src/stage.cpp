@@ -20,6 +20,10 @@
 #include <cassert>
 
 
+#include <gtl/include/scenes.h> // TODO remove 
+#include <gtl/include/demo_transition_scene.h>
+
+
 
 /*-----------------------------------------------------------------------------
     Mikel Negugogor (http://github.com/mikelneg)    
@@ -29,20 +33,76 @@ namespace gtl {
 
 
 stage::stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, unsigned num_buffers, unsigned max_desync)       
-    :   swchain_{swchain},
+    :   dev_{get_device_from(swchain)},
+        swchain_{swchain},
         cqueue_{cqueue_},
-        sync_{cqueue_,gtl::d3d::fence{get_device_from(swchain)},num_buffers-1,max_desync},
         num_buffers_{num_buffers},
-        scenes_{}
+        synchronizer_{cqueue_,num_buffers-1,max_desync},   
+        scenes_{},
+        root_sig_{dev_,gtl::d3d::dummy_rootsig_1()}
+        //calloc_{{{dev_},{dev_},{dev_}}},
+        //clist_before_{{{dev_, calloc_[0]},{dev_, calloc_[1]},{dev_, calloc_[2]}}},
+        //clist_after_{{{dev_, calloc_[0]},{dev_, calloc_[1]},{dev_, calloc_[2]}}}
 {
+        buffered_resource_.reserve(num_buffers);
+
+        for (unsigned i = 0; i < num_buffers; ++i) {
+            buffered_resource_.emplace_back(dev_);
+        }
+
         assert(num_buffers > 1);    
 }
 
 
 
 void stage::draw(float f)
-{
-    boost::apply_visitor([&](auto& scene){ scene.draw(f); }, scenes_.current_scene());
+{      
+        
+    auto fu = [&](auto idx) {                
+        assert(idx < buffered_resource_.size());
+        resource_object& ro_ = buffered_resource_[idx];        
+        gtl::d3d::direct_command_allocator& calloc = ro_.calloc_;
+        gtl::d3d::graphics_command_list& clb = ro_.clist_before_;
+        gtl::d3d::graphics_command_list& cla = ro_.clist_after_;
+        
+        auto res1 = calloc->Reset();
+        auto res2 = clb->Reset(calloc.get(), nullptr);                
+    
+        clb->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+                                          swchain_.get_current_resource(),                                           
+                                          D3D12_RESOURCE_STATE_PRESENT,
+                                          D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+        clb->Close();
+
+        auto res3 = cla->Reset(calloc.get(), nullptr);
+
+        cla->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+                                          swchain_.get_current_resource(), 
+                                          D3D12_RESOURCE_STATE_RENDER_TARGET, 
+                                          D3D12_RESOURCE_STATE_PRESENT));
+        
+        cla->Close();
+
+        std::vector<ID3D12CommandList*> v;
+        v.emplace_back(clb.get());
+        auto vec = boost::apply_visitor([&](auto& scene){ return scene.draw(static_cast<int>(idx), f, swchain_.rtv_heap()); }, scenes_.current_scene());
+        for (auto&& e : vec) v.emplace_back(e); 
+        v.emplace_back(cla.get());    
+
+        //std::initializer_list<ID3D12CommandList*> clists{clist_.get()};                                         
+        //if (WaitForSingleObject(swchain_->GetFrameLatencyWaitableObject(),0) == WAIT_OBJECT_0) {        
+            cqueue_->ExecuteCommandLists(static_cast<unsigned>(v.size()),v.data());
+            swchain_->Present(0,0);               
+            return true;
+        //} 
+        //    return false;
+    };
+
+    synchronizer_(fu,[](){});
+ 
+    //wait_for_gpu(dev_,cqueue_);    
+    //},[](){});    
 }
  
 
@@ -65,8 +125,10 @@ void stage::handle_events(coro::pull_type& yield)
     //    scenes_.current_scene() = boost::get<transition_scene>(scenes_.current_scene()).swap_second(scenes::detail::empty_scene{});
     //    apply_visitor(visit,scenes_.current_scene());
     //}
-      
-    scenes_.transition_scene(yield, gtl::d3d::get_device_from(swchain_), cqueue_, swchain_ );
+
+    //scenes_.current_scene() = scenes::transitions::twinkle_effect{dev_,cqueue_,gtl::d3d::dummy_rootsig_1()};
+        
+    scenes_.transition_scene(yield, dev_, cqueue_, swchain_, root_sig_);
 
     //for (;;) {
         //std::cout << "beginning stage handler..\n";  

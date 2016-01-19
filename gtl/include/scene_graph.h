@@ -22,10 +22,12 @@
 #include <vn/include/boost_visitors.h>
 
 #include <gtl/include/scenes.h>
-#include <gtl/include/intro_scene.h>
-#include <gtl/include/main_scene.h>
+#include <gtl/include/d3d_types.h>
+
+//#include <gtl/include/intro_scene.h>
+//#include <gtl/include/main_scene.h>
 #include <gtl/include/swirl_effect_transition_scene.h>
-#include <gtl/include/another_demo_transition_scene.h>
+#include <gtl/include/demo_transition_scene.h>
 
 namespace gtl {    
 
@@ -41,8 +43,8 @@ namespace gtl {
 
     public:        
         using scene_type = 
-            gtl::scenes::scene_variant<gtl::scenes::intro_scene, 
-                                       gtl::scenes::main_scene,
+            gtl::scenes::scene_variant<//gtl::scenes::intro_scene, 
+                                       //gtl::scenes::main_scene,
                                        gtl::scenes::transitions::swirl_effect,
                                        gtl::scenes::transitions::twinkle_effect>; // TODO private
 
@@ -62,36 +64,37 @@ namespace gtl {
         scene_graph() {}
         scene_type& current_scene() { 
             return current_scene_;         
-        }
+        }        
 
-        template <typename YieldType, typename Device, typename SwapChain, typename CommandQueue>
-        void transition_scene(YieldType& yield, Device& dev, SwapChain& swchain, CommandQueue& cqueue) {            
-        
+        template <typename A, typename B, typename C, typename D, typename R>
+        void transition_scene(A& yield, B& dev, C& cqueue, D& swapchain, R& rootsig) {            
+        //
             using transition_scene = scenes::detail::transition_scene<scene_type>;
             auto handle_events_v = vn::make_lambda_visitor<gtl::event>([&](auto& v){ return v.handle_events(yield); });
             auto handle_events = boost::apply_visitor(handle_events_v);//[&](scene_type& s) { return boost::apply_visitor(handle_events_v,s); };
-        
+        //
             scene_type& s = current_scene_;             
-            //s = scenes::transitions::swirl_effect{dev,swchain,cqueue};            
-            //handle_events(s);
-            
-            s = scenes::transitions::swirl_effect{dev,swchain,cqueue};
-
-            while (true) {                
+        //    //s = scenes::transitions::swirl_effect{dev,swchain,cqueue};            
+        //    //handle_events(s);
+                                
+            s = scenes::transitions::twinkle_effect{dev,swapchain,cqueue,rootsig};
+            handle_events(s);
+        
+            while (true) {                                
+        
+                s = scene_type{transition_scene{std::move(s), scenes::transitions::swirl_effect{dev,swapchain,cqueue,rootsig}, std::chrono::seconds(2)}};
                 handle_events(s);
-
-                s = scene_type{transition_scene{std::move(s), scenes::transitions::twinkle_effect{dev,swchain,cqueue}, std::chrono::seconds(2)}};
-                handle_events(s);
-
+        
                 s = boost::get<transition_scene>(s).swap_second(scenes::detail::empty_scene{});                                    
                 handle_events(s);            
-
-                s = scene_type{transition_scene{std::move(s), scenes::transitions::swirl_effect{dev,swchain,cqueue}, std::chrono::seconds(2)}};
+        
+                s = scene_type{transition_scene{std::move(s), scenes::transitions::twinkle_effect{dev,swapchain,cqueue,rootsig}, std::chrono::seconds(2)}};
                 handle_events(s);
-
+        
                 s = boost::get<transition_scene>(s).swap_second(scenes::detail::empty_scene{});                                    
                 handle_events(s);            
-
+            }   
+        }
         //
         //    //std::promise<scene_type> prom;
         //    s = boost::get<transition_scene>(s).swap_second(scenes::detail::empty_scene{});
@@ -109,11 +112,7 @@ namespace gtl {
         //    handle_events(s);            
         //
         //    s = boost::get<transition_scene>(s).swap_second(scenes::detail::empty_scene{});                                    
-        //    handle_events(s);            
-        
-                
-            }
-            std::cout << "what?\n";
+        //    handle_events(s);                                                       
 
         // works fine, testing..
         //
@@ -148,7 +147,7 @@ namespace gtl {
         //
         //    s = boost::get<transition_scene>(s).swap_second(scenes::detail::empty_scene{});                                    
         //    handle_events(s);            
-        }
+        
 
     };
   

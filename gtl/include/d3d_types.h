@@ -15,6 +15,8 @@
 #include <gtl/include/release_ptr.h>
 #include <gtl/include/gtl_window.h>
 #include <gtl/include/win_tools.h>
+
+#include <iostream> 
 #include <chrono>
 #include <array>
 #include <vector>
@@ -22,16 +24,18 @@
 #include <atomic>
 #include <string>
 
-namespace gtl {    
+#include <cassert>
+
+namespace gtl {        
 namespace d3d {    
 
-namespace _12_0 {    
-    
     namespace tags {
-        struct shader_visible{};
-        struct not_shader_visible{};                
+            struct shader_visible{};
+            struct not_shader_visible{};                
     }
-        
+
+namespace _12_0 {            
+           
 
     //
     //      device
@@ -106,9 +110,15 @@ namespace _12_0 {
         unsigned increment_;
         unsigned const size_;
     public:
-        resource_descriptor_heap(device&, unsigned num_descriptors, tags::shader_visible);
+        resource_descriptor_heap(device&, unsigned num_descriptors, d3d::tags::shader_visible);        
         auto increment_value() const noexcept { return increment_; }
         auto size() const noexcept { return size_; }
+        D3D12_CPU_DESCRIPTOR_HANDLE get_handle(unsigned n) { 
+            assert(n < size_);
+            CD3DX12_CPU_DESCRIPTOR_HANDLE handle{get()->GetCPUDescriptorHandleForHeapStart()};
+            handle.Offset(n,increment_value());
+            return handle;
+        }
     };
 
     class sampler_descriptor_heap : public release_ptr<D3D12DescriptorHeap> {
@@ -125,8 +135,10 @@ namespace _12_0 {
         std::vector<resource> frames_;        
         rtv_descriptor_heap rtv_heap_;
     public:
-        swap_chain(gtl::win::window&, device&, command_queue&, unsigned num_buffers); 
-        resource& get_current_resource() { return frames_[get()->GetCurrentBackBufferIndex()]; }                
+        swap_chain(gtl::win::window&, command_queue&, unsigned num_buffers); 
+        resource& get_current_resource() { return frames_[get()->GetCurrentBackBufferIndex()]; }
+        rtv_descriptor_heap& rtv_heap() { return rtv_heap_; }
+        void resize(int,int) { std::cout << "swapchain resizing..\n"; } // TODO implement
     };    
     
     class direct_command_allocator : public release_ptr<D3D12CommandAllocator> {
@@ -163,6 +175,7 @@ namespace _12_0 {
     public:
         pipeline_state_object(device&, root_signature&, vertex_shader&, pixel_shader&);
         pipeline_state_object(device&, root_signature&, compute_shader&);
+        pipeline_state_object(device&, D3D12_GRAPHICS_PIPELINE_STATE_DESC const&);
     };
 
     class graphics_command_list : public release_ptr<D3D12GraphicsCommandList> {
@@ -184,26 +197,30 @@ namespace _12_0 {
         resource buffer;                
         unsigned char* cbv_data_ptr{};
     public:
-        constant_buffer(device&,resource_descriptor_heap&,std::pair<char*,unsigned>);
-        void update(std::pair<char*,unsigned>);
-        resource& resource() { return buffer; }
+        constant_buffer(device&,resource_descriptor_heap&,std::size_t);
+        constant_buffer(device&,D3D12_CPU_DESCRIPTOR_HANDLE&,std::size_t);
+        void update(char const*, std::size_t);
+        void update(std::pair<char*,size_t>);
+        auto& resource() { return buffer; }
+        auto const& resource() const { return buffer; }
     };
 
     class srv : public release_ptr<D3D12Resource> {
     public:
         srv(device&,std::vector<D3D12_CPU_DESCRIPTOR_HANDLE>,command_queue&,std::wstring);
     };
-
+        
     class sampler : public release_ptr<D3D12Resource> {
     public:
         sampler(device&,D3D12_CPU_DESCRIPTOR_HANDLE);
+        sampler(device&,D3D12_SAMPLER_DESC const&,D3D12_CPU_DESCRIPTOR_HANDLE);
     };
 
     class rtv_srv_texture2D : public release_ptr<D3D12Resource> {
         rtv_descriptor_heap rtv_heap__;
         resource_descriptor_heap srv_heap_;
     public:
-        rtv_srv_texture2D(swap_chain&, unsigned num_buffers, tags::shader_visible);
+        rtv_srv_texture2D(swap_chain&, unsigned num_buffers, d3d::tags::shader_visible);
 
         resource_descriptor_heap& srv_heap() { return srv_heap_; }
         rtv_descriptor_heap& rtv_heap_() { return rtv_heap__; }

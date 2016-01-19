@@ -19,6 +19,8 @@
 
 //#include <gtl/include/intro_scene.h>
 //#include <gtl/include/main_scene.h>
+#include <gtl/include/d3d_types.h>
+#include <vector>
 
 #include <utility>
 
@@ -37,8 +39,8 @@ namespace gtl {
                 empty_scene() = default; 
                 empty_scene(empty_scene const&) = default; 
                 empty_scene(empty_scene&&) = default; 
-                empty_scene& operator=(empty_scene&&) = default; 
-                void draw(float) const {} 
+                empty_scene& operator=(empty_scene&&) = default;                 
+                std::vector<ID3D12CommandList*> draw(int,float,gtl::d3d::rtv_descriptor_heap&) const { return {}; } 
                 template <typename YieldType> gtl::event handle_events(YieldType&) const { return gtl::events::exit_state{0}; }                                                 
             };
             
@@ -93,11 +95,27 @@ namespace gtl {
                     return gtl::events::exit_state{0};
                 }
             
-                void draw(float) const {
+                //template <typename I, typename RTV, typename CLIST>
+                //void draw(float, I idx, RTV& rtv, CLIST& clist_) const {
+                //    float r = (current_timepoint_ - begin_timepoint_).count() / static_cast<float>(transition_duration_.count());            
+                //    if (r < 0.0f) { r = 0.0f; } else if (r > 1.0f) { r = 1.0f; }        
+                //    boost::apply_visitor([&](auto& v){ v.draw(idx,rtv,clist_,1.0f-r); },first_);
+                //    boost::apply_visitor([&](auto& v){ v.draw(idx,rtv,clist_,r); },second_);
+                //}
+
+                //  How to approach this:
+                //  (1) render targets are completely decided internally by the scene, they do all the binding, and they close
+                //      their own list(s) 
+                //  (2) vector<commandlist*> is returned and somewhere up the chain they are executed..
+                //  (3) what about indices for double-buffered resources.. 
+                
+                std::vector<ID3D12CommandList*> draw(int idx, float, gtl::d3d::rtv_descriptor_heap& rtv) const {
                     float r = (current_timepoint_ - begin_timepoint_).count() / static_cast<float>(transition_duration_.count());            
                     if (r < 0.0f) { r = 0.0f; } else if (r > 1.0f) { r = 1.0f; }        
-                    boost::apply_visitor([&](auto& v){ v.draw(1.0f-r); },first_);
-                    boost::apply_visitor([&](auto& v){ v.draw(r); },second_);
+                    auto v { boost::apply_visitor([&](auto& v){ return v.draw(idx,1.0f-r,rtv); },first_) };
+                    auto v_2 = boost::apply_visitor([&](auto& v){ return v.draw(idx,r,rtv); },second_);
+                    v.insert(begin(v),begin(v_2),end(v_2));
+                    return v;
                 }
 
                 T const& first() const { return first_; }

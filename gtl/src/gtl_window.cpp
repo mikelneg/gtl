@@ -53,7 +53,8 @@ window::window(HINSTANCE hinstance, unsigned width_px, unsigned height_px, const
   }
   //hwnd = CreateFullscreenWindow(hwnd,hinstance,style.lpszClassName,caption,this);
   hwnd = CreateWindow(style.lpszClassName, caption, 
-                      WS_VISIBLE,
+                      //WS_VISIBLE,
+                      WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME,
                       0, 0, // dummy positions, adjusted later with ResizeWindow()
                       0, 0, // dummy width and height, adjusted later with ResizeWindow()
                       nullptr, nullptr, // hWndParent and hMenu
