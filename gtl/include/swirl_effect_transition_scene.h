@@ -127,6 +127,62 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
         gtl::d3d::sampler_descriptor_heap sampler_heap_;
         gtl::d3d::sampler sampler_;
         
+         auto pso_desc(gtl::d3d::device& dev, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps) {
+            D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_{};
+            desc_.pRootSignature = rsig.get();
+		    desc_.VS = { reinterpret_cast<UINT8*>(vs->GetBufferPointer()), vs->GetBufferSize() };
+		    desc_.PS = { reinterpret_cast<UINT8*>(ps->GetBufferPointer()), ps->GetBufferSize() };        
+		    desc_.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
+		                            
+
+            //typedef struct D3D12_INPUT_ELEMENT_DESC
+            //{
+            //LPCSTR SemanticName;
+            //UINT SemanticIndex;
+            //DXGI_FORMAT Format;
+            //UINT InputSlot;
+            //UINT AlignedByteOffset;
+            //D3D12_INPUT_CLASSIFICATION InputSlotClass;
+            //UINT InstanceDataStepRate;
+
+            //D3D11_RASTERIZER_DESC desc_{};
+            //desc_.CullMode = D3D11_CULL_NONE; // BACK
+            //desc_.FillMode = D3D11_FILL_SOLID;
+            //desc_.FrontCounterClockwise = true;
+            //desc_.DepthBias = 0;
+            //desc_.DepthBiasClamp = 0;
+            //desc_.SlopeScaledDepthBias = 0;
+            //desc_.DepthClipEnable = false;
+            //desc_.ScissorEnable = false;
+            //desc_.MultisampleEnable = true;
+            //desc_.AntialiasedLineEnable = true;
+            desc_.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;  
+            desc_.RasterizerState.DepthClipEnable = false;
+            desc_.RasterizerState.AntialiasedLineEnable = true;            
+            
+            D3D12_BLEND_DESC blend_desc_ = {};//CD3DX12_BLEND_DESC(D3D12_DEFAULT);                  
+                blend_desc_.RenderTarget[0].BlendEnable = true;
+                blend_desc_.RenderTarget[0].SrcBlend = D3D12_BLEND_BLEND_FACTOR;
+                blend_desc_.RenderTarget[0].DestBlend = D3D12_BLEND_INV_BLEND_FACTOR;
+                blend_desc_.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
+                blend_desc_.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_BLEND_FACTOR;
+                blend_desc_.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_INV_BLEND_FACTOR;                
+                blend_desc_.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
+                blend_desc_.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;                 
+                blend_desc_.RenderTarget[0].BlendEnable = true;
+       
+            desc_.BlendState = blend_desc_;                                  
+            
+            desc_.DepthStencilState.DepthEnable = FALSE;
+		    desc_.DepthStencilState.StencilEnable = FALSE;
+		    desc_.SampleMask = UINT_MAX;                        
+		    desc_.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;            
+		    desc_.NumRenderTargets = 1;
+		    desc_.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;            
+		    desc_.SampleDesc.Count = 1;              
+            return desc_;		    
+        }
+
 
     public:
         swirl_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, gtl::d3d::root_signature& root_sig_) // TODO temporary effect..
@@ -139,7 +195,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                 cbheap_{{{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}}}},                                                     
                 cbuf_{},                
                 cbuffer_{{{dev_,cbheap_[0],sizeof(cbuf_)},{dev_,cbheap_[1],sizeof(cbuf_)},{dev_,cbheap_[2],sizeof(cbuf_)}}},                        
-                pso_{dev_, root_sig_, vshader_, pshader_},
+                pso_{dev_, pso_desc(dev_, root_sig_, vshader_, pshader_)},
                 calloc_{{{dev_},{dev_},{dev_}}},
                 clist_{{{dev_,calloc_[0],pso_},{dev_,calloc_[1],pso_},{dev_,calloc_[2],pso_}}},
                 viewport_{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f},

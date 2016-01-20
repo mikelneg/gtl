@@ -99,7 +99,9 @@ void stage::draw(float f)
         //    return false;
     };
 
-    synchronizer_(fu,[](){});
+    synchronizer_(fu,[](){}); // TODO this only synchronizes with the command queue; it doesn't 
+                              // guarantee that frames have been presented and that resources
+                              // are free to reuse --                                                                                                     
  
     //wait_for_gpu(dev_,cqueue_);    
     //},[](){});    

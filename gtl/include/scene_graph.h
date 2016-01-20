@@ -70,6 +70,7 @@ namespace gtl {
         void transition_scene(A& yield, B& dev, C& cqueue, D& swapchain, R& rootsig) {            
         //
             using transition_scene = scenes::detail::transition_scene<scene_type>;
+            using inv_transition_scene = scenes::detail::inverse_transition_scene<scene_type>;
             auto handle_events_v = vn::make_lambda_visitor<gtl::event>([&](auto& v){ return v.handle_events(yield); });
             auto handle_events = boost::apply_visitor(handle_events_v);//[&](scene_type& s) { return boost::apply_visitor(handle_events_v,s); };
         //
@@ -88,10 +89,10 @@ namespace gtl {
                 s = boost::get<transition_scene>(s).swap_second(scenes::detail::empty_scene{});                                    
                 handle_events(s);            
         
-                s = scene_type{transition_scene{std::move(s), scenes::transitions::twinkle_effect{dev,swapchain,cqueue,rootsig}, std::chrono::seconds(2)}};
+                s = scene_type{inv_transition_scene{std::move(s), scenes::transitions::twinkle_effect{dev,swapchain,cqueue,rootsig}, std::chrono::seconds(2)}};
                 handle_events(s);
         
-                s = boost::get<transition_scene>(s).swap_second(scenes::detail::empty_scene{});                                    
+                s = boost::get<inv_transition_scene>(s).swap_second(scenes::detail::empty_scene{});                                    
                 handle_events(s);            
             }   
         }

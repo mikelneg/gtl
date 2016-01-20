@@ -106,19 +106,24 @@ namespace transitions {
             cl->RSSetViewports(static_cast<unsigned>(viewports.size()),*viewports.begin());
             cl->RSSetScissorRects(1, std::addressof(scissor_));            
             cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-
-            float blendvalues[]{f,f,f,f};
-            cl->OMSetBlendFactor(blendvalues);
+            
+            //float blendvalues[]{f,f,f,f};
+            //cl->OMSetBlendFactor(blendvalues);
 
             CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
             rtv_handle.Offset(idx, rtv_heap_.increment_value());
+
+            float clearvalue[]{0.0f,0.0f,0.0f,0.0f};
+
+            cl->ClearRenderTargetView(rtv_handle,clearvalue,1,&scissor_); 
+
             cl->OMSetRenderTargets(1, &rtv_handle, TRUE, nullptr);
             cl->DrawInstanced(14, 1, 0, 0);             
 
             clist_[idx]->Close();
             font_clist_[idx]->Reset(calloc_[idx].get(),nullptr);      
-            font_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());
-            font_(idx,font_clist_[idx],viewport_,scissor_,rtv_handle);
+            font_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());            
+            font_(idx,f,font_clist_[idx],viewport_,scissor_,rtv_handle);
             font_clist_[idx]->Close();
 
             v.emplace_back(clist_[idx].get());

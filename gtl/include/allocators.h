@@ -38,7 +38,7 @@ namespace allocators {
     
         template <typename R>
         inline std::enable_if_t<std::is_trivially_default_constructible<R>::value>
-        construct(R*) noexcept {} // if our type is TDC we do nothing when default/value initialized       
+        construct(R*) noexcept {} // do nothing
     };
 
     template <typename T>

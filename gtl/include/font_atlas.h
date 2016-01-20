@@ -100,15 +100,17 @@ namespace d3d {
             desc_.InputLayout.pInputElementDescs = &layout_[0];
             desc_.InputLayout.NumElements = static_cast<unsigned>(layout_.size());
             
-                D3D12_BLEND_DESC blend_desc_{};                  
+                D3D12_BLEND_DESC blend_desc_ = CD3DX12_BLEND_DESC(D3D12_DEFAULT);                  
                 blend_desc_.RenderTarget[0].BlendEnable = true;
                 blend_desc_.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
                 blend_desc_.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
                 blend_desc_.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
                 blend_desc_.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ZERO;
-                blend_desc_.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ONE;
+                blend_desc_.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ONE;                
                 blend_desc_.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
                 blend_desc_.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;                 
+                blend_desc_.RenderTarget[0].BlendEnable = true;
+       
             desc_.BlendState = blend_desc_;                                  
             
             desc_.DepthStencilState.DepthEnable = FALSE;
@@ -124,9 +126,9 @@ namespace d3d {
         auto sampler_desc() {
             D3D12_SAMPLER_DESC sampler_{};
             sampler_.Filter = D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR;
-            sampler_.AddressU = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-            sampler_.AddressV = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
-            sampler_.AddressW = D3D12_TEXTURE_ADDRESS_MODE_CLAMP;
+            sampler_.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+            sampler_.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
+            sampler_.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
             sampler_.MaxAnisotropy = 4;
             sampler_.BorderColor[3] = 0.0f; // no alpha
             sampler_.ComparisonFunc = D3D12_COMPARISON_FUNC_NOT_EQUAL;
@@ -167,7 +169,7 @@ namespace d3d {
             vbuffers_[idx].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(Vertex));
         }
 
-        void operator()(unsigned idx, gtl::d3d::graphics_command_list& cl, 
+        void operator()(unsigned idx, float f, gtl::d3d::graphics_command_list& cl, 
                         gtl::d3d::D3D12Viewport& viewport,
                         gtl::d3d::D3D12ScissorRect& scissor,
                         D3D12_CPU_DESCRIPTOR_HANDLE& rtv_handle) const
@@ -188,6 +190,9 @@ namespace d3d {
             auto viewports = { std::addressof(viewport) };
             cl->RSSetViewports(static_cast<unsigned>(viewports.size()),*viewports.begin());
             
+            float blendvalues[]{f,f,f,f};
+            cl->OMSetBlendFactor(blendvalues);
+
             cl->RSSetScissorRects(1,&scissor);
             cl->OMSetRenderTargets(1, &rtv_handle, TRUE, nullptr);            
             cl->DrawInstanced(static_cast<unsigned>(mesh_.size()),1,0,0);
