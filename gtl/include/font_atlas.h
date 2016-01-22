@@ -62,6 +62,11 @@ namespace d3d {
                 {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                 {"UV", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
             };                         
+
+            //return std::vector<D3D12_INPUT_ELEMENT_DESC>{
+            //    {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+            //    {"UV", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+            //};                         
         }
 
         auto pso_desc(gtl::d3d::device& dev, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps) {
@@ -155,8 +160,8 @@ namespace d3d {
                        {dev,vbuffer_descriptors_.get_handle(2),MAX_STRING_WIDTH * sizeof(Vertex)}}},
             texture_descriptor_heap_{dev,1,gtl::d3d::tags::shader_visible{}},            
             texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, L"D:\\images\\fonts\\liberation\\bold-sdf\\font.dds"},                        
-            vshader_{L"FontAtlas_vs.cso"},
-            pshader_{L"FontAtlas_ps.cso"},
+            vshader_{L"font_atlas_vs.cso"},
+            pshader_{L"font_atlas_ps.cso"},
             pso_{dev,pso_desc(dev,rsig,vshader_,pshader_)},
             sampler_heap_{dev,1},            
             sampler_{dev,sampler_desc(),sampler_heap_->GetCPUDescriptorHandleForHeapStart()}
