@@ -14,6 +14,9 @@
 #include <array>
 
 namespace gtl {
+
+
+
 namespace d3d { 
 
     namespace tags { struct xml_format {}; } 
@@ -45,13 +48,13 @@ namespace d3d {
         std::unordered_multimap<uint8_t, std::pair<uint8_t, float>> kerning_map; 
     };            
 
-        struct Glyph {
-            float u, v;                        // uv coordinate in texture
-            float width, height;               // w/h of glyph
-            float x_offset, y_offset;          // offset for positioning
-            float x_advance;                   // xadvance for next character (altered by kerning)        
-            friend std::ostream& operator<<(std::ostream& s, Glyph& g);
-        };
+    struct Glyph {
+        float u,v;                        // uv coordinate in texture
+        float width, height;               // w/h of glyph
+        float x_offset, y_offset;          // offset for positioning
+        float x_advance;                   // xadvance for next character (altered by kerning)        
+        friend std::ostream& operator<<(std::ostream& s, Glyph& g);
+    };
 
 
 }} // namespace

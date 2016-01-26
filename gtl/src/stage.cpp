@@ -39,7 +39,7 @@ stage::stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, un
         num_buffers_{num_buffers},
         synchronizer_{cqueue_,num_buffers-1,max_desync},   
         scenes_{},
-        root_sig_{dev_,gtl::d3d::dummy_rootsig_1()}
+        root_sig_{dev_,gtl::d3d::dummy_rootsig_3()}
         //calloc_{{{dev_},{dev_},{dev_}}},
         //clist_before_{{{dev_, calloc_[0]},{dev_, calloc_[1]},{dev_, calloc_[2]}}},
         //clist_after_{{{dev_, calloc_[0]},{dev_, calloc_[1]},{dev_, calloc_[2]}}}
@@ -86,7 +86,8 @@ void stage::draw(float f)
 
         std::vector<ID3D12CommandList*> v;
         v.emplace_back(clb.get());
-        auto vec = boost::apply_visitor([&](auto& scene){ return scene.draw(static_cast<int>(idx), f, swchain_.rtv_heap()); }, scenes_.current_scene());
+        auto vec = boost::apply_visitor([&](auto& scene){ return scene.draw(static_cast<int>(idx), f, swchain_.rtv_heap()); }, 
+                                                    scenes_.current_scene());
         for (auto&& e : vec) v.emplace_back(e); 
         v.emplace_back(cla.get());    
 

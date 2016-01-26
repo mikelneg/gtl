@@ -1,8 +1,8 @@
 #include "../Include/font_atlas_glyph.h"
 
-//#define RAPIDXML_NO_EXCEPTIONS
-#define RAPIDXML_STATIC_POOL_SIZE (256)
 
+
+#define RAPIDXML_STATIC_POOL_SIZE (256)
 #include <RapidXML/rapidxml.hpp>
 
 #include <gtl/include/file_utilities.h>
@@ -84,9 +84,7 @@ font_atlas_glyph::font_atlas_glyph(std::wstring filename, d3d::tags::xml_format)
     base_width = extract_from_string<float>(node->first_attribute("base")->value());
     
     page_count = extract_from_string<float>(node->first_attribute("pages")->value());
- 
     
- 
     if (page_count > 1) {
         throw std::runtime_error{"page_count > 1 not currently supported.."};
     }

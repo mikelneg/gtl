@@ -27,11 +27,11 @@ namespace d3d {
             Eigen::Vector4f position;
             Eigen::Vector4f uv;        
         };
-    
+
         template <typename T>
         using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;
 
-        static constexpr unsigned MAX_STRING_WIDTH = 256;
+        static constexpr unsigned MAX_STRING_WIDTH = 256 * 6;
 
         std::vector<D3D12_INPUT_ELEMENT_DESC> layout_;
 
@@ -55,7 +55,7 @@ namespace d3d {
         //release_ptr<ID3D11BlendState> blendstate_{};
         //release_ptr<ID3D11RasterizerState> rsstate_{};
         //release_ptr<ID3D11SamplerState> sstate_{};
-        //release_ptr<ID3D11DepthStencilState> dsstate_{};              
+        //release_ptr<ID3D11DepthStencilState> dsstate_{};           
 
         auto vertex_layout() {
             return std::vector<D3D12_INPUT_ELEMENT_DESC>{
@@ -97,10 +97,10 @@ namespace d3d {
             //desc_.DepthClipEnable = false;
             //desc_.ScissorEnable = false;
             //desc_.MultisampleEnable = true;
-            //desc_.AntialiasedLineEnable = true;
+            //desc_.AntialiasedLineEnable = true;            
             desc_.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;  
             desc_.RasterizerState.DepthClipEnable = false;
-            desc_.RasterizerState.AntialiasedLineEnable = true;            
+            desc_.RasterizerState.AntialiasedLineEnable = false;            
 
             desc_.InputLayout.pInputElementDescs = &layout_[0];
             desc_.InputLayout.NumElements = static_cast<unsigned>(layout_.size());
@@ -130,7 +130,7 @@ namespace d3d {
 
         auto sampler_desc() {
             D3D12_SAMPLER_DESC sampler_{};
-            sampler_.Filter = D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR;
+            sampler_.Filter = D3D12_FILTER_MIN_POINT_MAG_MIP_LINEAR;            
             sampler_.AddressU = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
             sampler_.AddressV = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
             sampler_.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
@@ -143,6 +143,7 @@ namespace d3d {
     public:
     
         void set_message(std::string const& message) const;
+        void construct_vertices(std::string const& message) const;
     
         font_atlas() = default;
         font_atlas(font_atlas&&) = default;
@@ -159,14 +160,18 @@ namespace d3d {
                        {dev,vbuffer_descriptors_.get_handle(1),MAX_STRING_WIDTH * sizeof(Vertex)},
                        {dev,vbuffer_descriptors_.get_handle(2),MAX_STRING_WIDTH * sizeof(Vertex)}}},
             texture_descriptor_heap_{dev,1,gtl::d3d::tags::shader_visible{}},            
-            texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, L"D:\\images\\fonts\\liberation\\bold-sdf\\font.dds"},                        
+            texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, 
+                //L"D:\\images\\fonts\\liberation\\bold-sdf\\font.dds"
+                L"D:\\images\\fonts\\depth-field-font72\\font.dds"
+                },                        
             vshader_{L"font_atlas_vs.cso"},
             pshader_{L"font_atlas_ps.cso"},
             pso_{dev,pso_desc(dev,rsig,vshader_,pshader_)},
             sampler_heap_{dev,1},            
-            sampler_{dev,sampler_desc(),sampler_heap_->GetCPUDescriptorHandleForHeapStart()}
+            sampler_{dev,sampler_desc(),sampler_heap_->GetCPUDescriptorHandleForHeapStart()}            
         {            
-            set_message("AVAIL^^ -- starting up text..");
+            //set_message("AVAIL^^ -- starting up text..");
+            construct_vertices("VAVA hi this is a message how does it");
         }
     
         void update_vertex_buffer(unsigned idx) const
@@ -177,30 +182,38 @@ namespace d3d {
         void operator()(unsigned idx, float f, gtl::d3d::graphics_command_list& cl, 
                         gtl::d3d::D3D12Viewport& viewport,
                         gtl::d3d::D3D12ScissorRect& scissor,
+                        float font_scale,
                         D3D12_CPU_DESCRIPTOR_HANDLE& rtv_handle) const
         {                                
-            set_message("VAVAVmer;l");
+            
             update_vertex_buffer(idx);
 
             cl->SetPipelineState(pso_.get());
             auto heaps = { sampler_heap_.get(), texture_descriptor_heap_.get() };
         	cl->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());               
-            cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);            
+            //cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);            
+            cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);            
             cl->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
-            cl->SetGraphicsRootDescriptorTable(2, texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());
-                                                                                            
+            cl->SetGraphicsRootDescriptorTable(2, texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());                                                                      
+                        
+            cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);  
+            cl->SetGraphicsRoot32BitConstants(3, 1, std::addressof(font_scale), 4);  
+
             D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(),static_cast<unsigned>(mesh_.size() * sizeof(Vertex)),sizeof(Vertex)};
             cl->IASetVertexBuffers(0, 1, &cbv_);              
             
             auto viewports = { std::addressof(viewport) };
             cl->RSSetViewports(static_cast<unsigned>(viewports.size()),*viewports.begin());
             
-            float blendvalues[]{f,f,f,f};
-            cl->OMSetBlendFactor(blendvalues);
+            //float blendvalues[]{f,f,f,f};
+            //cl->OMSetBlendFactor(blendvalues);
 
             cl->RSSetScissorRects(1,&scissor);
             cl->OMSetRenderTargets(1, &rtv_handle, TRUE, nullptr);            
-            cl->DrawInstanced(static_cast<unsigned>(mesh_.size()),1,0,0);
+            if (mesh_.size() > 1) {
+                cl->DrawInstanced(static_cast<unsigned>(mesh_.size()-1),1,1,0);
+            }
+            // start vertex set to 1 to ignore first degenerate strip..
             
         }
     };

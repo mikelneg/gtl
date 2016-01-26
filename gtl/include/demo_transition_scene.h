@@ -44,6 +44,8 @@ namespace transitions {
         gtl::d3d::D3D12Viewport mutable viewport_;//{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f};
         gtl::d3d::D3D12ScissorRect mutable scissor_;//{0,0,960,540};    
 
+        gtl::d3d::D3D12Viewport mutable text_viewport_;//{0.0f,0.0f,320.0f,240.0f,1.0f,1.0f};
+
 
         gtl::d3d::resource_descriptor_heap resource_heap_;
         gtl::d3d::srv texture_;
@@ -52,6 +54,7 @@ namespace transitions {
         gtl::d3d::sampler sampler_;
                 
         gtl::d3d::font_atlas font_;
+        float mutable font_scale;
 
     public:
         twinkle_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, gtl::d3d::root_signature& root_sig_) // TODO temporary effect..
@@ -70,11 +73,16 @@ namespace transitions {
                 font_clist_{{{dev_,calloc_[0]},{dev_,calloc_[1]},{dev_,calloc_[2]}}},
                 viewport_{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f},
                 scissor_{0,0,960,540},
+                text_viewport_{0.0f,0.0f,320.0f,240.0f,1.0f,1.0f},
                 resource_heap_{dev_,1,gtl::d3d::tags::shader_visible{}},
                 texture_{dev_,{resource_heap_->GetCPUDescriptorHandleForHeapStart()},cqueue_,L"D:\\images\\skyboxes\\Grimmnight.dds"},
                 sampler_heap_{dev_,1},
                 sampler_{dev_,sampler_heap_->GetCPUDescriptorHandleForHeapStart()},        
-                font_{dev_, cqueue_, root_sig_, L"D:\\images\\fonts\\liberation\\bold-sdf\\font.fnt", gtl::d3d::tags::xml_format{}} 
+                font_{dev_, cqueue_, root_sig_, 
+                    //L"D:\\images\\fonts\\liberation\\bold-sdf\\font.fnt", 
+                    L"D:\\images\\fonts\\depth-field-font72\\font.fnt",
+                    gtl::d3d::tags::xml_format{}},
+                font_scale{72.0f}
         {            
             // cbuffer_[idx].update() -- 
             std::cout << "twinkle_effect()\n";                     
@@ -113,7 +121,7 @@ namespace transitions {
             CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
             rtv_handle.Offset(idx, rtv_heap_.increment_value());
 
-            float clearvalue[]{0.0f,0.0f,0.0f,0.0f};
+            float clearvalue[]{0.0f,0.0f,0.0f,0.0f};            
 
             cl->ClearRenderTargetView(rtv_handle,clearvalue,1,&scissor_); 
 
@@ -122,8 +130,12 @@ namespace transitions {
 
             clist_[idx]->Close();
             font_clist_[idx]->Reset(calloc_[idx].get(),nullptr);      
-            font_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());            
-            font_(idx,f,font_clist_[idx],viewport_,scissor_,rtv_handle);
+            font_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());               
+
+            float f_scale = font_scale / 72.0f;
+
+
+            font_(idx,f,font_clist_[idx],text_viewport_,scissor_,f_scale,rtv_handle);
             font_clist_[idx]->Close();
 
             v.emplace_back(clist_[idx].get());
@@ -144,15 +156,21 @@ namespace transitions {
                                     return gtl::events::exit_state{0}; break;
                         case k::K : std::cout << "twinkle_effect(): k pressed, throwing (none == " << count << ")\n";                                                
                                     throw std::runtime_error{__func__}; break;                    
-                        case k::R : std::cout << "twinkle_effect() : r pressed, resizing swapchain..\n"; 
-                                    swchain_.resize(100,100); 
-                                    break;
+                        //case k::R : std::cout << "twinkle_effect() : r pressed, resizing swapchain..\n"; 
+                        //            swchain_.resize(100,100); 
+                        //            break;
+                        case k::S : text_viewport_.Height++; break;
+                        case k::W : text_viewport_.Width++; break;
+                        case k::R : text_viewport_.TopLeftY++; break;
+                        case k::T : text_viewport_.TopLeftX++; break;
+                        case k::A : font_scale += 1.0f; break;
+                        case k::D : font_scale -= 1.0f; break;
                         default : std::cout << "twinkle_effect() : unknown key pressed\n"; 
                     }
                                    
                 } else if (same_type(yield.get(),ev::none{})) {
                     count++;
-                 }
+                }
             }            
             return gtl::events::exit_state{0};
         }            

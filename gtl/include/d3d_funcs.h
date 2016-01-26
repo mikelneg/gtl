@@ -46,6 +46,7 @@ namespace _12_0 {
 
         release_ptr<D3DBlob> dummy_rootsig_1();
         release_ptr<D3DBlob> dummy_rootsig_2();
+        release_ptr<D3DBlob> dummy_rootsig_3();
         
 }
 

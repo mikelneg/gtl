@@ -207,6 +207,44 @@ namespace _12_0 {
         return signature;
     }
 
+    release_ptr<D3DBlob> dummy_rootsig_3() 
+    {        
+        std::vector<CD3DX12_DESCRIPTOR_RANGE> table1_, table2_;
+		std::vector<CD3DX12_ROOT_PARAMETER> params_; 
+		
+        table1_.resize(1);     
+        table2_.resize(3);
+        
+        table1_[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);   // 1 descriptor, register 0     
+        
+        table2_[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);		  // 1 descriptor, register 0
+        table2_[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);    // 1 desc, reg 0, space 1
+        table2_[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);       // 1 desc, reg 0
+        
+        params_.resize(4);
+        params_[0].InitAsConstantBufferView(0); 
+        params_[1].InitAsDescriptorTable(win::array_size(table1_), table1_.data(), D3D12_SHADER_VISIBILITY_PIXEL);
+        params_[2].InitAsDescriptorTable(win::array_size(table2_), table2_.data(), D3D12_SHADER_VISIBILITY_ALL);
+        params_[3].InitAsConstants(8,0,1);
+
+		D3D12_ROOT_SIGNATURE_FLAGS flags_ =
+			D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
+			D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;			
+
+		CD3DX12_ROOT_SIGNATURE_DESC desc;
+		desc.Init(win::array_size(params_), params_.data(), 0, nullptr, flags_);    
+
+        release_ptr<D3DBlob> signature_;
+        release_ptr<D3DBlob> error_; // not currently using
+        win::throw_on_fail(D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, 
+                                                  &(signature_.expose_ptr()), &(error_.expose_ptr()))
+                                                  ,__func__);
+        return signature_;        
+    }
+
+
 
      /*               
             
