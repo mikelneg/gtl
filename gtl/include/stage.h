@@ -20,6 +20,11 @@
 #include <vector>
 #include <array>
 
+#include <thread>
+#include <atomic>
+#include <mutex>
+#include <condition_variable>
+
 namespace gtl {
 
 class stage {
@@ -49,11 +54,36 @@ class stage {
     std::vector<resource_object> buffered_resource_;    
     gtl::scene_graph scenes_;    
 
+    // multithread implementation here we go
+    enum class sig {
+        init_state,
+        frame_consumed,
+        frame_ready,
+        frame_hold,
+    };
+    
+
+    std::thread work_thread_;
+    std::mutex work_mutex_;
+    std::condition_variable cv_;
+    std::atomic_flag quit_flag_;
+    std::atomic<sig> frame_state_;
+    //
+    void work_thread();
+    
     void handle_events(coro::pull_type&);    
 
 public:
     stage(gtl::d3d::swap_chain&, gtl::d3d::command_queue&, unsigned num_buffers, unsigned max_desync);        
     void draw(float);
+
+    stage(stage&&) = delete;
+    stage& operator=(stage&&) = delete;
+
+    // multithread update
+    void update();
+
+    ~stage();
     
     coro::push_type make_event_handler();                    
 };

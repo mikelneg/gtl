@@ -66,33 +66,53 @@ namespace gtl {
             return current_scene_;         
         }        
 
-        template <typename A, typename B, typename C, typename D, typename R>
-        void transition_scene(A& yield, B& dev, C& cqueue, D& swapchain, R& rootsig) {            
+        template <typename A, typename B, typename C, typename D, typename R, typename M>
+        void transition_scene(A& yield, B& dev, C& cqueue, D& swapchain, R& rootsig, M& work_mutex_) {            
         //
             using transition_scene = scenes::detail::transition_scene<scene_type>;
             using inv_transition_scene = scenes::detail::inverse_transition_scene<scene_type>;
             auto handle_events_v = vn::make_lambda_visitor<gtl::event>([&](auto& v){ return v.handle_events(yield); });
             auto handle_events = boost::apply_visitor(handle_events_v);//[&](scene_type& s) { return boost::apply_visitor(handle_events_v,s); };
         //
+
             scene_type& s = current_scene_;             
-        //    //s = scenes::transitions::swirl_effect{dev,swchain,cqueue};            
-        //    //handle_events(s);
-                                
-            s = scenes::transitions::twinkle_effect{dev,swapchain,cqueue,rootsig};
-            handle_events(s);
+            
+            std::unique_lock<std::mutex> lock_{work_mutex_};
         
+
+        //    //s = scenes::transitions::swirl_effect{dev,swchain,cqueue};            
+        //    //handle_events(s);                                
+            s = scenes::transitions::twinkle_effect{dev,swapchain,cqueue,rootsig};
+
+            std::cout << "twinkle constructed..\n";
+            lock_.unlock();
+            std::cout << "lock released..\n";
+            handle_events(s);        
+            std::cout << "handle returned....\n";
+                        
+
             while (true) {                                
         
-                s = scene_type{transition_scene{std::move(s), scenes::transitions::swirl_effect{dev,swapchain,cqueue,rootsig}, std::chrono::seconds(2)}};
+                lock_.lock();    
+                s = scene_type{transition_scene{std::move(s), scenes::transitions::swirl_effect{dev,swapchain,cqueue,rootsig}, std::chrono::seconds(2)}};                
+                lock_.unlock();                
                 handle_events(s);
-        
+
+                lock_.lock();        
                 s = boost::get<transition_scene>(s).swap_second(scenes::detail::empty_scene{});                                    
+                lock_.unlock();
                 handle_events(s);            
         
+
+                lock_.lock();
                 s = scene_type{inv_transition_scene{std::move(s), scenes::transitions::twinkle_effect{dev,swapchain,cqueue,rootsig}, std::chrono::seconds(2)}};
+                lock_.unlock();
                 handle_events(s);
         
+
+                lock_.lock();
                 s = boost::get<inv_transition_scene>(s).swap_second(scenes::detail::empty_scene{});                                    
+                lock_.unlock();
                 handle_events(s);            
             }   
         }

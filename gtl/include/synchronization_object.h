@@ -30,7 +30,7 @@ public:
                                                                             //       the submitted index sequence by 2; beyond that the desync call is issued until 
                                                                             //       the completed cycle index is back within the tolerance         
     template <typename F, typename G>
-    void operator()(F&& sync_call, G&& desync_call) {            
+    bool operator()(F&& sync_call, G&& desync_call) {            
         // sync_call(value) should return true if the synchronization_object should advance its value, false otherwise.
         // desync_call() is a placeholder for the most part and will be called if the sync_object's value tolerance has been exceeded
         //  (this might be useful for logging..)
@@ -40,10 +40,12 @@ public:
             if (sync_call(period(last_set_value_,cycle_length_))) {     // if sync_call(value) returns true we advance   
                 cqueue_->Signal(fence_.get(), last_set_value_);        // value N has been issued to the fence..
                 ++last_set_value_;                                    // prepare to issue N+1..
+                return true;
             } else {}                                                // otherwise we do nothing..                                                                                    
         } else {                // desychronized case
             desync_call();      // issue sympathy call
         }
+        return false;
     }    
 
     synchronization_object(synchronization_object&&) = delete;

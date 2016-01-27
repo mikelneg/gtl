@@ -51,8 +51,92 @@ stage::stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, un
         }
 
         assert(num_buffers > 1);    
+
+        
+        frame_state_.store(sig::frame_consumed);
+
+        quit_flag_.test_and_set();        
+        work_thread_ = std::thread{&stage::work_thread,this};
 }
 
+stage::~stage() {
+    quit_flag_.clear();
+    cv_.notify_one();
+    if (work_thread_.joinable()) {
+        work_thread_.join();
+    }
+}
+
+void stage::work_thread() 
+{
+    std::unique_lock<std::mutex> lock_{work_mutex_};
+    
+    while(quit_flag_.test_and_set()) {    
+        cv_.wait(lock_);        
+        
+        auto fu = [&](auto idx) {                
+            assert(idx < buffered_resource_.size());
+            resource_object& ro_ = buffered_resource_[idx];        
+            gtl::d3d::direct_command_allocator& calloc = ro_.calloc_;
+            gtl::d3d::graphics_command_list& clb = ro_.clist_before_;
+            gtl::d3d::graphics_command_list& cla = ro_.clist_after_;
+            
+            auto res1 = calloc->Reset();
+            auto res2 = clb->Reset(calloc.get(), nullptr);                
+        
+            clb->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+                                              swchain_.get_current_resource(),                                           
+                                              D3D12_RESOURCE_STATE_PRESENT,
+                                              D3D12_RESOURCE_STATE_RENDER_TARGET));
+
+            clb->Close();
+
+            auto res3 = cla->Reset(calloc.get(), nullptr);
+
+            cla->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+                                              swchain_.get_current_resource(), 
+                                              D3D12_RESOURCE_STATE_RENDER_TARGET, 
+                                              D3D12_RESOURCE_STATE_PRESENT));
+            
+            cla->Close();
+
+            std::vector<ID3D12CommandList*> v;
+            v.emplace_back(clb.get());
+            auto vec = boost::apply_visitor([&](auto& scene){ return scene.draw(static_cast<int>(idx), 1.0f, swchain_.rtv_heap()); }, 
+                                                        scenes_.current_scene());
+            for (auto&& e : vec) v.emplace_back(e); 
+            v.emplace_back(cla.get());    
+
+            sig local_state_{sig::frame_consumed};
+            if (frame_state_.compare_exchange_weak(local_state_, sig::frame_hold, std::memory_order_acq_rel)) {           
+                cqueue_->ExecuteCommandLists(static_cast<unsigned>(v.size()),v.data());                
+                return true;
+            }            
+            return false;
+        };
+
+        if (synchronizer_(fu,[](){})) {
+            frame_state_.store(sig::frame_ready,std::memory_order_release);                
+        } // TODO this only synchronizes with the command queue; it doesn't 
+                              // guarantee that frames have been presented and that resources
+                              // are free to reuse --                                                                                                                     
+    }
+}
+
+void stage::update()
+{      
+    //sig local_state_{sig::init_state};
+
+    if (frame_state_.load(std::memory_order_acquire) == sig::frame_ready) {
+        swchain_->Present(0,0);
+        frame_state_.exchange(sig::frame_consumed,std::memory_order_acq_rel);
+    }
+
+    cv_.notify_one();
+    
+    //wait_for_gpu(dev_,cqueue_);    
+    //},[](){});    
+}
 
 
 void stage::draw(float f)
@@ -131,7 +215,7 @@ void stage::handle_events(coro::pull_type& yield)
 
     //scenes_.current_scene() = scenes::transitions::twinkle_effect{dev_,cqueue_,gtl::d3d::dummy_rootsig_1()};
         
-    scenes_.transition_scene(yield, dev_, cqueue_, swchain_, root_sig_);
+    scenes_.transition_scene(yield, dev_, cqueue_, swchain_, root_sig_, work_mutex_);
 
     //for (;;) {
         //std::cout << "beginning stage handler..\n";  
