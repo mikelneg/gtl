@@ -18,11 +18,11 @@
 
 #include <unordered_map>
 #include <cassert>
+#include <algorithm>
 
 
 #include <gtl/include/scenes.h> // TODO remove 
 #include <gtl/include/demo_transition_scene.h>
-
 
 
 /*-----------------------------------------------------------------------------
@@ -32,17 +32,16 @@
 namespace gtl {
 
 
-stage::stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, unsigned num_buffers, unsigned max_desync)       
-    :   dev_{get_device_from(swchain)},
+stage::stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, unsigned num_buffers)
+    :   dev_{get_device(swchain)},
         swchain_{swchain},
         cqueue_{cqueue_},
         num_buffers_{num_buffers},
-        synchronizer_{cqueue_,num_buffers-1,max_desync},   
+        synchronizer_{cqueue_, num_buffers-1, (std::max)(0,static_cast<int>(num_buffers)-2)}, // maximum desync value.   
         scenes_{},
-        root_sig_{dev_,gtl::d3d::dummy_rootsig_3()}
-        //calloc_{{{dev_},{dev_},{dev_}}},
-        //clist_before_{{{dev_, calloc_[0]},{dev_, calloc_[1]},{dev_, calloc_[2]}}},
-        //clist_after_{{{dev_, calloc_[0]},{dev_, calloc_[1]},{dev_, calloc_[2]}}}
+        root_sig_{dev_,gtl::d3d::dummy_rootsig_3()},
+        dxgi_pp{}, 
+        frame_rate_limiter_{std::chrono::milliseconds(9)} // frame time limit.. 17 == ~60fps, 9 == ~120fps
 {
         buffered_resource_.reserve(num_buffers);
 
@@ -51,17 +50,17 @@ stage::stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, un
         }
 
         assert(num_buffers > 1);    
-
-        
-        frame_state_.store(sig::frame_consumed);
-
+        frame_state_.store(sig::frame_consumed);   
         quit_flag_.test_and_set();        
         work_thread_ = std::thread{&stage::work_thread,this};
 }
 
-stage::~stage() {
+stage::~stage() 
+{
+    std::unique_lock<std::mutex> lock{work_mutex_};
+    frame_state_.store(sig::frame_consumed);
     quit_flag_.clear();
-    cv_.notify_one();
+    cv_.notify_one();    
     if (work_thread_.joinable()) {
         work_thread_.join();
     }
@@ -71,12 +70,12 @@ void stage::work_thread()
 {
     std::unique_lock<std::mutex> lock_{work_mutex_};
     
-    while(quit_flag_.test_and_set()) {    
-        cv_.wait(lock_);        
+    while(quit_flag_.test_and_set(std::memory_order_acq_rel)) {    
+        cv_.wait(lock_, [this](){ return frame_state_.load(std::memory_order_acquire) == sig::frame_consumed; });                
         
-        auto fu = [&](auto idx) {                
-            assert(idx < buffered_resource_.size());
-            resource_object& ro_ = buffered_resource_[idx];        
+        synchronizer_([this](auto& sync_index) {                        
+            assert(value(sync_index) < buffered_resource_.size());
+            resource_object& ro_ = buffered_resource_[value(sync_index)];        
             gtl::d3d::direct_command_allocator& calloc = ro_.calloc_;
             gtl::d3d::graphics_command_list& clb = ro_.clist_before_;
             gtl::d3d::graphics_command_list& cla = ro_.clist_after_;
@@ -102,94 +101,29 @@ void stage::work_thread()
 
             std::vector<ID3D12CommandList*> v;
             v.emplace_back(clb.get());
-            auto vec = boost::apply_visitor([&](auto& scene){ return scene.draw(static_cast<int>(idx), 1.0f, swchain_.rtv_heap()); }, 
+            auto vec = boost::apply_visitor([&](auto& scene){ return scene.draw(static_cast<int>(value(sync_index)), 1.0f, swchain_.rtv_heap()); }, 
                                                         scenes_.current_scene());
             for (auto&& e : vec) v.emplace_back(e); 
             v.emplace_back(cla.get());    
 
-            sig local_state_{sig::frame_consumed};
-            if (frame_state_.compare_exchange_weak(local_state_, sig::frame_hold, std::memory_order_acq_rel)) {           
-                cqueue_->ExecuteCommandLists(static_cast<unsigned>(v.size()),v.data());                
-                return true;
-            }            
-            return false;
-        };
-
-        if (synchronizer_(fu,[](){})) {
-            frame_state_.store(sig::frame_ready,std::memory_order_release);                
-        } // TODO this only synchronizes with the command queue; it doesn't 
-                              // guarantee that frames have been presented and that resources
-                              // are free to reuse --                                                                                                                     
+            //
+            cqueue_->ExecuteCommandLists(static_cast<unsigned>(v.size()),v.data());                                                
+            advance(sync_index);    // the command queue's update has to be sequenced before the frame is made ready                                   
+            frame_state_.store(sig::frame_ready,std::memory_order_release);                            
+       },[](){});
     }
 }
 
 void stage::update()
-{      
-    //sig local_state_{sig::init_state};
-
-    if (frame_state_.load(std::memory_order_acquire) == sig::frame_ready) {
-        swchain_->Present(0,0);
-        frame_state_.exchange(sig::frame_consumed,std::memory_order_acq_rel);
-    }
-
-    cv_.notify_one();
-    
-    //wait_for_gpu(dev_,cqueue_);    
-    //},[](){});    
-}
-
-
-void stage::draw(float f)
-{      
-        
-    auto fu = [&](auto idx) {                
-        assert(idx < buffered_resource_.size());
-        resource_object& ro_ = buffered_resource_[idx];        
-        gtl::d3d::direct_command_allocator& calloc = ro_.calloc_;
-        gtl::d3d::graphics_command_list& clb = ro_.clist_before_;
-        gtl::d3d::graphics_command_list& cla = ro_.clist_after_;
-        
-        auto res1 = calloc->Reset();
-        auto res2 = clb->Reset(calloc.get(), nullptr);                
-    
-        clb->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                          swchain_.get_current_resource(),                                           
-                                          D3D12_RESOURCE_STATE_PRESENT,
-                                          D3D12_RESOURCE_STATE_RENDER_TARGET));
-
-        clb->Close();
-
-        auto res3 = cla->Reset(calloc.get(), nullptr);
-
-        cla->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                          swchain_.get_current_resource(), 
-                                          D3D12_RESOURCE_STATE_RENDER_TARGET, 
-                                          D3D12_RESOURCE_STATE_PRESENT));
-        
-        cla->Close();
-
-        std::vector<ID3D12CommandList*> v;
-        v.emplace_back(clb.get());
-        auto vec = boost::apply_visitor([&](auto& scene){ return scene.draw(static_cast<int>(idx), f, swchain_.rtv_heap()); }, 
-                                                    scenes_.current_scene());
-        for (auto&& e : vec) v.emplace_back(e); 
-        v.emplace_back(cla.get());    
-
-        //std::initializer_list<ID3D12CommandList*> clists{clist_.get()};                                         
-        //if (WaitForSingleObject(swchain_->GetFrameLatencyWaitableObject(),0) == WAIT_OBJECT_0) {        
-            cqueue_->ExecuteCommandLists(static_cast<unsigned>(v.size()),v.data());
-            swchain_->Present(0,0);               
-            return true;
-        //} 
-        //    return false;
-    };
-
-    synchronizer_(fu,[](){}); // TODO this only synchronizes with the command queue; it doesn't 
-                              // guarantee that frames have been presented and that resources
-                              // are free to reuse --                                                                                                     
- 
-    //wait_for_gpu(dev_,cqueue_);    
-    //},[](){});    
+{          
+    frame_rate_limiter_(
+        [this](){         
+            if (frame_state_.load(std::memory_order_acquire) == sig::frame_ready) {
+                swchain_->Present1(0,0,std::addressof(dxgi_pp)); // potentially blocking 
+                frame_state_.store(sig::frame_consumed, std::memory_order_release);   
+                cv_.notify_one();
+            }                
+        });    
 }
  
 

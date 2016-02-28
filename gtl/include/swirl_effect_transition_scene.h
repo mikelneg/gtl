@@ -249,6 +249,8 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             return v;
         }
         
+        // ^^ vv ^^ vv ^^ vv
+
         template <typename YieldType>
         gtl::event handle_events(YieldType& yield) const {            
             namespace ev = gtl::events;

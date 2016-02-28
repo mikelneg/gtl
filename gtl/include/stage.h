@@ -16,6 +16,7 @@
 
 #include <gtl/include/scene_graph.h>
 #include <gtl/include/events.h>
+#include <gtl/include/rate_limiter.h>
 
 #include <vector>
 #include <array>
@@ -41,6 +42,8 @@ class stage {
     gtl::d3d::D3D12ScissorRect scissor_;
 
     gtl::d3d::root_signature root_sig_;
+
+    gtl::d3d::PresentParameters dxgi_pp;
     
     struct resource_object {
         gtl::d3d::direct_command_allocator calloc_;
@@ -56,25 +59,24 @@ class stage {
 
     // multithread implementation here we go
     enum class sig {
-        init_state,
         frame_consumed,
-        frame_ready,
-        frame_hold,
+        frame_ready,        
     };
     
-
     std::thread work_thread_;
     std::mutex work_mutex_;
     std::condition_variable cv_;
     std::atomic_flag quit_flag_;
-    std::atomic<sig> frame_state_;
+    std::atomic<sig> frame_state_;    
+
+    gtl::rate_limiter frame_rate_limiter_;
     //
     void work_thread();
     
     void handle_events(coro::pull_type&);    
 
 public:
-    stage(gtl::d3d::swap_chain&, gtl::d3d::command_queue&, unsigned num_buffers, unsigned max_desync);        
+    stage(gtl::d3d::swap_chain&, gtl::d3d::command_queue&, unsigned num_buffers);        
     void draw(float);
 
     stage(stage&&) = delete;

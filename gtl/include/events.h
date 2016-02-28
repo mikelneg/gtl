@@ -15,17 +15,22 @@
 namespace gtl {
 namespace events {
 
-    inline namespace event_types {
+    inline namespace event_types {                    
+        struct done {};
+        //
         struct none {};        
         struct keydown { unsigned key; };
+        struct mouse_click { int id; int x,y; };
         struct mousedown {};
         struct exit_immediately {};
         struct exit_state { int exitcode; };
     }                
 
     class event_variant {
-        using variant = vn::variant_over<none,
-                                         keydown, 
+        using variant = vn::variant_over<done, 
+                                         none,
+                                         keydown,
+                                         mouse_click,
                                          mousedown,                                          
                                          exit_immediately,
                                          exit_state>;
@@ -40,12 +45,20 @@ namespace events {
 
         variant value() const { return value_; }
 
-        friend bool same_type(event_variant const& lhs, event_variant const& rhs) { 
+        friend bool same_type(event_variant const& lhs, event_variant const& rhs) {
+            using boost::apply_visitor;
             return apply_visitor(vn::visitors::same_type{},lhs.value_,rhs.value_); 
         }
 
         friend bool operator==(event_variant const& lhs, event_variant const& rhs) {
+            using boost::apply_visitor;
             return apply_visitor(vn::visitors::weak_equality{}, lhs.value_, rhs.value_);
+        }
+
+        template <typename T>
+        friend bool has_variant_type(event_variant const& e) { 
+            using boost::apply_visitor;
+            return apply_visitor(vn::visitors::has_variant_type<T>{},e);
         }
     };
 

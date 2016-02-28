@@ -36,6 +36,7 @@ namespace   d3d {
         using D3D12ScissorRect         = D3D12_RECT;         
         using D3D12CommandList         = ID3D12CommandList;
         using CpuDescriptorHandle      = CD3DX12_CPU_DESCRIPTOR_HANDLE;
+        using PresentParameters        = DXGI_PRESENT_PARAMETERS;
 
         constexpr int frame_count() noexcept { return 3; }    
         // Nice discussion, and suggests 3 as the minimum default buffer count (reasons in the video):    
