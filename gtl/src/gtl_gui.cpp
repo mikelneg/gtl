@@ -77,7 +77,7 @@ namespace gui {
     void textbox::set_focus(gui_listener_pull& p) {        
         using gtl::events::has_variant_type;
         std::cout << "textbox taking focus..\n";               
-        while (!has_variant_type<gtl::events::done>(msg(p.get()))) {
+        while (!has_variant_type<gtl::events::exit_all>(msg(p.get()))) {
             if (has_variant_type<gtl::events::none>(msg(p.get()))) {
                 //yield.get().second(msg::none{});
                 if (controller(p.get())) {
@@ -94,7 +94,7 @@ namespace gui {
     void textbox::listen(gui_listener_pull& p) {
         using gtl::events::has_variant_type;
         std::cout << "textbox observing..\n";        
-        while (!has_variant_type<gtl::events::done>(msg(p.get()))) {
+        while (!has_variant_type<gtl::events::exit_all>(msg(p.get()))) {
             if (has_variant_type<gtl::events::none>(msg(p.get()))) {
                 std::cout << "[textbox noticed the <none> message!]\n";
             } else
@@ -112,7 +112,7 @@ namespace gui {
         std::cout << "textbox done observing..\n";
     }
 
-    void button::click(gui_pull& p) const { func_(p); }
+    void button::click(gui_listener_pull& p) const { func_(p); }
 
 }} // namespaces
 
