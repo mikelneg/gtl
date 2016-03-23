@@ -151,7 +151,7 @@ namespace transitions {
             while (!same_type(yield().get(),ev::exit_immediately{})){                   
                 if (same_type(yield.get(),ev::keydown{})){ 
                     
-                    switch( boost::get<ev::keydown>( yield.get().value() ).key ) {
+                    switch( boost::get<ev::keydown>( yield.get() ).key ) {
                         case k::Q : std::cout << "twinkle_effect(): q pressed, exiting A from route 0 (none == " << count << ")\n";                                                                
                                     return gtl::events::exit_state{0}; break;
                         case k::K : std::cout << "twinkle_effect(): k pressed, throwing (none == " << count << ")\n";                                                

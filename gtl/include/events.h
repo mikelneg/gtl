@@ -48,6 +48,9 @@ namespace events {
         event_variant(Args&&...args) noexcept(noexcept(event_variant_base_(std::forward<Args>(args)...)))
             : event_variant_base_(std::forward<Args>(args)...) {}
                 
+        event_variant(event_variant&&) = default;
+        event_variant& operator=(event_variant&&) = default;
+
         friend bool same_type(event_variant const& lhs, event_variant const& rhs) {
             using boost::apply_visitor;
             return apply_visitor(vn::visitors::same_type{},lhs,rhs); 

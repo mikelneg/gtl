@@ -20,6 +20,7 @@
 #include <boost/coroutine/asymmetric_coroutine.hpp>
 
 #include <gtl/include/events.h>
+#include <gtl/include/gtl_render_properties.h>
 
 namespace gtl { 
 namespace gui {  
@@ -36,11 +37,7 @@ namespace gui {
     class empty {}; 
     
     using id = std::string;
-            
-    //using listener = boost::coroutines::asymmetric_coroutine<std::pair<int&, gtl::gui::layer&>>;
-    //using observer = boost::coroutines::asymmetric_coroutine<std::pair<gtl::gui::ui_variant&, std::string>>::push_type;
-    //using msg_registry = std::unordered_multimap<std::string,observer>;
-       
+                  
     using event_stream = boost::coroutines::asymmetric_coroutine< gtl::event const& >;
     using event_pull = event_stream::pull_type;    
     using event_push = event_stream::push_type;
@@ -56,27 +53,6 @@ namespace gui {
     using gui_pull = gui_channel::pull_type;
     using gui_push = gui_channel::push_type;
     
-    
-    //template <typename T>
-    //struct msg_reg {
-    //    std::vector<msg_observer::push_type> reg;
-    //
-    //    template <typename F>
-    //    void attach(F&& f) {
-    //        reg.emplace_back(std::forward<F>(f));
-    //    }
-    //
-    //    friend auto begin(msg_reg& m) { return m.reg.begin(); }
-    //    friend auto end(msg_reg& m) { return m.reg.end(); }
-    //};
-    
-    // some generic interface:
-    //    listen(p,q);
-    //
-    // using listener_registry = std::vector< event_push >;    
-
-    //inline layer& get_parent_from(gui_channel_params& p) { return p.first; }
-    //inline layer& get_parent_from(gui_pull& p) { return get_parent_from(p.get()); }    
     
     struct listener_registry {
         std::vector< gui_listener_push > listeners_;
