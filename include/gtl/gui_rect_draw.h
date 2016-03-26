@@ -1,16 +1,16 @@
-#ifndef TUWOOAFFEEF_GTL_D3D_FONT_ATLAS_H_
-#define TUWOOAFFEEF_GTL_D3D_FONT_ATLAS_H_
+#ifndef UWAAFVBBZZASASDFF_GTL_GUI_RECT_DRAW_H_
+#define UWAAFVBBZZASASDFF_GTL_GUI_RECT_DRAW_H_
 
 /*-----------------------------------------------------------------------------
     Mikel Negugogor (http://github.com/mikelneg)                              
     
-    namespace gtl::d3d::
+    namespace gtl::gui::detail
     
-    class font_atlas;
+    class rect_draw
 -----------------------------------------------------------------------------*/
 
 #include <gtl/d3d_types.h>
-#include <gtl/font_atlas_glyph.h>
+#include <gtl/gui_rect.h>
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
@@ -19,23 +19,19 @@
 namespace gtl {
 namespace d3d {
 
-    namespace tags { struct xml_format; } // defined in font_atlas_glyph.h
-
-    class font_atlas {        
+    class rect_draw {        
 
         struct Vertex {
             Eigen::Vector4f position;
             Eigen::Vector4f uv;        
         };
 
+        static constexpr unsigned MAX_RECTS = 40 * 4;
+
         template <typename T>
-        using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;
+        using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;        
 
-        static constexpr unsigned MAX_STRING_WIDTH = 256 * 6;
-
-        std::vector<D3D12_INPUT_ELEMENT_DESC> layout_;
-
-        font_atlas_glyph mutable font_definition;
+        std::vector<D3D12_INPUT_ELEMENT_DESC> layout_;        
 
         gtl::d3d::resource_descriptor_heap vbuffer_descriptors_;        
         aligned_vector<Vertex> mutable mesh_;                
@@ -52,21 +48,12 @@ namespace d3d {
         gtl::d3d::sampler_descriptor_heap sampler_heap_;
         gtl::d3d::sampler sampler_;
 
-        //release_ptr<ID3D11BlendState> blendstate_{};
-        //release_ptr<ID3D11RasterizerState> rsstate_{};
-        //release_ptr<ID3D11SamplerState> sstate_{};
-        //release_ptr<ID3D11DepthStencilState> dsstate_{};           
-
         auto vertex_layout() {
             return std::vector<D3D12_INPUT_ELEMENT_DESC>{
                 {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                 {"UV", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
             };                         
 
-            //return std::vector<D3D12_INPUT_ELEMENT_DESC>{
-            //    {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-            //    {"UV", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
-            //};                         
         }
 
         auto pso_desc(gtl::d3d::device& dev, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps) {
@@ -77,27 +64,6 @@ namespace d3d {
 		    desc_.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 		                            
 
-            //typedef struct D3D12_INPUT_ELEMENT_DESC
-            //{
-            //LPCSTR SemanticName;
-            //UINT SemanticIndex;
-            //DXGI_FORMAT Format;
-            //UINT InputSlot;
-            //UINT AlignedByteOffset;
-            //D3D12_INPUT_CLASSIFICATION InputSlotClass;
-            //UINT InstanceDataStepRate;
-
-            //D3D11_RASTERIZER_DESC desc_{};
-            //desc_.CullMode = D3D11_CULL_NONE; // BACK
-            //desc_.FillMode = D3D11_FILL_SOLID;
-            //desc_.FrontCounterClockwise = true;
-            //desc_.DepthBias = 0;
-            //desc_.DepthBiasClamp = 0;
-            //desc_.SlopeScaledDepthBias = 0;
-            //desc_.DepthClipEnable = false;
-            //desc_.ScissorEnable = false;
-            //desc_.MultisampleEnable = true;
-            //desc_.AntialiasedLineEnable = true;            
             desc_.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;  
             desc_.RasterizerState.DepthClipEnable = false;
             desc_.RasterizerState.AntialiasedLineEnable = false;            
@@ -141,37 +107,34 @@ namespace d3d {
         }
 
     public:
+            
+        void construct_vertices() const;
     
-        void set_message(std::string const& message) const;
-        void construct_vertices(std::string const& message) const;
+        rect_draw() = default;
+        rect_draw(rect_draw&&) = default;
+        rect_draw& operator=(rect_draw&&) = default;
     
-        font_atlas() = default;
-        font_atlas(font_atlas&&) = default;
-        font_atlas& operator=(font_atlas&&) = default;
-    
-        font_atlas(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, 
-                   gtl::d3d::root_signature& rsig, 
-                   std::wstring definition_filename, 
-                   gtl::d3d::tags::xml_format tag) 
-        :   layout_(vertex_layout()),
-            font_definition{definition_filename, tag},
+        rect_draw(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, 
+                   gtl::d3d::root_signature& rsig) 
+        :   layout_(vertex_layout()),            
             vbuffer_descriptors_{dev,3,gtl::d3d::tags::shader_visible{}},
-            vbuffers_{{{dev,vbuffer_descriptors_.get_handle(0),MAX_STRING_WIDTH * sizeof(Vertex)},
-                       {dev,vbuffer_descriptors_.get_handle(1),MAX_STRING_WIDTH * sizeof(Vertex)},
-                       {dev,vbuffer_descriptors_.get_handle(2),MAX_STRING_WIDTH * sizeof(Vertex)}}},
+            vbuffers_{{{dev,vbuffer_descriptors_.get_handle(0), MAX_RECTS  * sizeof(Vertex)},
+                       {dev,vbuffer_descriptors_.get_handle(1), MAX_RECTS  * sizeof(Vertex)},
+                       {dev,vbuffer_descriptors_.get_handle(2), MAX_RECTS  * sizeof(Vertex)}}},
             texture_descriptor_heap_{dev,1,gtl::d3d::tags::shader_visible{}},            
-            texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, 
-                //L"D:\\images\\fonts\\liberation\\bold-sdf\\font.dds"
-                L"D:\\images\\fonts\\depth-field-font72\\font.dds"
+            texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue,                 
+                L"D:\\images\\palettes\\greenish_palette.dds"
                 },                        
-            vshader_{L"font_atlas_vs.cso"},
-            pshader_{L"font_atlas_ps.cso"},
+            vshader_{L"rect_draw_gui_vs.cso"},
+            pshader_{L"rect_draw_gui_ps.cso"},
             pso_{dev,pso_desc(dev,rsig,vshader_,pshader_)},
             sampler_heap_{dev,1},            
             sampler_{dev,sampler_desc(),sampler_heap_->GetCPUDescriptorHandleForHeapStart()}            
-        {            
-            //set_message("AVAIL^^ -- starting up text..");
-            construct_vertices("VAVA hi this is a message how does it");
+        {                        
+            construct_vertices();            
+            update_vertex_buffer(0);
+            update_vertex_buffer(1);
+            update_vertex_buffer(2);
         }
     
         void update_vertex_buffer(unsigned idx) const
@@ -181,13 +144,11 @@ namespace d3d {
 
         void operator()(unsigned idx, float f, gtl::d3d::graphics_command_list& cl, 
                         gtl::d3d::D3D12Viewport const& viewport,
-                        gtl::d3d::D3D12ScissorRect const& scissor,
-                        float font_scale,
+                        gtl::d3d::D3D12ScissorRect const& scissor,                        
                         D3D12_CPU_DESCRIPTOR_HANDLE const& rtv_handle) const
         {                                
+            //update_vertex_buffer(idx);
             
-            update_vertex_buffer(idx);
-
             cl->SetPipelineState(pso_.get());
             auto heaps = { sampler_heap_.get(), texture_descriptor_heap_.get() };
         	cl->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());               
@@ -197,7 +158,7 @@ namespace d3d {
             cl->SetGraphicsRootDescriptorTable(2, texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());                                                                      
                         
             cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);  
-            cl->SetGraphicsRoot32BitConstants(3, 1, std::addressof(font_scale), 4);  
+            //cl->SetGraphicsRoot32BitConstants(3, 1, std::addressof(font_scale), 4);  
 
             D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(),static_cast<unsigned>(mesh_.size() * sizeof(Vertex)),sizeof(Vertex)};
             cl->IASetVertexBuffers(0, 1, &cbv_);              

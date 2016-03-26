@@ -22,7 +22,8 @@
 #include <gtl/d3d_types.h>
 #include <gtl/d3d_funcs.h>
 
-#include <gtl/d3d_gui_types.h>
+#include <gtl/gui_rect_draw.h>
+
 #include <vn/math_utilities.h>
 
 #include <Eigen/Dense>
@@ -120,18 +121,19 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 
         std::array<gtl::d3d::direct_command_allocator,frame_count> calloc_;
         std::array<gtl::d3d::graphics_command_list,frame_count> clist_;
+        std::array<gtl::d3d::graphics_command_list,frame_count> mutable gui_rect_clist_;
         
         gtl::d3d::D3D12Viewport viewport_;//{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f};
         gtl::d3d::D3D12ScissorRect scissor_;//{0,0,960,540};    
 
         gtl::d3d::resource_descriptor_heap resource_heap_;
-        gtl::d3d::srv texture_;
-        gtl::d3d::srv color_palette_;
+        gtl::d3d::srv texture_;        
 
         gtl::d3d::sampler_descriptor_heap sampler_heap_;
-        gtl::d3d::sampler sampler_;
+        gtl::d3d::sampler sampler_;      
 
-        std::vector<gtl::d3d::dummy_types::rect> gui_rects;
+        gtl::d3d::rect_draw gui_rects_;
+
 
         auto pso_desc(gtl::d3d::device& dev, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps) {
             D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_{};
@@ -204,25 +206,17 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                 pso_{dev_, pso_desc(dev_, root_sig_, vshader_, pshader_)},
                 calloc_{{{dev_},{dev_},{dev_}}},
                 clist_{{{dev_,calloc_[0],pso_},{dev_,calloc_[1],pso_},{dev_,calloc_[2],pso_}}},
+                gui_rect_clist_{{{dev_,calloc_[0]},{dev_,calloc_[1]},{dev_,calloc_[2]}}},
                 viewport_{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f},
                 scissor_{0,0,960,540},
-                resource_heap_{dev_,1,gtl::d3d::tags::shader_visible{}},
+                resource_heap_{dev_,2,gtl::d3d::tags::shader_visible{}},
                 texture_{dev_,{resource_heap_->GetCPUDescriptorHandleForHeapStart()},cqueue_,L"D:\\images\\skyboxes\\Nightsky.dds"},
-                color_palette_{dev_,{},cqueue_,L"D:\\images\\palettes\\greenish_palette.dds"},
                 sampler_heap_{dev_,1},
-                sampler_{dev_,sampler_heap_->GetCPUDescriptorHandleForHeapStart()}
+                sampler_{dev_,sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
+                gui_rects_{dev_, cqueue_, root_sig_}
         {            
             // cbuffer_[idx].update() -- 
-            std::cout << "swirl_effect()\n";
-
-            // construct gui_dummy stuff..            
-            for (unsigned i = 0; i < 20; ++i) {
-                gui_rects.emplace_back(gtl::d3d::dummy_types::rect{
-                                        {vn::math::rand_zero_one(),0.001f,1.0f,1.0f},
-                                        {0.8f, 0.8f},
-                                        static_cast<uint32_t>(i)
-                                       });
-            }
+            std::cout << "swirl_effect()\n";            
         }
 
         swirl_effect& operator=(swirl_effect&&) { std::cout << "swirl_effect operator= called..\n"; return *this; } // TODO throw? assert false?
@@ -261,7 +255,16 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             cl->DrawInstanced(14, 1, 0, 0);             
 
             clist_[idx]->Close();
+
+            gui_rect_clist_[idx]->Reset(calloc_[idx].get(),nullptr);      
+            gui_rect_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());                           
+
+            gui_rects_(idx,f,gui_rect_clist_[idx],viewport_,scissor_,rtv_handle);
+            gui_rect_clist_[idx]->Close();
+
             v.emplace_back(clist_[idx].get());
+            v.emplace_back(gui_rect_clist_[idx].get());
+            
             return v;
         }
         

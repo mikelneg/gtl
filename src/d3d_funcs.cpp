@@ -215,11 +215,11 @@ namespace _12_0 {
         table1_.resize(1);     
         table2_.resize(3);
         
-        table1_[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);   // 1 descriptor, register 0     
+        table1_[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);   // 1 descriptor, register 0             
         
-        table2_[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);		  // 1 descriptor, register 0
+        table2_[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 2, 0);		  // 1 descriptor, register 0
         table2_[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0, 1);    // 1 desc, reg 0, space 1
-        table2_[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);       // 1 desc, reg 0
+        table2_[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);       // 1 desc, reg 0        
         
         params_.resize(4);
         params_[0].InitAsConstantBufferView(0); 

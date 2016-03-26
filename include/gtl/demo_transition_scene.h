@@ -54,7 +54,7 @@ namespace transitions {
         gtl::d3d::sampler sampler_;
                 
         gtl::d3d::font_atlas font_;
-        float mutable font_scale;
+        float mutable font_scale;        
 
     public:
         twinkle_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, gtl::d3d::root_signature& root_sig_) // TODO temporary effect..
@@ -74,7 +74,7 @@ namespace transitions {
                 viewport_{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f},
                 scissor_{0,0,960,540},
                 text_viewport_{0.0f,0.0f,320.0f,240.0f,1.0f,1.0f},
-                resource_heap_{dev_,1,gtl::d3d::tags::shader_visible{}},
+                resource_heap_{dev_,2,gtl::d3d::tags::shader_visible{}},
                 texture_{dev_,{resource_heap_->GetCPUDescriptorHandleForHeapStart()},cqueue_,L"D:\\images\\skyboxes\\Grimmnight.dds"},
                 sampler_heap_{dev_,1},
                 sampler_{dev_,sampler_heap_->GetCPUDescriptorHandleForHeapStart()},        
@@ -82,7 +82,7 @@ namespace transitions {
                     //L"D:\\images\\fonts\\liberation\\bold-sdf\\font.fnt", 
                     L"D:\\images\\fonts\\depth-field-font72\\font.fnt",
                     gtl::d3d::tags::xml_format{}},
-                font_scale{72.0f}
+                font_scale{72.0f}                
         {            
             // cbuffer_[idx].update() -- 
             std::cout << "twinkle_effect()\n";                     
