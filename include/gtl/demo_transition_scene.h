@@ -10,7 +10,6 @@
 -----------------------------------------------------------------------------*/
 
 #include <gtl/swirl_effect_transition_scene.h>
-
 #include <gtl/font_atlas.h>
 
 namespace gtl {
@@ -24,11 +23,12 @@ namespace transitions {
 
         gtl::d3d::device& dev_;
         gtl::d3d::command_queue& cqueue_;
-        gtl::d3d::root_signature& root_sig_;
+        //gtl::d3d::root_signature& rg_;
         gtl::d3d::swap_chain& swchain_;
 
         gtl::d3d::vertex_shader vshader_;
         gtl::d3d::pixel_shader pshader_;
+        gtl::d3d::root_signature root_sig_;
        
         std::array<gtl::d3d::resource_descriptor_heap,frame_count> cbheap_;
 
@@ -40,7 +40,7 @@ namespace transitions {
         std::array<gtl::d3d::direct_command_allocator,frame_count> mutable calloc_;
         std::array<gtl::d3d::graphics_command_list,frame_count> mutable clist_;
         std::array<gtl::d3d::graphics_command_list,frame_count> mutable font_clist_;
-        
+                
         gtl::d3d::D3D12Viewport mutable viewport_;//{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f};
         gtl::d3d::D3D12ScissorRect mutable scissor_;//{0,0,960,540};    
 
@@ -57,13 +57,14 @@ namespace transitions {
         float mutable font_scale;        
 
     public:
-        twinkle_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, gtl::d3d::root_signature& root_sig_) // TODO temporary effect..
+        twinkle_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_) // TODO temporary effect..
             :   dev_{dev_}, 
                 cqueue_{cqueue_},
-                root_sig_{root_sig_},
+                //root_sig_{root_sig_},
                 swchain_{swchain_},
                 vshader_{L"skybox_vs.cso"},
                 pshader_{L"skybox_ps.cso"},
+                root_sig_{dev_, vshader_},
                 cbheap_{{{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}}}},                                                     
                 cbuf_{},                
                 cbuffer_{{{dev_,cbheap_[0],sizeof(cbuf_)},{dev_,cbheap_[1],sizeof(cbuf_)},{dev_,cbheap_[2],sizeof(cbuf_)}}},                        

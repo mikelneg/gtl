@@ -10,6 +10,7 @@
 -----------------------------------------------------------------------------*/
 
 #include <windows.h>
+#include <windowsx.h>
 #include <iostream>
 #include <gtl/events.h>
 
@@ -60,27 +61,35 @@ namespace detail {
                                     dispatch_event(handler,keydown{static_cast<unsigned>(wparam)});    
                                 } break;            
             case WM_SYSKEYDOWN: break;            
-            case WM_MOUSEWHEEL: break;     
-            case WM_MOUSEMOVE: break;    
+            case WM_MOUSEWHEEL: break;                 
             case WM_LBUTTONDOWN: break;            
             case WM_CAPTURECHANGED: return 0;            
             case WM_LBUTTONUP: break;
+    
+            case WM_MOUSEMOVE:  {   T& handler = get_window_user_data<T>(hwnd);                                    
+                                    dispatch_event(handler, gtl::events::mouse_at{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+                                    return 0;
+                                }
+                                break;                
+            
+                                //case WM_NCMOUSEMOVE: break;                
             
             //----------------------------------//                 
             case WM_NCCREATE: set_window_user_data(hwnd, lparam); break;
             
-            case WM_SETCURSOR:  if (LOWORD(lparam) == HTCLIENT) {
-                                    SetCursor(NULL);
+            case WM_SETCURSOR:  if (LOWORD(lparam) == HTCLIENT) {  // Hide cursor in client area..
+                                    //SetCursor(NULL);
                                     return TRUE;
                                 } break;                                    
 
             case WM_NCCALCSIZE: break; // this_ might be nullptr; do not touch!    
             case WM_GETMINMAXINFO: break; // this_ is probably nullptr; do not touch!    
-            case WM_KILLFOCUS: std::cout << "losing focus..\n"; break;    
-            case WM_SETFOCUS: std::cout << "focus returned..\n"; SetFocus(hwnd); break;            
+            case WM_KILLFOCUS: std::cout << "losing focus..\n"; break; // ReleaseCapture(); ?
+            case WM_SETFOCUS: std::cout << "focus returned..\n"; SetFocus(hwnd); break; // SetCapture(hwnd);            
 
-            case WM_CLOSE: DestroyWindow(hwnd);
-                           break;
+            case WM_CLOSE: // DestroyWindow(hwnd); 
+                           return 0; // we'll handle closing ourselves.. 
+                           break; // TODO how to handle WM_CLOSE?
 
             case WM_DESTROY: PostQuitMessage(0); // Beginning of destruction                             
                              break;

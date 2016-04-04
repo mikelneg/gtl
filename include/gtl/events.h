@@ -28,15 +28,17 @@ namespace events {
         struct none {};        
         struct keydown { unsigned key; };
         struct mouse_click { std::string id; int x,y; };
+        struct mouse_at { int64_t coord; };   // TODO revisit: currently int64_t because windows uses hi and low bits to set both x and y coord..             
         struct mousedown {};
         struct exit_immediately {};
-        struct exit_state { int exitcode; };
+        struct exit_state { int exitcode; };  
     }                
 
     using event_variant_base_ = boost::variant<done, dump_contents, focus_entity, exit_all, 
                                                none,
                                                keydown,
                                                mouse_click,
+                                               mouse_at,
                                                mousedown,                                          
                                                exit_immediately,
                                                exit_state>;
@@ -71,14 +73,15 @@ namespace events {
     //};
 
     class event_variant {
-        using variant = vn::variant_over<done, 
-                                         none,
-                                         keydown,
-                                         mouse_click,
-                                         mousedown,                                          
-                                         exit_immediately,
-                                         exit_state>;
-        variant value_;
+        //using variant = vn::variant_over<done, 
+        //                                 none,
+        //                                 keydown,
+        //                                 mouse_click,
+        //                                 mousedown,                                          
+        //                                 exit_immediately,
+        //                                 exit_state>;
+        using variant = event_variant_base_;
+        variant value_;      
     
     public:   
         template <typename T>

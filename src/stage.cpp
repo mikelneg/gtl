@@ -32,14 +32,14 @@
 namespace gtl {
 
 
-stage::stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, unsigned num_buffers, gtl::d3d::blob root_sig_blob)
+stage::stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, unsigned num_buffers)
     :   dev_{get_device(swchain)},
         swchain_{swchain},
         cqueue_{cqueue_},
         num_buffers_{num_buffers},
         synchronizer_{cqueue_, num_buffers-1, (std::max)(0,static_cast<int>(num_buffers)-2)}, // maximum desync value.   
         scenes_{},
-        root_sig_{dev_,std::move(root_sig_blob)},
+        //root_sig_{dev_,std::move(root_sig_blob)},
         dxgi_pp{}, 
         frame_rate_limiter_{std::chrono::milliseconds(9)} // frame time limit.. 17 == ~60fps, 9 == ~120fps
 {
@@ -57,10 +57,12 @@ stage::stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, un
 
 stage::~stage() 
 {
-    std::unique_lock<std::mutex> lock{work_mutex_};
-    frame_state_.store(sig::frame_consumed);
-    quit_flag_.clear();
-    cv_.notify_one();    
+    {
+        std::unique_lock<std::mutex> lock{work_mutex_};
+        quit_flag_.clear(std::memory_order_release);
+        frame_state_.store(sig::frame_consumed,std::memory_order_release);    
+        cv_.notify_all();    
+    }
     if (work_thread_.joinable()) {
         work_thread_.join();
     }
@@ -71,8 +73,12 @@ void stage::work_thread()
     std::unique_lock<std::mutex> lock_{work_mutex_};
     
     while(quit_flag_.test_and_set(std::memory_order_acq_rel)) {    
-        cv_.wait(lock_, [this](){ return frame_state_.load(std::memory_order_acquire) == sig::frame_consumed; });                
+        cv_.wait(lock_, [this](){ 
+            return frame_state_.load(std::memory_order_acquire) == sig::frame_consumed; 
+        });                
         
+        if (!quit_flag_.test_and_set(std::memory_order_acq_rel)) { return; }
+
         synchronizer_([this](auto& sync_index) {                        
             assert(value(sync_index) < buffered_resource_.size());
             resource_object& ro_ = buffered_resource_[value(sync_index)];        
@@ -95,8 +101,7 @@ void stage::work_thread()
             cla->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
                                               swchain_.get_current_resource(), 
                                               D3D12_RESOURCE_STATE_RENDER_TARGET, 
-                                              D3D12_RESOURCE_STATE_PRESENT));
-            
+                                              D3D12_RESOURCE_STATE_PRESENT));            
             cla->Close();
 
             std::vector<ID3D12CommandList*> v;
@@ -148,8 +153,8 @@ void stage::handle_events(coro::pull_type& yield)
     //}
 
     //scenes_.current_scene() = scenes::transitions::twinkle_effect{dev_,cqueue_,gtl::d3d::dummy_rootsig_1()};
-        
-    scenes_.transition_scene(yield, dev_, cqueue_, swchain_, root_sig_, work_mutex_);
+
+    scenes_.transition_scene(yield, dev_, cqueue_, swchain_, work_mutex_);
 
     //for (;;) {
         //std::cout << "beginning stage handler..\n";  
@@ -185,7 +190,9 @@ stage::coro::push_type stage::make_event_handler()
     return stage::coro::push_type{
         [this](stage::coro::pull_type& yield) mutable
         {
-            this->handle_events(yield);                                                        
+            try {
+                this->handle_events(yield);                                                        
+            } catch (std::exception& e) { std::cout << "exception caught... " << e.what() << "\n"; }
         }};        
 }
 

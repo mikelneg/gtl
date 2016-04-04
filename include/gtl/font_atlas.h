@@ -47,6 +47,8 @@ namespace d3d {
         gtl::d3d::vertex_shader vshader_;
         gtl::d3d::pixel_shader pshader_;
 
+        gtl::d3d::root_signature& root_sig_;
+
         gtl::d3d::pipeline_state_object pso_;    
                 
         gtl::d3d::sampler_descriptor_heap sampler_heap_;
@@ -71,12 +73,11 @@ namespace d3d {
 
         auto pso_desc(gtl::d3d::device& dev, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps) {
             D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_{};
-            desc_.pRootSignature = rsig.get();
+            desc_.pRootSignature = rsig.get();            
 		    desc_.VS = { reinterpret_cast<UINT8*>(vs->GetBufferPointer()), vs->GetBufferSize() };
 		    desc_.PS = { reinterpret_cast<UINT8*>(ps->GetBufferPointer()), ps->GetBufferSize() };        
 		    desc_.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
-		                            
-
+		                                        
             //typedef struct D3D12_INPUT_ELEMENT_DESC
             //{
             //LPCSTR SemanticName;
@@ -164,9 +165,11 @@ namespace d3d {
                 //L"D:\\images\\fonts\\liberation\\bold-sdf\\font.dds"
                 L"D:\\images\\fonts\\depth-field-font72\\font.dds"
                 },                        
-            vshader_{L"font_atlas_vs.cso"},
+            vshader_{L"font_atlas_vs.cso"},                  
             pshader_{L"font_atlas_ps.cso"},
-            pso_{dev,pso_desc(dev,rsig,vshader_,pshader_)},
+            root_sig_{rsig},
+            //pso_{dev,pso_desc(dev,rsig,vshader_,pshader_)},
+            pso_{dev,pso_desc(dev,root_sig_,vshader_,pshader_)},
             sampler_heap_{dev,1},            
             sampler_{dev,sampler_desc(),sampler_heap_->GetCPUDescriptorHandleForHeapStart()}            
         {            

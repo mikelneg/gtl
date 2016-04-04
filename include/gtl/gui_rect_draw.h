@@ -4,7 +4,7 @@
 /*-----------------------------------------------------------------------------
     Mikel Negugogor (http://github.com/mikelneg)                              
     
-    namespace gtl::gui::detail
+    namespace gtl::d3d
     
     class rect_draw
 -----------------------------------------------------------------------------*/
@@ -15,6 +15,8 @@
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
 #include <Eigen/StdVector>
+
+#include <atomic>
 
 namespace gtl {
 namespace d3d {
@@ -46,8 +48,8 @@ namespace d3d {
         gtl::d3d::pipeline_state_object pso_;    
                 
         gtl::d3d::sampler_descriptor_heap sampler_heap_;
-        gtl::d3d::sampler sampler_;
-
+        gtl::d3d::sampler sampler_;        
+        
         auto vertex_layout() {
             return std::vector<D3D12_INPUT_ELEMENT_DESC>{
                 {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
@@ -88,8 +90,10 @@ namespace d3d {
 		    desc_.DepthStencilState.StencilEnable = FALSE;
 		    desc_.SampleMask = UINT_MAX;                        
 		    desc_.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;            
-		    desc_.NumRenderTargets = 1;
+		    // TODO fix this so that it matches caller pso
+            desc_.NumRenderTargets = 2;
 		    desc_.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;            
+            desc_.RTVFormats[1] = DXGI_FORMAT_R32_UINT;
 		    desc_.SampleDesc.Count = 1;              
             return desc_;		    
         }
@@ -102,7 +106,7 @@ namespace d3d {
             sampler_.AddressW = D3D12_TEXTURE_ADDRESS_MODE_BORDER;
             sampler_.MaxAnisotropy = 4;
             sampler_.BorderColor[3] = 0.0f; // no alpha
-            sampler_.ComparisonFunc = D3D12_COMPARISON_FUNC_NOT_EQUAL;
+            sampler_.ComparisonFunc = D3D12_COMPARISON_FUNC_NOT_EQUAL;            
             return sampler_;
         }
 
@@ -134,7 +138,7 @@ namespace d3d {
             construct_vertices();            
             update_vertex_buffer(0);
             update_vertex_buffer(1);
-            update_vertex_buffer(2);
+            update_vertex_buffer(2);             
         }
     
         void update_vertex_buffer(unsigned idx) const
@@ -145,7 +149,7 @@ namespace d3d {
         void operator()(unsigned idx, float f, gtl::d3d::graphics_command_list& cl, 
                         gtl::d3d::D3D12Viewport const& viewport,
                         gtl::d3d::D3D12ScissorRect const& scissor,                        
-                        D3D12_CPU_DESCRIPTOR_HANDLE const& rtv_handle) const
+                        D3D12_CPU_DESCRIPTOR_HANDLE *rtv_handle) const
         {                                
             //update_vertex_buffer(idx);
             
@@ -157,8 +161,7 @@ namespace d3d {
             cl->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
             cl->SetGraphicsRootDescriptorTable(2, texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());                                                                      
                         
-            cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);  
-            //cl->SetGraphicsRoot32BitConstants(3, 1, std::addressof(font_scale), 4);  
+            cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);                     
 
             D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(),static_cast<unsigned>(mesh_.size() * sizeof(Vertex)),sizeof(Vertex)};
             cl->IASetVertexBuffers(0, 1, &cbv_);              
@@ -170,7 +173,7 @@ namespace d3d {
             //cl->OMSetBlendFactor(blendvalues);
 
             cl->RSSetScissorRects(1,&scissor);
-            cl->OMSetRenderTargets(1, &rtv_handle, TRUE, nullptr);            
+            cl->OMSetRenderTargets(2, rtv_handle, false, nullptr);            
             if (mesh_.size() > 1) {
                 cl->DrawInstanced(static_cast<unsigned>(mesh_.size()-1),1,1,0);
             }

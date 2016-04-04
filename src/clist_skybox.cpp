@@ -78,7 +78,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 	//clist->DrawInstanced(3, 1, 0, 0);
     // previous: context_.Draw(14, 0);   
     
-    clist->OMSetRenderTargets(2, &rtv_srv_.rtv_heap_()->GetCPUDescriptorHandleForHeapStart(), TRUE, nullptr);    
+    clist->OMSetRenderTargets(2, &rtv_srv_.rtv_heap()->GetCPUDescriptorHandleForHeapStart(), TRUE, nullptr);    
     clist->DrawInstanced(14, 1, 0, 0);
 
     clist->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(

@@ -174,6 +174,13 @@ namespace _12_0 {
 		win::throw_on_fail(dev->CreateRootSignature(0, signature_->GetBufferPointer(), signature_->GetBufferSize(),__uuidof(type), reinterpret_cast<void**>(&expose_ptr())),__func__);
         set_name(get(),L"root_sig");             
     }
+
+    root_signature::root_signature(device& dev, vertex_shader& shader_)
+    {        
+        release_ptr<D3DBlob> error_; // not currently using		        
+		win::throw_on_fail(dev->CreateRootSignature(0, shader_->GetBufferPointer(), shader_->GetBufferSize(),__uuidof(type), reinterpret_cast<void**>(&expose_ptr())),__func__);
+        set_name(get(),L"root_sig");             
+    }
     
 
   //  cb_root_signature::cb_root_signature(device& dev)
@@ -537,8 +544,64 @@ namespace _12_0 {
         //set_name(get(),L"samplers");               
     }
 
+    rtv_srv_texture2D::rtv_srv_texture2D(swap_chain& swchain, DXGI_FORMAT format, unsigned num_buffers, d3d::tags::shader_visible)
+        :   rtv_heap_{ get_device_from(swchain), num_buffers},
+            srv_heap_{ get_device_from(swchain), 1, d3d::tags::shader_visible{}}
+    {
+        DXGI_SWAP_CHAIN_DESC swchaindesc_{};
+        swchain->GetDesc(&swchaindesc_);
+
+        device dev{get_device_from(swchain)};
+
+        D3D12_TEXTURE_LAYOUT layout{};
+
+        auto tdesc = CD3DX12_RESOURCE_DESC::Tex2D(format, 
+                                                  swchaindesc_.BufferDesc.Width, 
+                                                  swchaindesc_.BufferDesc.Height, 
+                                                  num_buffers, 1, 1, 0, 
+                                                  D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+
+        dev->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+                                                   D3D12_HEAP_FLAG_NONE,                                    
+                                                   &tdesc,
+                                                   D3D12_RESOURCE_STATE_RENDER_TARGET,
+                                                   nullptr,
+                                                   __uuidof(type),
+                                                   reinterpret_cast<void**>(&expose_ptr()));
+
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
+        CD3DX12_CPU_DESCRIPTOR_HANDLE srv_handle{srv_heap_->GetCPUDescriptorHandleForHeapStart()};                    
+
+        dev->CreateShaderResourceView(get(), nullptr, srv_handle);
+      
+        D3D12_RENDER_TARGET_VIEW_DESC rtv_desc{};
+
+        rtv_desc.Format = format;
+        rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+        rtv_desc.Texture2DArray.ArraySize = 1; // not num_buffers.. 
+        rtv_desc.Texture2DArray.MipSlice = 0;
+        //rtv_desc.Texture2DArray.FirstArraySlice = 0;
+        
+
+
+        auto calc = []( UINT MipSlice, UINT ArraySlice, UINT PlaneSlice, UINT MipLevels, UINT ArraySize )
+                        { 
+                            return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize; 
+                        };
+
+        for (UINT i = 0; i < num_buffers; ++i) {            
+            rtv_desc.Texture2DArray.FirstArraySlice = i;
+            dev->CreateRenderTargetView(get(), &rtv_desc, rtv_handle);
+            rtv_handle.Offset(1, rtv_heap_.increment_value());
+            
+        }
+
+        set_name(get(), L"rtv_srv_tx2d");
+
+    }
+
     rtv_srv_texture2D::rtv_srv_texture2D(swap_chain& swchain, unsigned num_buffers, d3d::tags::shader_visible)
-        :   rtv_heap__{ get_device_from(swchain), num_buffers},
+        :   rtv_heap_{ get_device_from(swchain), num_buffers},
             srv_heap_{ get_device_from(swchain), 1, d3d::tags::shader_visible{}}
     {
         DXGI_SWAP_CHAIN_DESC swchaindesc_{};
@@ -562,7 +625,7 @@ namespace _12_0 {
                                                    __uuidof(type),
                                                    reinterpret_cast<void**>(&expose_ptr()));
 
-        CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap__->GetCPUDescriptorHandleForHeapStart()};
+        CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
         CD3DX12_CPU_DESCRIPTOR_HANDLE srv_handle{srv_heap_->GetCPUDescriptorHandleForHeapStart()};                    
 
         dev->CreateShaderResourceView(get(), nullptr, srv_handle);
@@ -585,7 +648,7 @@ namespace _12_0 {
         for (UINT i = 0; i < num_buffers; ++i) {            
             rtv_desc.Texture2DArray.FirstArraySlice = i;
             dev->CreateRenderTargetView(get(), &rtv_desc, rtv_handle);
-            rtv_handle.Offset(1, rtv_heap__.increment_value());
+            rtv_handle.Offset(1, rtv_heap_.increment_value());
             
         }
 
@@ -595,7 +658,7 @@ namespace _12_0 {
 
 
     uav_texture2D::uav_texture2D(swap_chain& swchain, D3D12_CPU_DESCRIPTOR_HANDLE& uav_handle)
-     //: rtv_heap__{ get_device_from(swchain), 1, tags::not_shader_visible{}}
+     //: rtv_heap_{ get_device_from(swchain), 1, tags::not_shader_visible{}}
     {
         DXGI_SWAP_CHAIN_DESC swchaindesc_{};
         swchain->GetDesc(&swchaindesc_);
@@ -621,7 +684,7 @@ namespace _12_0 {
 
         //CD3DX12_CPU_DESCRIPTOR_HANDLE uav_handle{uav_heap_->GetCPUDescriptorHandleForHeapStart()};        
         //CD3DX12_CPU_DESCRIPTOR_HANDLE srv_handle{srv_heap_->GetCPUDescriptorHandleForHeapStart()};        
-        //CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap__->GetCPUDescriptorHandleForHeapStart()};        
+        //CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};        
 
         //dev->CreateShaderResourceView(get(), nullptr, srv_handle);
       
@@ -640,7 +703,7 @@ namespace _12_0 {
      
         //uav_desc.Texture2DArray.FirstArraySlice = i; // i: 0 -> numbuffers
         dev->CreateUnorderedAccessView(get(), nullptr, &uav_desc, uav_handle);        
-        //uav_handle.Offset(1, rtv_heap__.increment_value());         
+        //uav_handle.Offset(1, rtv_heap_.increment_value());         
 
         //D3D12_RENDER_TARGET_VIEW_DESC rtv_desc{};
         //

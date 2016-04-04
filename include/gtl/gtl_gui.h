@@ -116,7 +116,7 @@ namespace gui {
         std::function<void(gui_listener_pull&)> func_;      
     public:
         template <typename F> 
-        button::button(F&& f) //noexcept(noexcept(func_(std::forward<F>(f))))
+        button(F&& f) //noexcept(noexcept(func_(std::forward<F>(f))))
         : func_(std::forward<F>(f)) {}        
                 
         void click(gui_listener_pull&) const;

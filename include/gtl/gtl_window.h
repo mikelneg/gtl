@@ -25,41 +25,51 @@ namespace win {
         std::pair<unsigned,unsigned> px_dims;
         std::vector<gtl::event> event_queue;        
 
-        void pump_messages() {
-            event_queue.clear();
-            // the wndproc function is emplacing events in event_queue            
+        void extract_messages() {            
             while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) {
                 TranslateMessage(&msg);
-                DispatchMessage(&msg);
+                DispatchMessage(&msg); // wndproc is emplacing events in event_queue            
             }                                                        
         }
 
+        // void get_messages() {            
+        //    BOOL ret;
+        //    while((ret = GetMessage( &msg, NULL, 0, 0 )) != 0)
+        //    { 
+        //        if (ret == -1)
+        //        {
+        //            // error case..
+        //        }
+        //        else
+        //        {
+        //            TranslateMessage(&msg); 
+        //            DispatchMessage(&msg); 
+        //        }
+        //    }
+        // }
+
     public:                                                
                 
-        window(HINSTANCE inst, unsigned w_px, unsigned h_px, const char* caption);                
+        window(HINSTANCE hinst, unsigned w_px, unsigned h_px, const char* caption);                
         window(window&&) = delete;
-        window& operator=(window&&) = delete;
+        window& operator=(window&&) = delete;                            
         
-        // TODO handle cleanup..
-
-        void post_close_message() const
-        { 
-            PostMessage(hwnd, WM_CLOSE, 0, 0); 
-        }        
-
-        void process_messages_and_swap_queues(std::vector<gtl::event>& swap_queue) {                                    
-            pump_messages();
-            swap_queue.swap(event_queue);            
+        template <typename F>
+        void pump_messages(F func) {            
+            while (true) {
+                event_queue.clear();
+                extract_messages();
+                if (msg.message == WM_QUIT) { 
+                    return; 
+                } 
+                func(const_cast<decltype(event_queue) const&>(event_queue));
+            }
         }
         
         ~window() {            
-            if (*this) {
-                std::cout << "Exited early..\n";
-                post_close_message();
-                while (*this) { 
-                    pump_messages();
-                    std::this_thread::yield();
-                }
+            if (*this) { // if msg.message != WM_QUIT then we have exited early..                                
+                DestroyWindow(hwnd);  // WM_DESTROY should issue PostQuitMessage(0);
+                pump_messages([](auto&){ std::this_thread::yield(); }); // pump until WM_QUIT                
             }
         }
 

@@ -63,6 +63,8 @@ window::window(HINSTANCE hinstance, unsigned width_px, unsigned height_px, const
   if (!hwnd) {
       throw std::runtime_error{__func__};   
   }          
+  //SetCursor(NULL);    
+  ShowCursor(true);
   resize_window(hwnd, width_px, height_px); // remove for fullscreen                
 }   
 

@@ -150,11 +150,6 @@ namespace _12_0 {
     public:
         compute_command_allocator(device&);        
     };
-
-    class root_signature : public release_ptr<D3D12RootSignature> {
-    public:
-        root_signature(device&, release_ptr<D3DBlob> signature);        
-    };
     
     class vertex_shader : public release_ptr<D3DBlob> {
     public:
@@ -170,6 +165,12 @@ namespace _12_0 {
     public:
         compute_shader(std::wstring path);
     };
+
+    class root_signature : public release_ptr<D3D12RootSignature> {
+    public:
+        root_signature(device&, release_ptr<D3DBlob> signature);
+        root_signature(device&, vertex_shader&);
+    };    
 
     class pipeline_state_object : public release_ptr<D3D12PipelineState> {
     public:
@@ -217,13 +218,15 @@ namespace _12_0 {
     };
 
     class rtv_srv_texture2D : public release_ptr<D3D12Resource> {
-        rtv_descriptor_heap rtv_heap__;
+        rtv_descriptor_heap rtv_heap_;
         resource_descriptor_heap srv_heap_;
     public:
         rtv_srv_texture2D(swap_chain&, unsigned num_buffers, d3d::tags::shader_visible);
+        rtv_srv_texture2D(swap_chain&, DXGI_FORMAT, unsigned num_buffers, d3d::tags::shader_visible);
+
 
         resource_descriptor_heap& srv_heap() { return srv_heap_; }
-        rtv_descriptor_heap& rtv_heap_() { return rtv_heap__; }
+        rtv_descriptor_heap& rtv_heap() { return rtv_heap_; }
     };
 
     class uav_texture2D : public release_ptr<D3D12Resource> {

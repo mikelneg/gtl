@@ -41,7 +41,7 @@ class stage {
     gtl::d3d::D3D12Viewport viewport_;
     gtl::d3d::D3D12ScissorRect scissor_;
 
-    gtl::d3d::root_signature root_sig_;
+    //gtl::d3d::root_signature root_sig_;
 
     gtl::d3d::PresentParameters dxgi_pp;
     
@@ -76,7 +76,7 @@ class stage {
     void handle_events(coro::pull_type&);    
 
 public:
-    stage(gtl::d3d::swap_chain&, gtl::d3d::command_queue&, unsigned num_buffers, gtl::d3d::blob);        
+    stage(gtl::d3d::swap_chain&, gtl::d3d::command_queue&, unsigned num_buffers);        
     void draw(float);
 
     stage(stage&&) = delete;
