@@ -19,5 +19,7 @@ namespace tags {
     struct contiguous {};
     struct discontiguous {};
 
+    struct xml_format {};
+
 }} // namespaces
 #endif

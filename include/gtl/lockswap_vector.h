@@ -12,7 +12,7 @@
 #include <vector>
 #include <mutex>
 #include <memory>
-#include <vn/boost_utilities.h>
+#include <vn/boost_variant_utilities.h>
 
 namespace gtl {
 

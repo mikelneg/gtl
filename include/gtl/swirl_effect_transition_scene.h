@@ -145,7 +145,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 
         gtl::copyable_atomic<int64_t> mutable mouse_coord_;
         
-        auto pso_desc(gtl::d3d::device& dev, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps) {
+        auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps) {
             D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_{};
             desc_.pRootSignature = rsig.get();
 		    desc_.VS = { reinterpret_cast<UINT8*>(vs->GetBufferPointer()), vs->GetBufferSize() };
@@ -209,8 +209,8 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             :   dev_{dev_}, 
                 cqueue_{cqueue_},                
                 swchain_{swchain_},
-                vshader_{L"skybox_vs.cso"},
-                pshader_{L"skybox_ps.cso"},
+                vshader_{L"D:\\Code\\D3D12_migration\\D3D12_migration\\Debug\\x64\\skybox_vs.cso"},
+                pshader_{L"D:\\Code\\D3D12_migration\\D3D12_migration\\Debug\\x64\\skybox_ps.cso"},
                 root_sig_{dev_, vshader_},
                 cbheap_{{{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}}}},                                                     
                 cbuf_{},                

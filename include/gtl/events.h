@@ -13,7 +13,7 @@
 #include <string> 
 
 #include <boost/variant.hpp>
-#include <vn/boost_utilities.h>
+#include <vn/boost_variant_utilities.h>
 #include <vn/boost_visitors.h>
 
 namespace gtl {
@@ -107,6 +107,8 @@ namespace events {
             using boost::apply_visitor;
             return apply_visitor(vn::visitors::has_variant_type<T>{},e.value());
         }
+
+        //operator variant&() { return value_; }
     };
 
 
@@ -114,7 +116,7 @@ namespace events {
     void dispatch_event(T& t, event_variant e) {        
         t.emplace_back(std::move(e));
     }
-    
+       
 
 } // namespace 
 

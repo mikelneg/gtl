@@ -119,8 +119,8 @@ void font_atlas::construct_vertices(std::string const& message) const
     using v4 = Eigen::Vector4f;
 
     v4 coord{0.0f, 0.0f, 0.0f, 0.0f};
-    float lwidth = font_definition.base_width;
-    float lheight = font_definition.line_height;
+    //float lwidth = font_definition.base_width;
+    //float lheight = font_definition.line_height;
 
     auto insert_glyph = [this](auto&& uv, auto& coord){                
                 
@@ -160,7 +160,7 @@ void font_atlas::set_message(std::string const& message) const
 {
     mesh_.clear();
     
-    float ratio = font_definition.base_width / font_definition.line_height;
+    //float ratio = font_definition.base_width / font_definition.line_height;
     
     Eigen::Vector4f coord{0.0f, font_definition.base_width / (1280.0f * 3.0f), 1.0f, 1.0f};
     

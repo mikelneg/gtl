@@ -7,7 +7,7 @@ namespace d3d {
 namespace graphics_command_lists {
 
 static 
-void play_skybox_bundle(d3d::graphics_command_list& clist) {
+void play_skybox_bundle(d3d::graphics_command_list&) {
 
 
 

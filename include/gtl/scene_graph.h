@@ -9,6 +9,8 @@
 -----------------------------------------------------------------------------*/
 #include <iostream> // TODO remove
 
+#include <windows.h> // TODO move this
+
 #include <unordered_map>
 #include <utility>
 #include <algorithm>
@@ -89,7 +91,13 @@ namespace gtl {
         //    //handle_events(s);                                
                 s = scenes::transitions::twinkle_effect{dev,swapchain,cqueue};
             }
-            handle_events(s);                                         
+            
+            auto result_handler = boost::apply_visitor(vn::make_lambda_visitor<bool>(
+                                                          [](auto const&){ return true; },
+                                                          [](gtl::events::exit_all const&){ return false; })
+                                                       );
+
+            if (!result_handler(handle_events(s).value())) { return; }                                        
 
             while (true) {                                
         
@@ -98,17 +106,14 @@ namespace gtl {
 
                 s = scene_type{transition_scene{std::move(s), scenes::transitions::swirl_effect{dev,swapchain,cqueue}, std::chrono::seconds(2)}};                
                 }
-                handle_events(s);
-                //if (same_type(handle_events(s).value(),gtl::events::exit_all{})) {                     
-                //    return; 
-                //}
+                if (!result_handler(handle_events(s).value())) { return; }                                        
 
                             {
                 std::unique_lock<std::mutex> lock_{work_mutex_};
 
                 s = boost::get<transition_scene>(s).swap_second(scenes::detail::empty_scene{});                                    
                 }
-                handle_events(s);
+                if (!result_handler(handle_events(s).value())) { return; }                                        
                 //if (same_type(handle_events(s).value(),gtl::events::exit_all{})) {                     
                 //    return; 
                 //}
@@ -118,7 +123,7 @@ namespace gtl {
 
                 s = scene_type{inv_transition_scene{std::move(s), scenes::transitions::twinkle_effect{dev,swapchain,cqueue}, std::chrono::seconds(2)}};
                 }
-                handle_events(s);
+                if (!result_handler(handle_events(s).value())) { return; }                                        
                 //if (same_type(handle_events(s),gtl::events::exit_all{})) {                     
                 //    return; 
                 //}
@@ -129,7 +134,7 @@ namespace gtl {
 
                 s = boost::get<inv_transition_scene>(s).swap_second(scenes::detail::empty_scene{});                                    
                 }
-                handle_events(s);            
+                if (!result_handler(handle_events(s).value())) { return; }                                        
                 //if (same_type(handle_events(s),gtl::events::exit_all{})) {                     
                 //    return; 
                 //}

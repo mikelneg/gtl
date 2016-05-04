@@ -10,7 +10,7 @@
 #include <chrono>
 
 #include <boost/variant.hpp>
-#include <vn/boost_utilities.h>
+#include <vn/boost_variant_utilities.h>
 #include <vn/boost_visitors.h>
 
 #include <boost/coroutine/symmetric_coroutine.hpp>

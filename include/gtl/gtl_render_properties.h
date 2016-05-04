@@ -11,7 +11,7 @@
 #include <string> 
 
 #include <boost/variant.hpp>
-#include <vn/boost_utilities.h>
+#include <vn/boost_variant_utilities.h>
 #include <vn/boost_visitors.h>
 
 namespace gtl {

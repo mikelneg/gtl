@@ -71,7 +71,7 @@ namespace d3d {
             //};                         
         }
 
-        auto pso_desc(gtl::d3d::device& dev, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps) {
+        auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps) {
             D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_{};
             desc_.pRootSignature = rsig.get();            
 		    desc_.VS = { reinterpret_cast<UINT8*>(vs->GetBufferPointer()), vs->GetBufferSize() };
@@ -165,8 +165,8 @@ namespace d3d {
                 //L"D:\\images\\fonts\\liberation\\bold-sdf\\font.dds"
                 L"D:\\images\\fonts\\depth-field-font72\\font.dds"
                 },                        
-            vshader_{L"font_atlas_vs.cso"},                  
-            pshader_{L"font_atlas_ps.cso"},
+            vshader_{L"D:\\Code\\D3D12_migration\\D3D12_migration\\Debug\\x64\\font_atlas_vs.cso"},                  
+            pshader_{L"D:\\Code\\D3D12_migration\\D3D12_migration\\Debug\\x64\\font_atlas_ps.cso"},
             root_sig_{rsig},
             //pso_{dev,pso_desc(dev,rsig,vshader_,pshader_)},
             pso_{dev,pso_desc(dev,root_sig_,vshader_,pshader_)},
@@ -182,7 +182,7 @@ namespace d3d {
             vbuffers_[idx].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(Vertex));
         }
 
-        void operator()(unsigned idx, float f, gtl::d3d::graphics_command_list& cl, 
+        void operator()(unsigned idx, float, gtl::d3d::graphics_command_list& cl,
                         gtl::d3d::D3D12Viewport const& viewport,
                         gtl::d3d::D3D12ScissorRect const& scissor,
                         float font_scale,

@@ -43,7 +43,7 @@ namespace d3d {
     }
 
     template <typename T, int N>
-    std::array<T, N> extract_from_string(std::string string_, char delimiter)
+    std::array<T, N> extract_from_string(std::string string_, char)
     {
         std::array<T, N> array_;
         std::stringstream stream_{string_};

@@ -13,7 +13,7 @@
 
 #include <gtl/tags.h>
 #include <gtl/release_ptr.h>
-#include <gtl/gtl_window.h>
+//#include <gtl/gtl_window.h>
 #include <gtl/win_tools.h>
 
 #include <iostream> 
@@ -135,7 +135,7 @@ namespace _12_0 {
         std::vector<resource> frames_;        
         rtv_descriptor_heap rtv_heap_;
     public:
-        swap_chain(gtl::win::window&, command_queue&, unsigned num_buffers); 
+        swap_chain(HWND, command_queue&, unsigned num_buffers); 
         resource& get_current_resource() { return frames_[get()->GetCurrentBackBufferIndex()]; }
         rtv_descriptor_heap& rtv_heap() { return rtv_heap_; }
         void resize(int,int) { std::cout << "swapchain resizing..\n"; } // TODO implement

@@ -130,13 +130,15 @@ namespace _12_0 {
         set_name(get(),L"samp_heap");               
     }
 
-    swap_chain::swap_chain(gtl::win::window& win, command_queue& cqueue_, unsigned num_buffers_) 
+    swap_chain::swap_chain(HWND hwnd, command_queue& cqueue_, unsigned num_buffers_) 
         :   frames_(num_buffers_),
             rtv_heap_{get_device_from(cqueue_), num_buffers_}     
     {        
         RECT client_area{};
-        if (!GetClientRect(get_hwnd(win), &client_area)) { throw std::runtime_error{__func__}; }        
-        auto desc = create_swapchain_desc(tags::flipmodel_windowed{}, get_hwnd(win), num_buffers_, width(client_area), height(client_area));                                  
+        if (!GetClientRect(hwnd, &client_area)) { throw std::runtime_error{__func__}; }        
+        //auto desc = create_swapchain_desc(tags::flipmodel_windowed{}, hwnd, num_buffers_, width(client_area), height(client_area));                                  
+        auto desc = create_swapchain_desc(tags::flipmodel_windowed{}, hwnd, num_buffers_, 
+                                            960, 540);                                  
         release_ptr<IDXGISwapChain> tmp_ptr;  // We first get a generic IDXGISwapChain* and then 
                                               //  use QueryInterface() to "upcast" to our desired type,
                                               //  in this case IDXGISwapChain3 (ie., DXGISwapChain)
@@ -553,7 +555,7 @@ namespace _12_0 {
 
         device dev{get_device_from(swchain)};
 
-        D3D12_TEXTURE_LAYOUT layout{};
+        //D3D12_TEXTURE_LAYOUT layout{};
 
         auto tdesc = CD3DX12_RESOURCE_DESC::Tex2D(format, 
                                                   swchaindesc_.BufferDesc.Width, 

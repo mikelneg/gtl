@@ -1,4 +1,4 @@
-#include "../include/gtl_d3d12_0.h"
+#include "gtl/gtl_d3d12_0.h"
 
 #include <gtl/include/release_ptr.h>
 #include <gtl/include/win_tools.h>

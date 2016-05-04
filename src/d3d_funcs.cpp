@@ -65,7 +65,7 @@ namespace _12_0 {
     {           
         // some preconditions.. 
         if (num_buffers < 2 || num_buffers > 16) { throw std::logic_error{__func__}; }
-        if ((height % 4) != 0) { throw std::logic_error{__func__}; }
+        //if ((height % 4) != 0) { throw std::logic_error{__func__}; }
 
         DXGI_SWAP_CHAIN_DESC desc{};        
         desc.BufferDesc.Width = width;

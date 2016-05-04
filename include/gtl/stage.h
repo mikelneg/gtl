@@ -10,12 +10,14 @@
 
 #include <gtl/d3d_types.h>
 #include <gtl/synchronization_object.h>
+
 //#include <gtl/gtl_window.h>
 
 #include <boost/coroutine/asymmetric_coroutine.hpp>
 
 #include <gtl/scene_graph.h>
 #include <gtl/events.h>
+#include <gtl/event_handler.h>
 #include <gtl/rate_limiter.h>
 
 #include <vector>
@@ -25,6 +27,7 @@
 #include <atomic>
 #include <mutex>
 #include <condition_variable>
+#include <functional>
 
 namespace gtl {
 
@@ -34,27 +37,17 @@ class stage {
 
     gtl::d3d::device dev_;
     gtl::d3d::swap_chain& swchain_; 
-    gtl::d3d::command_queue& cqueue_;    
-    unsigned num_buffers_;
-    gtl::d3d::synchronization_object synchronizer_;    
+    gtl::d3d::command_queue& cqueue_;        
+    gtl::d3d::synchronization_object synchronizer_;  
+
+    gtl::coroutine::event_handler event_handler_;        
 
     gtl::d3d::D3D12Viewport viewport_;
     gtl::d3d::D3D12ScissorRect scissor_;
 
     //gtl::d3d::root_signature root_sig_;
 
-    gtl::d3d::PresentParameters dxgi_pp;
-    
-    struct resource_object {
-        gtl::d3d::direct_command_allocator calloc_;
-        gtl::d3d::graphics_command_list clist_before_;
-        gtl::d3d::graphics_command_list clist_after_;
-        resource_object(gtl::d3d::device& dev) : calloc_{dev}, clist_before_{dev,calloc_}, clist_after_{dev,calloc_} {}
-        resource_object(resource_object&&) = default;
-        resource_object& operator=(resource_object&&) = default;
-    };
-
-    std::vector<resource_object> buffered_resource_;    
+    gtl::d3d::PresentParameters dxgi_pp;           
     gtl::scene_graph scenes_;    
 
     // multithread implementation here we go
@@ -66,28 +59,31 @@ class stage {
     std::thread work_thread_;
     std::mutex work_mutex_;
     std::condition_variable cv_;
-    std::atomic_flag quit_flag_;
-    std::atomic<sig> frame_state_;    
+    //std::atomic_flag quit_flag_;  // the mutex guards this, so going with non-atomic
+    bool quit_flag_;
+    std::atomic<sig> frame_state_;            
 
     gtl::rate_limiter frame_rate_limiter_;
     //
-    void work_thread();
+    void work_thread(unsigned num_buffers);
     
-    void handle_events(coro::pull_type&);    
+    void event_handler(coro::pull_type&);    
 
 public:
     stage(gtl::d3d::swap_chain&, gtl::d3d::command_queue&, unsigned num_buffers);        
-    void draw(float);
+    //void draw(float);
 
     stage(stage&&) = delete;
     stage& operator=(stage&&) = delete;
 
     // multithread update
-    void update();
+    void present();
 
     ~stage();
-    
-    coro::push_type make_event_handler();                    
+        
+    inline void dispatch_event(gtl::event const& e) { event_handler_.dispatch_event(e); }
+
+    //coro::push_type make_event_handler(std::function<void()>);                    
 };
 
 

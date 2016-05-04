@@ -13,7 +13,7 @@
 #include <boost/functional/hash.hpp>
 #include <gtl/events.h>
 
-#include <vn/boost_utilities.h>
+#include <vn/boost_variant_utilities.h>
 #include <vn/type_list.h>
 #include <vn/has_equality_operator.h>
 

@@ -58,7 +58,7 @@ namespace d3d {
 
         }
 
-        auto pso_desc(gtl::d3d::device& dev, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps) {
+        auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps) {
             D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_{};
             desc_.pRootSignature = rsig.get();
 		    desc_.VS = { reinterpret_cast<UINT8*>(vs->GetBufferPointer()), vs->GetBufferSize() };
@@ -146,7 +146,7 @@ namespace d3d {
             vbuffers_[idx].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(Vertex));
         }
 
-        void operator()(unsigned idx, float f, gtl::d3d::graphics_command_list& cl, 
+        void operator()(unsigned idx, float, gtl::d3d::graphics_command_list& cl,
                         gtl::d3d::D3D12Viewport const& viewport,
                         gtl::d3d::D3D12ScissorRect const& scissor,                        
                         D3D12_CPU_DESCRIPTOR_HANDLE *rtv_handle) const
