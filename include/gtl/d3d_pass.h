@@ -30,17 +30,8 @@ namespace d3d {
                 DescriptorTable( SRV(t0, numDescriptors = 2),      
                                  UAV(u0) ),                        
                 RootConstants(num32BitConstants = 8, b0, space = 1)      
+  
 
-    
-
-        
-
-        
-
-
-
-
-*/    
     class pass {
     
         gtl::d3d::root_signature root_sig_;
@@ -125,7 +116,7 @@ namespace d3d {
         }
 
     };
-
+*/
 }} // namespaces
 #endif
 
