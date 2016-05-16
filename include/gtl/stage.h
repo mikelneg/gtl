@@ -20,6 +20,9 @@
 #include <gtl/event_handler.h>
 #include <gtl/rate_limiter.h>
 
+#include <gtl/scene.h>
+#include <gtl/command_variant.h>
+
 #include <vector>
 #include <array>
 
@@ -32,25 +35,15 @@
 namespace gtl {
 
 class stage {
-
     using coro = boost::coroutines::asymmetric_coroutine<gtl::event>;        
 
-    gtl::d3d::device dev_;
-    gtl::d3d::swap_chain& swchain_; 
-    gtl::d3d::command_queue& cqueue_;        
-    gtl::d3d::synchronization_object synchronizer_;  
-
     gtl::coroutine::event_handler event_handler_;        
-
-    gtl::d3d::D3D12Viewport viewport_;
-    gtl::d3d::D3D12ScissorRect scissor_;
-
-    //gtl::d3d::root_signature root_sig_;
-
-    gtl::d3d::PresentParameters dxgi_pp;           
+    std::function<void(gtl::scene_graph&,coro::pull_type&,std::mutex&)> scene_builder_;
+    
     gtl::scene_graph scenes_;    
+    
+    gtl::scene<gtl::command_variant> current_scene_;
 
-    // multithread implementation here we go
     enum class sig {
         frame_consumed,
         frame_ready,        
@@ -58,32 +51,37 @@ class stage {
     
     std::thread work_thread_;
     std::mutex work_mutex_;
-    std::condition_variable cv_;
-    //std::atomic_flag quit_flag_;  // the mutex guards this, so going with non-atomic
-    bool quit_flag_;
+    std::condition_variable cv_;    
+    bool quit_flag_; // the mutex guards this, so going with non-atomic
     std::atomic<sig> frame_state_;            
 
     gtl::rate_limiter frame_rate_limiter_;
+    
     //
-    void work_thread(unsigned num_buffers);
+    void work_thread(gtl::d3d::device, gtl::d3d::swap_chain&, 
+                     gtl::d3d::command_queue&, unsigned);
     
     void event_handler(coro::pull_type&);    
 
 public:
     stage(gtl::d3d::swap_chain&, gtl::d3d::command_queue&, unsigned num_buffers);        
-    //void draw(float);
+    ~stage();
 
     stage(stage&&) = delete;
     stage& operator=(stage&&) = delete;
+    
+    void present(gtl::d3d::swap_chain&,gtl::d3d::PresentParameters);           
+    void dispatch_event(gtl::event const& e) { event_handler_.dispatch_event(e); }   
 
-    // multithread update
-    void present();
-
-    ~stage();
+    template <typename S, typename ...Params>
+    void attach_scene(gtl::construct_tag<S>, Params&&...params) {
+        // attach to render loop
+        // attach to event handler
         
-    inline void dispatch_event(gtl::event const& e) { event_handler_.dispatch_event(e); }
 
-    //coro::push_type make_event_handler(std::function<void()>);                    
+
+                
+    }
 };
 
 

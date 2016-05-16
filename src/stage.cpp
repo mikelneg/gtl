@@ -16,6 +16,7 @@
 #include <chrono>
 #include <future>
 #include <functional>
+#include <utility>
 
 #include <unordered_map>
 #include <cassert>
@@ -24,6 +25,10 @@
 
 #include <gtl/scenes.h> // TODO remove 
 #include <gtl/demo_transition_scene.h>
+#include <gtl/command_variant.h>
+
+#include <gtl/tags.h>
+#include <gtl/scene.h>
 
 
 /*-----------------------------------------------------------------------------
@@ -32,22 +37,45 @@
 
 namespace gtl {
 
+    namespace {
+        
+        struct empty_scene {
+            template <typename...Ts>
+            constexpr empty_scene(Ts&&...) noexcept {}
+
+            template <typename ...Ts>
+            inline void operator()(Ts&&...) const {} 
+        };
+
+    }
+
+
 
 stage::stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, unsigned num_buffers)
-    :   dev_{get_device(swchain)},
-        swchain_{swchain},
-        cqueue_{cqueue_},        
-        synchronizer_{cqueue_, num_buffers-1, (std::max)(0,static_cast<int>(num_buffers)-2)}, // maximum desync value.   
+    :  // dev_{get_device(swchain)},
+       // swchain_{swchain},
+       // cqueue_{cqueue_},        
+        //synchronizer_{cqueue_, num_buffers-1, (std::max)(0,static_cast<int>(num_buffers)-2)}, // maximum desync value.   
         event_handler_{[this](auto& yield){ this->event_handler(yield); }},
-        scenes_{},        
-        dxgi_pp{},
+        scenes_{},  
+        current_scene_{gtl::tag::construct<empty_scene>{}},
+        //dxgi_pp{},
+        scene_builder_{[&](auto& scene_graph_, auto& yield_, auto& mutex_){ 
+                            scene_graph_.transition_scene(yield_, get_device(swchain), cqueue_, swchain, mutex_);   
+                      }},
         quit_flag_{false},
         frame_rate_limiter_{std::chrono::milliseconds(9)} // frame time limit.. 17 == ~60fps, 9 == ~120fps
 {        
         assert(num_buffers > 1);    
         frame_state_.store(sig::frame_consumed);   
         //quit_flag_.test_and_set();        
-        work_thread_ = std::thread{&stage::work_thread,this,num_buffers};
+        work_thread_ = std::thread{&stage::work_thread,
+                                   this,
+                                        get_device(swchain),
+                                        std::ref(swchain),
+                                        std::ref(cqueue_),
+                                        num_buffers                                       
+                                   };
 }
 
 stage::~stage() 
@@ -77,7 +105,9 @@ namespace { // implementation detail..
     };
 }
 
-void stage::work_thread(unsigned num_buffers) 
+void stage::work_thread(gtl::d3d::device dev_, gtl::d3d::swap_chain& swchain_, 
+                        gtl::d3d::command_queue& cqueue_, unsigned num_buffers)
+                         
 {
     std::unique_lock<std::mutex> lock_{work_mutex_};
     
@@ -90,6 +120,10 @@ void stage::work_thread(unsigned num_buffers)
     }
     //
 
+    gtl::d3d::synchronization_object synchronizer_{cqueue_, num_buffers-1, 
+                                            static_cast<unsigned>((std::max)(0,static_cast<int>(num_buffers)-2))};                                        
+
+
     //while(quit_flag_.test_and_set(std::memory_order_acq_rel)) {    
     while(!quit_flag_) {    
         cv_.wait(lock_, [this](){ 
@@ -99,7 +133,7 @@ void stage::work_thread(unsigned num_buffers)
         //if (!quit_flag_.test_and_set(std::memory_order_acq_rel)) { return; }
         if (quit_flag_) { return; }
 
-        synchronizer_([&buffered_resource_,this](auto& sync_index) {                        
+        synchronizer_([&buffered_resource_,&cqueue_,&swchain_,this](auto& sync_index) {                        
             assert(value(sync_index) < buffered_resource_.size());
             resource_object& ro_ = buffered_resource_[value(sync_index)];        
             gtl::d3d::direct_command_allocator& calloc = ro_.calloc_;
@@ -127,12 +161,16 @@ void stage::work_thread(unsigned num_buffers)
                                               D3D12_RESOURCE_STATE_PRESENT));            
             cla->Close();
 
-            std::vector<ID3D12CommandList*> v;
+            //std::vector<ID3D12CommandList*> v;
             v.emplace_back(clb.get());
             
-            auto vec = boost::apply_visitor([&](auto& scene){ 
-                return scene.draw(static_cast<int>(value(sync_index)), 1.0f, swchain_.rtv_heap()); // draw call..
-            },scenes_.current_scene());
+            // // modifying to work with attach_scene ..
+            //auto vec = boost::apply_visitor([&](auto& scene){ 
+            //    return scene.draw(static_cast<int>(value(sync_index)), 1.0f, swchain_.rtv_heap()); // draw call..
+            //},scenes_.current_scene());
+            
+            //current_scene_.send_command(gtl::commands::draw{});            
+
 
             for (auto&& e : vec) v.emplace_back(e); 
             v.emplace_back(cla.get());    
@@ -145,10 +183,10 @@ void stage::work_thread(unsigned num_buffers)
     }
 }
 
-void stage::present()
+void stage::present(gtl::d3d::swap_chain& swchain_, gtl::d3d::PresentParameters dxgi_pp)
 {          
     frame_rate_limiter_(
-        [this](){         
+        [&swchain_, &dxgi_pp, this](){         
             if (frame_state_.load(std::memory_order_acquire) == sig::frame_ready) {
                 swchain_->Present1(0,0,std::addressof(dxgi_pp)); // potentially blocking 
                 frame_state_.store(sig::frame_consumed, std::memory_order_release);   
@@ -159,69 +197,7 @@ void stage::present()
 
 void stage::event_handler(coro::pull_type& yield)
 {
-    //using namespace ::gtl::events::event_types;            
-    //using transition_scene = scenes::detail::transition_scene<scene_graph::scene_type>;
-    //using std::swap;                
-    //    
-    //auto visit = vn::make_lambda_visitor<gtl::event>([&](auto& v){ return v.handle_events(yield); });
-    //
-    //scenes_.current_scene() = scenes::intro_scene{};
-    //
-    //while (!same_type(yield.get(),gtl::events::exit_immediately{})){    
-    //    apply_visitor(visit,scenes_.current_scene());                 
-    //    scenes_.current_scene() = scene_graph::scene_type{transition_scene{std::move(scenes_.current_scene()), 
-    //        scene_graph::scene_type{scenes::main_scene{}}, std::chrono::milliseconds(3000)}};
-    //    apply_visitor(visit,scenes_.current_scene());
-    //    //if (!state_manager(yield, result)) { return; }                
-    //    scenes_.current_scene() = boost::get<transition_scene>(scenes_.current_scene()).swap_second(scenes::detail::empty_scene{});
-    //    apply_visitor(visit,scenes_.current_scene());
-    //}
-
-    //scenes_.current_scene() = scenes::transitions::twinkle_effect{dev_,cqueue_,gtl::d3d::dummy_rootsig_1()};
-
-    scenes_.transition_scene(yield, dev_, cqueue_, swchain_, work_mutex_);
-
-    //for (;;) {
-        //std::cout << "beginning stage handler..\n";  
-        ////state_v transit = transition_h{std::move(scene_), state_v{state_B{}}};
-        //apply_visitor(visit,current_scene_);        
-        //current_scene_ = transition_scene{std::move(current_scene_), 
-        //    gtl::scene{main_scene{}}, std::chrono::milliseconds(2000)}; //swap(scene_, transit);
-        //apply_visitor(visit,current_scene_);        
-        //current_scene_ = std::move(boost::get<main_scene>(boost::get<transition_scene>(current_scene_).second()));
-        //apply_visitor(visit,current_scene_);        
-        //scene_ = empty_scene{std::move(boost::get<state_B>(boost::get<transition_h>(scene_).s2))};
-        //swap(boost::get<transition_h>(scene_).s2, scene_);                        
-        //to state_manager = [&](evco::pull_type& yield, int result) {
-        //      using boost::get;      
-        //      if (result == 1) { 
-        //          std::cout << "state_manager swapping states..\n";  
-        //          //state_v transit = transition_h{std::move(stayyt), state_v{state_B{}}};
-        //          using std::swap;                
-        //          stayyt = transition_h{std::move(stayyt), state_v{state_B{}}}; //swap(stayyt, transit);
-        //          auto visit = vn::make_lambda_visitor([&](auto& v){ v(yield); }, [](boost::blank){});
-        //          boost::apply_visitor(visit,stayyt); // drop to stayyt..                                  
-        //          stayyt = state_B{std::move(boost::get<state_B>(boost::get<transition_h>(stayyt).s2))};
-        //          //swap(boost::get<transition_h>(stayyt).s2, stayyt);
-        //      }
-        //      if (result == 2) { std::cout << "state_manager bonking out..\n"; return false; }
-        //      return true;    
-    //}
+    scene_builder_(scenes_,yield,work_mutex_); 
 }
-
-
-//stage::coro::push_type stage::make_event_handler(std::function<void()> cleanup_) 
-//{
-//    return stage::coro::push_type{
-//        [cleanup_=std::move(cleanup_),this](stage::coro::pull_type& yield) mutable
-//        {
-//            try {
-//                this->handle_events(yield);                
-//                cleanup_();
-//                //for (;;) while (yield) { yield(); } 
-//            } catch (std::exception& e) { std::cout << "exception caught... " << e.what() << "\n"; }
-//        }};        
-//}
-
 
 } // namespace

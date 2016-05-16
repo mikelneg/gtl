@@ -4,12 +4,19 @@
 /*-----------------------------------------------------------------------------
     Mikel Negugogor (http://github.com/mikelneg)                              
     
-    namespace gtl::tags::    
+    namespace gtl::tag::    
     useful tag types
 -----------------------------------------------------------------------------*/
 
 namespace gtl {
-namespace tags {
+namespace tag {
+    
+    template <typename T>
+    struct construct {
+        // TODO revisit this; used to prevent copy initialization from empty lists
+        // e.g., prevents void blah(construct<T>); from being called with blah({});
+        constexpr explicit construct() noexcept {} 
+    };
 
     struct no_initialization {};
     struct uninitialized {};
