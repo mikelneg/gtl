@@ -1,7 +1,7 @@
 #include "gtl/stage.h"
 
 #include <gtl/events.h>
-#include <gtl/scenes.h>
+//#include <gtl/scenes.h>
 
 #include <gtl/gtl_window.h>
 #include <gtl/d3d_types.h>
@@ -23,12 +23,14 @@
 #include <algorithm>
 
 
-#include <gtl/scenes.h> // TODO remove 
-#include <gtl/demo_transition_scene.h>
+//#include <gtl/scenes.h> // TODO remove 
+//#include <gtl/demo_transition_scene.h>
 #include <gtl/command_variant.h>
 
 #include <gtl/tags.h>
 #include <gtl/scene.h>
+
+#include <gtl/events.h>
 
 
 /*-----------------------------------------------------------------------------
@@ -40,11 +42,15 @@ namespace gtl {
     namespace {
         
         struct empty_scene {
+                        
+            //empty_scene(empty_scene const&) = default;
+            //empty_scene& operator=(empty_scene const&) = default;
+            
             template <typename...Ts>
             constexpr empty_scene(Ts&&...) noexcept {}
 
             template <typename ...Ts>
-            inline void operator()(Ts&&...) const {} 
+            void operator()(Ts const&...) const {}             
         };
 
     }
@@ -56,16 +62,18 @@ stage::stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, un
        // swchain_{swchain},
        // cqueue_{cqueue_},        
         //synchronizer_{cqueue_, num_buffers-1, (std::max)(0,static_cast<int>(num_buffers)-2)}, // maximum desync value.   
-        event_handler_{[this](auto& yield){ this->event_handler(yield); }},
-        scenes_{},  
-        current_scene_{gtl::tag::construct<empty_scene>{}},
+        scene_{empty_scene{}},            
+        event_handler_{},
+        //scenes_{},  
+        //scenes_{},
         //dxgi_pp{},
-        scene_builder_{[&](auto& scene_graph_, auto& yield_, auto& mutex_){ 
-                            scene_graph_.transition_scene(yield_, get_device(swchain), cqueue_, swchain, mutex_);   
-                      }},
+        //scene_builder_{[&](auto& scene_graph_, auto& yield_, auto& mutex_){ 
+         //                   scene_graph_.transition_scene(yield_, get_device(swchain), cqueue_, swchain, mutex_);   
+         //             }},
         quit_flag_{false},
-        frame_rate_limiter_{std::chrono::milliseconds(9)} // frame time limit.. 17 == ~60fps, 9 == ~120fps
-{        
+        frame_rate_limiter_{std::chrono::milliseconds(9)}, // frame time limit.. 17 == ~60fps, 9 == ~120fps
+        draw_params_{draw_queue_, 0, 0.0f, swchain.rtv_heap()}
+{            
         assert(num_buffers > 1);    
         frame_state_.store(sig::frame_consumed);   
         //quit_flag_.test_and_set();        
@@ -103,7 +111,18 @@ namespace { // implementation detail..
         resource_object(resource_object&&) = default;
         resource_object& operator=(resource_object&&) = default;
     };
+        
+    template <typename T>
+    using id_t = T;            
+
+    template <typename ...Ts, typename ...Qs>    
+    static 
+    void assign_draw_params(std::tuple<Ts...>& tuple_, Qs&&...qs) {
+        tuple_ = {qs...};
+    }    
 }
+
+
 
 void stage::work_thread(gtl::d3d::device dev_, gtl::d3d::swap_chain& swchain_, 
                         gtl::d3d::command_queue& cqueue_, unsigned num_buffers)
@@ -160,19 +179,29 @@ void stage::work_thread(gtl::d3d::device dev_, gtl::d3d::swap_chain& swchain_,
                                               D3D12_RESOURCE_STATE_RENDER_TARGET, 
                                               D3D12_RESOURCE_STATE_PRESENT));            
             cla->Close();
+            
+            std::vector<ID3D12CommandList*> &v = draw_queue_;
 
-            //std::vector<ID3D12CommandList*> v;
+            v.clear();
+
             v.emplace_back(clb.get());
             
+            // TODO rethink this call..
+
+            assign_draw_params(draw_params_, v, static_cast<int>(value(sync_index)), 1.0f, swchain_.rtv_heap());                
+
+            scene_.send_command(gtl::commands::draw{});   
+            // causes scene_ to call draw_callback with a functional like [&](auto&&...ps){ scene_internal_.draw(ps...); }            
+            // draw_callback then calls that functional with draw_params_ expanded            
+
             // // modifying to work with attach_scene ..
-            //auto vec = boost::apply_visitor([&](auto& scene){ 
+            //auto vec = boost::apply_visitor([&](auto& scene){      
             //    return scene.draw(static_cast<int>(value(sync_index)), 1.0f, swchain_.rtv_heap()); // draw call..
             //},scenes_.current_scene());
             
             //current_scene_.send_command(gtl::commands::draw{});            
 
-
-            for (auto&& e : vec) v.emplace_back(e); 
+            //for (auto&& e : vec) v.emplace_back(e); 
             v.emplace_back(cla.get());    
 
             //
@@ -195,9 +224,8 @@ void stage::present(gtl::d3d::swap_chain& swchain_, gtl::d3d::PresentParameters 
         });    
 }
 
-void stage::event_handler(coro::pull_type& yield)
-{
-    scene_builder_(scenes_,yield,work_mutex_); 
-}
+//void stage::event_handler(coro::pull_type& yield)
+//{
+//}
 
 } // namespace

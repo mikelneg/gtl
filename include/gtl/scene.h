@@ -21,32 +21,34 @@ namespace gtl {
     template <typename CommandVariant>
     class scene {
     
-        struct scene_priv_interface {
+        struct scene_interface {
             virtual void dispatch(CommandVariant) const = 0;
-            virtual ~scene_priv_interface() {}
+            virtual ~scene_interface() {}
         };
     
         template <typename T>
-        struct scene_priv_impl final : scene_priv_interface {
+        class scene_priv_impl final : public scene_interface {
             
             T obj;
-    
+
+        public:            
+
             template <typename ...Qs>
-            constexpr scene_priv_impl(Qs&&...qs) noexcept(noexcept(obj(std::forward<Qs>(qs)...)))
+            scene_priv_impl(Qs&&...qs) //noexcept(noexcept(obj(std::forward<Qs>(qs)...)))
                 :   obj(std::forward<Qs>(qs)...)                 
             {}        
                                     
             virtual void dispatch(CommandVariant v) const final { 
-                apply_visitor(obj,v);   // adl 
+                apply_visitor(obj,v);   // adl call, should pick up boost::apply_visitor if using boost::variant CommandVariant
             }    
         };
     
-        std::unique_ptr<scene_priv_interface> ptr;
+        std::unique_ptr<scene_interface> ptr;
     
-    public:
-    
+    public:                    
+
         template <typename C, typename ...Ps>
-        scene(gtl::tag::construct<C>, Ps&&...ps) 
+        scene(gtl::tags::construct<C>, Ps&&...ps) 
             : ptr{std::make_unique<scene_priv_impl<C>>(std::forward<Ps>(ps)...)}
         {}
     
@@ -55,10 +57,13 @@ namespace gtl {
             : ptr{std::make_unique<scene_priv_impl<std::remove_reference_t<T>>>(std::forward<T>(t))}
         {}
     
+        scene(scene&&) = default;
+        scene& operator=(scene&&) = default;
+
         template <typename T>
         inline void send_command(T&& t) const { ptr->dispatch(t); }
     
-        friend void swap(scene& lhs, scene& rhs) { using std::swap; swap(lhs.ptr,rhs.ptr); }
+        //friend void swap(scene& lhs, scene& rhs) { using std::swap; swap(lhs.ptr,rhs.ptr); }
     };
 
 }

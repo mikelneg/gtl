@@ -22,15 +22,19 @@ namespace coroutine {
         using coro = boost::coroutines::asymmetric_coroutine<gtl::event>;                
         coro::push_type coroutine_;
     public:
+
+        using push_type = coro::push_type;
+        using pull_type = coro::pull_type;
+
         event_handler();
 
         template <typename F>
         event_handler(F func) : coroutine_{vn::coroutines::make_trycatch_coroutine(std::move(func))} {}
 
-        //template <typename F>
-        //void replace_handler(F func) {
-        //    coroutine_ = coro::push_type{vn::coroutines::make_trycatch_coroutine(std::move(func))};
-        //}
+        template <typename F>
+        void replace_handler(F func) {
+            coroutine_ = coro::push_type{vn::coroutines::make_trycatch_coroutine(std::move(func))};
+        }
 
         void dispatch_event(gtl::event const&);
     };

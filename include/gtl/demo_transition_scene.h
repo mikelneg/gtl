@@ -144,6 +144,55 @@ namespace transitions {
             return v;
         }
         
+        void draw(std::vector<ID3D12CommandList*>& v, int idx, float f, gtl::d3d::rtv_descriptor_heap& rtv_heap_) const {            
+            update(cbuf_);
+            cbuffer_[idx].update(reinterpret_cast<const char*>(&cbuf_),sizeof(cbuf_));
+            //            
+            
+            calloc_[idx]->Reset();
+            clist_[idx]->Reset(calloc_[idx].get(),pso_.get());
+            //
+            gtl::d3d::graphics_command_list const& cl = clist_[idx];            
+            
+            cl->SetGraphicsRootSignature(root_sig_.get());
+            auto heaps = { sampler_heap_.get(), resource_heap_.get() };
+        	cl->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());                    
+            cl->SetGraphicsRootConstantBufferView(0, (cbuffer_[idx].resource())->GetGPUVirtualAddress());
+            cl->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
+            cl->SetGraphicsRootDescriptorTable(2, resource_heap_->GetGPUDescriptorHandleForHeapStart());
+                                                                    
+            auto viewports = { std::addressof(viewport_) };
+            cl->RSSetViewports(static_cast<unsigned>(viewports.size()),*viewports.begin());
+            cl->RSSetScissorRects(1, std::addressof(scissor_));            
+            cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+            
+            //float blendvalues[]{f,f,f,f};
+            //cl->OMSetBlendFactor(blendvalues);
+
+            CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
+            rtv_handle.Offset(idx, rtv_heap_.increment_value());
+
+            float clearvalue[]{0.0f,0.0f,0.0f,0.0f};            
+
+            cl->ClearRenderTargetView(rtv_handle,clearvalue,1,&scissor_); 
+
+            cl->OMSetRenderTargets(1, &rtv_handle, TRUE, nullptr);
+            cl->DrawInstanced(14, 1, 0, 0);             
+
+            clist_[idx]->Close();
+            font_clist_[idx]->Reset(calloc_[idx].get(),nullptr);      
+            font_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());               
+
+            float f_scale = font_scale / 72.0f;
+
+
+            font_(idx,f,font_clist_[idx],text_viewport_,scissor_,f_scale,rtv_handle);
+            font_clist_[idx]->Close();
+
+            v.emplace_back(clist_[idx].get());
+            v.emplace_back(font_clist_[idx].get());            
+        }
+
         template <typename YieldType>
         gtl::event handle_events(YieldType& yield) const {            
             namespace ev = gtl::events;

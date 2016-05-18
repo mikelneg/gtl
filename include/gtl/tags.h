@@ -4,12 +4,12 @@
 /*-----------------------------------------------------------------------------
     Mikel Negugogor (http://github.com/mikelneg)                              
     
-    namespace gtl::tag::    
+    namespace gtl::tags::    
     useful tag types
 -----------------------------------------------------------------------------*/
 
 namespace gtl {
-namespace tag {
+namespace tags {
     
     template <typename T>
     struct construct {

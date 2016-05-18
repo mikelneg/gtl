@@ -37,6 +37,9 @@
 #include <random>
 #include <atomic>
 
+#include <gtl/stage.h>
+#include <gtl/command_variant.h>
+
 namespace gtl {
 namespace scenes {
 namespace transitions {
@@ -107,6 +110,8 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
     class swirl_effect {        
         
         constexpr static std::size_t frame_count = 3; // TODO place elsewhere..
+
+        gtl::stage& stage_;
 
         gtl::d3d::device& dev_;
         gtl::d3d::command_queue& cqueue_;        
@@ -205,8 +210,11 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 
 
     public:
-        swirl_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_) // TODO temporary effect..
-            :   dev_{dev_}, 
+        swirl_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_,
+                     gtl::stage& stage_) // TODO temporary effect..
+            :   stage_{stage_},
+
+                dev_{dev_}, 
                 cqueue_{cqueue_},                
                 swchain_{swchain_},
                 vshader_{L"D:\\Code\\D3D12_migration\\D3D12_migration\\Debug\\x64\\skybox_vs.cso"},
@@ -245,7 +253,142 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 
         ~swirl_effect() { std::cout << "~swirl_effect()\n"; }
 
-        std::vector<ID3D12CommandList*> draw(int idx, float f, gtl::d3d::rtv_descriptor_heap& rtv_heap_) const {            
+        template <typename T>
+        void operator()(T const&) const { std::cout << "swirl_effect caught generic message, not handling..\n"; }
+
+        void operator()(gtl::commands::draw const&) const {            
+            stage_.draw_callback([this](auto&&...ps){ draw(std::forward<decltype(ps)>(ps)...); });
+        }
+
+
+//        std::vector<ID3D12CommandList*> draw(int idx, float f, gtl::d3d::rtv_descriptor_heap& rtv_heap_) const {            
+//            update(cbuf_);
+//            cbuffer_[idx].update(reinterpret_cast<const char*>(&cbuf_),sizeof(cbuf_));  
+//
+//            // copy id layer into id_readback
+//            
+//            uint32_t id_value_{};
+//                        
+//            //id_readback_->ReadFromSubresource(&id_value_, 0, 0, 0, &CD3DX12_BOX{0,1});
+//            void *p{};            
+//            id_readback_->Map(0, &CD3DX12_RANGE{0,4},&p);
+//            memcpy(&id_value_, p, 4);
+//            id_readback_->Unmap(0, &CD3DX12_RANGE{1,0}); // end < begin tells the api that nothing was written
+//            
+//
+//
+////            
+////
+////            void CopyBufferRegion(
+////                  [in] ID3D12Resource *pDstBuffer,
+////                       UINT64         DstOffset,
+////                  [in] ID3D12Resource *pSrcBuffer,
+////                       UINT64         SrcOffset,
+////                       UINT64         NumBytes
+////                );
+////
+////            
+////
+////            void CopyTextureRegion(
+////  [in]           const D3D12_TEXTURE_COPY_LOCATION *pDst,
+////                       UINT                        DstX,
+////                       UINT                        DstY,
+////                       UINT                        DstZ,
+////  [in]           const D3D12_TEXTURE_COPY_LOCATION *pSrc,
+////  [in, optional] const D3D12_BOX                   *pSrcBox
+////);
+////                
+//            //            
+//            std::vector<ID3D12CommandList*> v;
+//            calloc_[idx]->Reset();
+//            clist_[idx]->Reset(calloc_[idx].get(),pso_.get());
+//            //
+//            gtl::d3d::graphics_command_list const& cl = clist_[idx];            
+//            
+//            cl->SetGraphicsRootSignature(root_sig_.get());
+//            auto heaps = { sampler_heap_.get(), resource_heap_.get() };
+//        	cl->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());                    
+//            cl->SetGraphicsRootConstantBufferView(0, (cbuffer_[idx].resource())->GetGPUVirtualAddress());
+//            cl->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
+//            cl->SetGraphicsRootDescriptorTable(2, resource_heap_->GetGPUDescriptorHandleForHeapStart());
+//                                                                    
+//            float blendvalues[]{f,f,f,f};
+//            cl->OMSetBlendFactor(blendvalues);
+//
+//            auto viewports = { std::addressof(viewport_) };
+//            cl->RSSetViewports(static_cast<unsigned>(viewports.size()),*viewports.begin());
+//            cl->RSSetScissorRects(1, std::addressof(scissor_));            
+//            cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+//
+//            CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};                                                    
+//            rtv_handle.Offset(idx, rtv_heap_.increment_value());
+//
+//            CD3DX12_CPU_DESCRIPTOR_HANDLE id_handle{id_layer_.rtv_heap()->GetCPUDescriptorHandleForHeapStart()};                                                    
+//            id_handle.Offset(idx, id_layer_.rtv_heap().increment_value());
+//
+//            D3D12_CPU_DESCRIPTOR_HANDLE handles[]{rtv_handle,id_handle};
+//
+//            //cl->OMSetRenderTargets(2, handles, false, nullptr); // not issuing ids with this shader..
+//            cl->OMSetRenderTargets(1, &rtv_handle, TRUE, nullptr);
+//            cl->DrawInstanced(14, 1, 0, 0);             
+//            clist_[idx]->Close();            
+//            
+//            gui_rect_clist_[idx]->Reset(calloc_[idx].get(),nullptr);      
+//            gui_rect_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());                           
+//            
+//            gui_rects_(idx,f,gui_rect_clist_[idx],viewport_,scissor_,handles);
+//                            
+//            D3D12_TEXTURE_COPY_LOCATION src{id_layer_, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX};
+//            D3D12_TEXTURE_COPY_LOCATION dst{id_readback_, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT, 
+//                                                    D3D12_PLACED_SUBRESOURCE_FOOTPRINT{0,
+//                                CD3DX12_SUBRESOURCE_FOOTPRINT{DXGI_FORMAT_R32_UINT,1,1,1,256}}};
+//
+//            src.SubresourceIndex = idx;            
+//            //dst.PlacedFootprint = D3D12_PLACED_SUBRESOURCE_FOOTPRINT{0,CD3DX12_SUBRESOURCE_FOOTPRINT{DXGI_FORMAT_R32_UINT,4,1,0,16}};
+//
+//            // id layer texture copy..
+//            gui_rect_clist_[idx]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+//                id_layer_, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE, idx));
+//
+//            //gui_rect_clist_[idx]->CopyBufferRegion(id_readback_,0,id_layer_,0,4);
+//
+//            LPARAM coord_ = mouse_coord_.get();
+//            int mx = GET_X_LPARAM(coord_);
+//            int my = GET_Y_LPARAM(coord_);
+//
+//            static int i = 0;
+//            if (i++ > 30) {
+//                i = 0;
+//                std::cout << "mouse @ " << mx << "," << my << " :: id == " << id_value_ << "\n"; 
+//                //std::cout << "id value == " << id_value_ << "\n"; 
+//            }
+//
+//            if (mx > 0 && 960 > mx && my > 0 && 540 > my) {
+//                gui_rect_clist_[idx]->CopyTextureRegion(&dst,0,0,0,&src,
+//                                        //&CD3DX12_BOX{200,200,201,201});
+//                                        &CD3DX12_BOX{mx,my,mx+1,my+1});
+//            }
+//                                    
+//            gui_rect_clist_[idx]->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+//                id_layer_, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, idx));            
+//
+//            gui_rect_clist_[idx]->Close();
+//
+//            //
+//            //id_sampler_clist_[idx]->Reset(calloc_[idx].get(),nullptr);      
+//            //id_sampler_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());                           
+//            ////id_sampler_(idx,f,gui_rect_clist_[idx],viewport_,scissor_,rtv_handle);
+//            //id_sampler_clist_[idx]->Close();
+//
+//            //
+//            v.emplace_back(clist_[idx].get());
+//            v.emplace_back(gui_rect_clist_[idx].get());
+//            //v.emplace_back(id_sampler_clist_[idx].get());
+//            
+//            return v;
+//        }
+        
+        void draw(std::vector<ID3D12CommandList*>& v, int idx, float f, gtl::d3d::rtv_descriptor_heap& rtv_heap_) const {            
             update(cbuf_);
             cbuffer_[idx].update(reinterpret_cast<const char*>(&cbuf_),sizeof(cbuf_));  
 
@@ -283,7 +426,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 //);
 //                
             //            
-            std::vector<ID3D12CommandList*> v;
+            //std::vector<ID3D12CommandList*> v;
             calloc_[idx]->Reset();
             clist_[idx]->Reset(calloc_[idx].get(),pso_.get());
             //
@@ -369,9 +512,10 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             v.emplace_back(gui_rect_clist_[idx].get());
             //v.emplace_back(id_sampler_clist_[idx].get());
             
-            return v;
+            //return v;
         }
         
+
         // ^^ vv ^^ vv ^^ vv
 
         template <typename YieldType>
@@ -379,6 +523,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             namespace ev = gtl::events;
             namespace k = gtl::keyboard;
             int count{};
+            std::cout << "swirl_effect event handler entered..\n"; 
             while (!same_type(yield().get(),ev::exit_immediately{})){                   
                 if (same_type(yield.get(),ev::keydown{})){ 
                     
@@ -402,6 +547,11 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                 }
             }            
             return gtl::events::exit_state{0};
+        }            
+
+                
+        void operator()(gtl::commands::handle const&) const {
+            stage_.replace_event_handler([this](auto& yield){ handle_events(yield); });
         }            
     };
 
