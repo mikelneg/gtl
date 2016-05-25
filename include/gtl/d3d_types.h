@@ -13,7 +13,6 @@
 
 #include <gtl/tags.h>
 #include <gtl/release_ptr.h>
-//#include <gtl/gtl_window.h>
 #include <gtl/win_tools.h>
 
 #include <iostream> 
