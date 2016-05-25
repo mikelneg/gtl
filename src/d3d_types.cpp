@@ -468,6 +468,16 @@ namespace _12_0 {
         set_name(get(),L"fence");               
     }
 
+    void fence::synchronized_increment(command_queue& cqueue)
+    {
+        gtl::win::waitable_handle handle;        
+        auto const new_value = this->get()->GetCompletedValue()+1;
+        this->get()->SetEventOnCompletion(new_value, handle);        
+        cqueue->Signal(this->get(),new_value);        
+        wait(handle);
+        assert(this->get()->GetCompletedValue() == new_value);
+    }
+    
     void fence::synchronized_set(uint64_t new_value, command_queue& cqueue)
     {
         fence tmp_fence_{ get_device_from(cqueue) };

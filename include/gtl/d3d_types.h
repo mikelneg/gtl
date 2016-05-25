@@ -36,42 +36,6 @@ namespace d3d {
 
 namespace _12_0 {            
            
-
-    //
-    //      device
-    //      debug_layer
-    //      swap_chain
-    //
-    //      command_queue
-    //      command_allocator
-    //      command_list
-    //      
-    //      descriptor_heap
-    //      descriptor
-    //
-    //      root_signature
-    //
-    //      pipeline_state_object
-    //      v_shader
-    //      p_shader
-    //      c_shader
-    //
-    //      resources
-    //      
-    //      fences
-    //
-    //
-    //
-    //          stage a,b,c; present(a,b,c); 
-    //
-    //
-    //
-    //    
-    //
-    //
-    //
-    //
-
     class resource : public release_ptr<D3D12Resource> {
     public:        
         resource() = default;
@@ -82,9 +46,9 @@ namespace _12_0 {
         dxgi_factory();
     };
     
-    class device : public release_ptr<D3D12Device> {            
+    class device : public release_ptr<D3D12Device> {                    
     public:        
-        device(gtl::tags::uninitialized) {}
+        device(gtl::tags::uninitialized) noexcept {}
         device(gtl::tags::debug);
         device(gtl::tags::release);
         device(device&&) = default;
@@ -143,12 +107,12 @@ namespace _12_0 {
     
     class direct_command_allocator : public release_ptr<D3D12CommandAllocator> {
     public:
-        direct_command_allocator(device&);
+        direct_command_allocator(device&);        
     };
     
     class compute_command_allocator : public release_ptr<D3D12CommandAllocator> {
     public:
-        compute_command_allocator(device&);        
+        compute_command_allocator(device&);               
     };
     
     class vertex_shader : public release_ptr<D3DBlob> {
@@ -192,6 +156,7 @@ namespace _12_0 {
         fence(device& dev) : fence(*dev) {}
         fence(fence&& other) = default;
         void synchronized_set(uint64_t new_value, command_queue&);
+        void synchronized_increment(command_queue&);
     };
 
     class constant_buffer {

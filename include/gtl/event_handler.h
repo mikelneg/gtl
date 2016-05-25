@@ -20,7 +20,14 @@ namespace coroutine {
 
     class event_handler {        
         using coro = boost::coroutines::asymmetric_coroutine<gtl::event>;                
+
+        class scoped_replacement {
+            // TODO swaps coroutines; on scope exit swaps back..
+              
+        };
+
         coro::push_type coroutine_;
+           
     public:
 
         using push_type = coro::push_type;
@@ -32,8 +39,16 @@ namespace coroutine {
         event_handler(F func) : coroutine_{vn::coroutines::make_trycatch_coroutine(std::move(func))} {}
 
         template <typename F>
-        void replace_handler(F func) {
+        auto exchange_handler(F func) {
+            auto ret = std::move(coroutine_); 
             coroutine_ = coro::push_type{vn::coroutines::make_trycatch_coroutine(std::move(func))};
+            return ret;
+        }
+        
+        auto exchange_handler(coro::push_type&& other) {
+            auto ret = std::move(coroutine_); 
+            coroutine_ = std::move(other);
+            return ret;
         }
 
         void dispatch_event(gtl::event const&);

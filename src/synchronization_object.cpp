@@ -41,7 +41,14 @@ const
 
 void synchronization_object::advance() 
 { 
-    cqueue_->Signal(fence_.get(), last_set_value_); ++last_set_value_; 
+    cqueue_->Signal(fence_.get(), last_set_value_); 
+    ++last_set_value_; 
+}
+
+void synchronization_object::synchronous_advance() 
+{ 
+    fence_.synchronized_increment(cqueue_);
+    ++last_set_value_;
 }
 
 bool synchronization_object::values_are_synchronized() 

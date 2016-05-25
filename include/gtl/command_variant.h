@@ -14,6 +14,9 @@
 namespace gtl {
 
     namespace commands {
+        
+        struct get_some_resource {}; // TODO just for testing..
+        struct get_swap_chain {};
         struct draw {};
 
         struct resize {};
@@ -21,6 +24,8 @@ namespace gtl {
     }
 
     using command_variant = boost::variant<
+                                           commands::get_some_resource,    
+                                           commands::get_swap_chain,
                                            commands::draw,
                                            commands::resize,
                                            commands::handle

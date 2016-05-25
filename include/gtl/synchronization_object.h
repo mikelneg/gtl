@@ -47,10 +47,12 @@ public:
 
     friend unsigned value(synchronization_object const& s) { return s.periodic_value(); }
     friend void advance(synchronization_object& s) { s.advance(); }    
+    friend void synchronous_advance(synchronization_object& s) { s.synchronous_advance(); }
 
 private:    
     
-    void advance();
+    void advance(); // TODO should probably consider making a distinct type for sync/async synchronization           
+    void synchronous_advance(); 
     unsigned periodic_value() const;    
     bool values_are_synchronized() const;
     void wait_for_values_to_sync_at(uint64_t new_value); // synchronizes

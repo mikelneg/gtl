@@ -30,9 +30,9 @@ namespace gtl {
         class scene_priv_impl final : public scene_interface {
             
             T obj;
-
+    
         public:            
-
+    
             template <typename ...Qs>
             scene_priv_impl(Qs&&...qs) //noexcept(noexcept(obj(std::forward<Qs>(qs)...)))
                 :   obj(std::forward<Qs>(qs)...)                 
@@ -46,7 +46,7 @@ namespace gtl {
         std::unique_ptr<scene_interface> ptr;
     
     public:                    
-
+    
         template <typename C, typename ...Ps>
         scene(gtl::tags::construct<C>, Ps&&...ps) 
             : ptr{std::make_unique<scene_priv_impl<C>>(std::forward<Ps>(ps)...)}
@@ -59,7 +59,7 @@ namespace gtl {
     
         scene(scene&&) = default;
         scene& operator=(scene&&) = default;
-
+    
         template <typename T>
         inline void send_command(T&& t) const { ptr->dispatch(t); }
     

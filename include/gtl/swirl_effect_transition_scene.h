@@ -111,7 +111,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
         
         constexpr static std::size_t frame_count = 3; // TODO place elsewhere..
 
-        gtl::stage& stage_;
+        //gtl::stage& stage_;
 
         gtl::d3d::device& dev_;
         gtl::d3d::command_queue& cqueue_;        
@@ -148,7 +148,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 
         gtl::d3d::rect_draw gui_rects_;
 
-        gtl::copyable_atomic<int64_t> mutable mouse_coord_;
+        gtl::copyable_atomic<int64_t> mutable mouse_coord_;        
         
         auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps) {
             D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_{};
@@ -210,9 +210,9 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 
 
     public:
-        swirl_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_,
-                     gtl::stage& stage_) // TODO temporary effect..
-            :   stage_{stage_},
+        swirl_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_)
+                  //   gtl::stage& stage_) // TODO temporary effect..
+            :  // stage_{stage_},
 
                 dev_{dev_}, 
                 cqueue_{cqueue_},                
@@ -248,17 +248,19 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             std::cout << "swirl_effect()\n";
         }
 
+        void set_mouse_coords(int64_t i) const { mouse_coord_.set(i); }
+
         swirl_effect& operator=(swirl_effect&&) { std::cout << "swirl_effect operator= called..\n"; return *this; } // TODO throw? assert false?
         swirl_effect(swirl_effect&&) = default;
 
         ~swirl_effect() { std::cout << "~swirl_effect()\n"; }
 
-        template <typename T>
-        void operator()(T const&) const { std::cout << "swirl_effect caught generic message, not handling..\n"; }
+        //template <typename T>
+        //void operator()(T const&) const { std::cout << "swirl_effect caught generic message, not handling..\n"; }
 
-        void operator()(gtl::commands::draw const&) const {            
-            stage_.draw_callback([this](auto&&...ps){ draw(std::forward<decltype(ps)>(ps)...); });
-        }
+        //void operator()(gtl::commands::draw const&) const {            
+        //    stage_.draw_callback([this](auto&&...ps){ draw(std::forward<decltype(ps)>(ps)...); });
+        //}
 
 
 //        std::vector<ID3D12CommandList*> draw(int idx, float f, gtl::d3d::rtv_descriptor_heap& rtv_heap_) const {            
@@ -518,41 +520,41 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 
         // ^^ vv ^^ vv ^^ vv
 
-        template <typename YieldType>
-        gtl::event handle_events(YieldType& yield) const {            
-            namespace ev = gtl::events;
-            namespace k = gtl::keyboard;
-            int count{};
-            std::cout << "swirl_effect event handler entered..\n"; 
-            while (!same_type(yield().get(),ev::exit_immediately{})){                   
-                if (same_type(yield.get(),ev::keydown{})){ 
-                    
-                    switch( boost::get<ev::keydown>( yield.get().value() ).key ) {
-                        case k::Escape : std::cout << "swirl_effect(): escape pressed, exiting all..\n"; 
-                                         return gtl::events::exit_all{}; break;
-                        case k::Q : std::cout << "swirl_effect(): q pressed, exiting A from route 0 (none == " << count << ")\n";                                                                
-                                    return gtl::events::exit_state{0}; break;
-                        case k::K : std::cout << "swirl_effect(): k pressed, throwing (none == " << count << ")\n";                                                
-                                    throw std::runtime_error{__func__}; break;                    
-                        case k::R : std::cout << "swirl_effect() : r pressed, resizing swapchain..\n"; 
-                                    swchain_.resize(100,100); 
-                                    break;
-                        default : std::cout << "swirl_effect() : unknown key pressed\n"; 
-                    }
-                                   
-                } else if (same_type(yield.get(),ev::none{})) {
-                    count++;                
-                } else if (same_type(yield.get(),ev::mouse_at{})) {
-                    mouse_coord_.set(boost::get<ev::mouse_at>(yield.get().value()).coord);                    
-                }
-            }            
-            return gtl::events::exit_state{0};
-        }            
+        //template <typename YieldType>
+        //gtl::event handle_events(YieldType& yield) const {            
+        //    namespace ev = gtl::events;
+        //    namespace k = gtl::keyboard;
+        //    int count{};
+        //    std::cout << "swirl_effect event handler entered..\n"; 
+        //    while (!same_type(yield().get(),ev::exit_immediately{})){                   
+        //        if (same_type(yield.get(),ev::keydown{})){ 
+        //            
+        //            switch( boost::get<ev::keydown>( yield.get().value() ).key ) {
+        //                case k::Escape : std::cout << "swirl_effect(): escape pressed, exiting all..\n"; 
+        //                                 return gtl::events::exit_all{}; break;
+        //                case k::Q : std::cout << "swirl_effect(): q pressed, exiting A from route 0 (none == " << count << ")\n";                                                                
+        //                            return gtl::events::exit_state{0}; break;
+        //                case k::K : std::cout << "swirl_effect(): k pressed, throwing (none == " << count << ")\n";                                                
+        //                            throw std::runtime_error{__func__}; break;                    
+        //                case k::R : std::cout << "swirl_effect() : r pressed, resizing swapchain..\n"; 
+        //                            swchain_.resize(100,100); 
+        //                            break;
+        //                default : std::cout << "swirl_effect() : unknown key pressed\n"; 
+        //            }
+        //                           
+        //        } else if (same_type(yield.get(),ev::none{})) {
+        //            count++;                
+        //        } else if (same_type(yield.get(),ev::mouse_at{})) {
+        //            mouse_coord_.set(boost::get<ev::mouse_at>(yield.get().value()).coord);                    
+        //        }
+        //    }            
+        //    return gtl::events::exit_state{0};
+        //}            
 
                 
-        void operator()(gtl::commands::handle const&) const {
-            stage_.replace_event_handler([this](auto& yield){ handle_events(yield); });
-        }            
+        //void operator()(gtl::commands::handle const&) const {
+        //    stage_.replace_event_handler([this](auto& yield){ handle_events(yield); });
+        //}            
     };
 
 }}} // namespaces

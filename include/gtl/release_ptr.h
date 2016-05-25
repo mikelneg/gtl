@@ -53,7 +53,7 @@ namespace gtl {
     namespace detail {
         struct release_deleter {
             template <typename T>
-            void operator()(T* t) const {
+            void operator()(T* t) const noexcept(noexcept(t->Release())) {
                 if (t) t->Release(); 
             }
         };
