@@ -66,7 +66,7 @@ public:
     stage(stage&&) = delete;
     stage& operator=(stage&&) = delete;
     
-    void present(gtl::d3d::swap_chain&,gtl::d3d::PresentParameters);           
+    void present(gtl::d3d::swap_chain&, DXGI_PRESENT_PARAMETERS);           
     void dispatch_event(gtl::event const& e) { event_handler_.dispatch_event(e); }           
 };
 

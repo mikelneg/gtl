@@ -449,7 +449,7 @@ namespace gtl {
 //
 
 
-void stage::present(gtl::d3d::swap_chain& swchain_, gtl::d3d::PresentParameters dxgi_pp)
+void stage::present(gtl::d3d::swap_chain& swchain_, DXGI_PRESENT_PARAMETERS dxgi_pp)
 {          
     frame_rate_limiter_(
         [&swchain_, &dxgi_pp, this](){                 

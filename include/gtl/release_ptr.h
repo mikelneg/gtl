@@ -47,8 +47,14 @@ namespace gtl {
         T* operator->() const noexcept { return ptr_; }
 
         operator T*() const noexcept { return ptr_; }
-        explicit operator bool() const noexcept { return ptr_ != nullptr; }
+        explicit operator bool() const noexcept { return ptr_ != nullptr; }            
     };
+
+    template <typename T>
+    void** void_ptr(release_ptr<T>& t) noexcept { return reinterpret_cast<void**>(std::addressof(t.expose_ptr())); }
+        
+    template <typename T>
+    decltype(auto) expose_ptr(release_ptr<T>& t) noexcept { return t.expose_ptr(); }
 
     namespace detail {
         struct release_deleter {

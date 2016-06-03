@@ -40,6 +40,8 @@
 #include <gtl/stage.h>
 #include <gtl/command_variant.h>
 
+#include <gtl/physics_simulation.h>
+
 namespace gtl {
 namespace scenes {
 namespace transitions {
@@ -135,8 +137,8 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 
         //std::array<std::atomic<int32_t>, frame_count> mutable ids_;
         
-        gtl::d3d::D3D12Viewport viewport_;//{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f};
-        gtl::d3d::D3D12ScissorRect scissor_;//{0,0,960,540};    
+        gtl::d3d::raw::Viewport viewport_;//{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f};
+        gtl::d3d::raw::ScissorRect scissor_;//{0,0,960,540};    
 
         gtl::d3d::resource_descriptor_heap resource_heap_;
         gtl::d3d::srv texture_;     
@@ -210,7 +212,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 
 
     public:
-        swirl_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_)
+        swirl_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, gtl::physics_simulation& physics_)
                   //   gtl::stage& stage_) // TODO temporary effect..
             :  // stage_{stage_},
 
@@ -235,7 +237,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                 id_layer_{swchain_, DXGI_FORMAT_R32_UINT, 3, gtl::d3d::tags::shader_visible{}},
                 sampler_heap_{dev_,1},
                 sampler_{dev_,sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
-                gui_rects_{dev_, cqueue_, root_sig_}
+                gui_rects_{dev_, cqueue_, root_sig_, physics_}
         {            
             //
             dev_->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),
@@ -243,7 +245,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                                           &CD3DX12_RESOURCE_DESC::Buffer(256),
                                           D3D12_RESOURCE_STATE_COPY_DEST,
                                           nullptr, __uuidof(gtl::d3d::resource::type),
-                                          reinterpret_cast<void**>(&id_readback_.expose_ptr()));            
+                                          void_ptr(id_readback_));            
             // cbuffer_[idx].update() -- 
             std::cout << "swirl_effect()\n";
         }
@@ -390,7 +392,8 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 //            return v;
 //        }
         
-        void draw(std::vector<ID3D12CommandList*>& v, int idx, float f, gtl::d3d::rtv_descriptor_heap& rtv_heap_) const {            
+        void draw(std::vector<ID3D12CommandList*>& v, 
+                  int idx, float f, gtl::d3d::rtv_descriptor_heap& rtv_heap_, std::atomic<uint32_t>& id_) const {            
             update(cbuf_);
             cbuffer_[idx].update(reinterpret_cast<const char*>(&cbuf_),sizeof(cbuf_));  
 
@@ -404,7 +407,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             memcpy(&id_value_, p, 4);
             id_readback_->Unmap(0, &CD3DX12_RANGE{1,0}); // end < begin tells the api that nothing was written
             
-
+            id_.store(id_value_, std::memory_order_relaxed);
 
 //            
 //
@@ -458,7 +461,10 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             D3D12_CPU_DESCRIPTOR_HANDLE handles[]{rtv_handle,id_handle};
 
             //cl->OMSetRenderTargets(2, handles, false, nullptr); // not issuing ids with this shader..
-            cl->OMSetRenderTargets(1, &rtv_handle, TRUE, nullptr);
+            float const clearvalues[]{0.0f,0.0f,0.0f,0.0f};
+            cl->ClearRenderTargetView(id_handle,clearvalues,0,nullptr);            
+
+            cl->OMSetRenderTargets(1, &rtv_handle, TRUE, nullptr);            
             cl->DrawInstanced(14, 1, 0, 0);             
             clist_[idx]->Close();            
             
@@ -486,7 +492,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             int my = GET_Y_LPARAM(coord_);
 
             static int i = 0;
-            if (i++ > 30) {
+            if (++i > 50) {
                 i = 0;
                 std::cout << "mouse @ " << mx << "," << my << " :: id == " << id_value_ << "\n"; 
                 //std::cout << "id value == " << id_value_ << "\n"; 

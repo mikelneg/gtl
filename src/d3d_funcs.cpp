@@ -1,5 +1,5 @@
 #include "gtl/d3d_funcs.h"
-#include "gtl/d3d_types.h"
+#include <gtl/d3d_types.h>
 
 #include <gtl/release_ptr.h>
 #include <gtl/win_tools.h>
@@ -10,7 +10,10 @@
 #include <windows.h>
 #include <winerror.h>
 #include <memory>
+#include <vector>
 #include <stdexcept>
+#include <ostream>
+#include <gtl/d3d_ostream.h>
 
 /*-----------------------------------------------------------------------------
     Mikel Negugogor (http://github.com/mikelneg)    
@@ -18,56 +21,51 @@
 
 namespace gtl { 
 namespace d3d { 
-namespace _12_0 {
+namespace version_12_0 {
 
-    // static helper functions
-    static 
-    void disable_alt_enter(HWND hwnd)
-    {
-        auto factory = get_dxgi_factory();
-        win::throw_on_fail( factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER)
-                            ,__func__ );
+    
+    constexpr int frame_count() noexcept { return 3; }    
+    // Nice discussion, and suggests 3 as the minimum default buffer count (reasons in the video):    
+    // https://www.youtube.com/watch?v=E3wTajGZOsA
+
+    namespace {
+        static void disable_alt_enter(HWND hwnd) 
+        {
+            auto factory = get_dxgi_factory();
+            win::throw_on_fail(factory->MakeWindowAssociation(hwnd, DXGI_MWA_NO_ALT_ENTER),__func__ );
+        }    
     }
 
     //////////////////////////////////////////////////////// 
 
-    release_ptr<DXGIFactory> get_dxgi_factory() 
+    release_ptr<raw::Factory> get_dxgi_factory() 
     {  
-        release_ptr<DXGIFactory> ptr;
-        win::throw_on_fail(CreateDXGIFactory2(0,__uuidof(DXGIFactory), reinterpret_cast<void**>(&ptr))
-                            ,__func__ );        
+        release_ptr<raw::Factory> ptr;
+        win::throw_on_fail(CreateDXGIFactory2(0,__uuidof(raw::Factory), void_ptr(ptr)),__func__ );        
         return ptr;
     }
 
-    release_ptr<DXGIAdapter> get_hw_adapter()
+    std::vector<raw::AdapterDesc> enumerate_adaptors()
     {	            
-        // adapted from: https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/Samples/D3D12HelloWorld/src/HelloWindow/DXSample.cpp        
+        // adapted from https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/Samples/D3D12HelloWorld/src/HelloWindow/DXSample.cpp        
         auto factory = get_dxgi_factory();
-        release_ptr<DXGIAdapter> ptr;                        
-	    for (UINT i = 0; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters1(i, &ptr); ++i)
+        release_ptr<raw::Adapter> ptr;                        
+        std::vector<raw::AdapterDesc> adapters;
+	    for (unsigned i = 0; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters1(i, std::addressof(ptr.expose_ptr())); ++i)
 	    {
-		    DXGI_ADAPTER_DESC1 desc;
-		    ptr->GetDesc1(&desc);
-		    if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) { 
-		    	ptr.reset();
-                continue;
-		    }
-		    if (win::succeeded(D3D12CreateDevice(ptr.get(), D3D_FEATURE_LEVEL_12_0, __uuidof(D3D12Device), nullptr))) {
-		    	return ptr;
-		    }
+            raw::AdapterDesc desc{};
+		    ptr->GetDesc1(std::addressof(desc));
+            adapters.emplace_back(desc);                        
 	    }	    
 
-        win::throw_on_fail(E_FAIL, __func__); // if we've made it here, we have failed..
-        return ptr; // silence compiler warning
+        return adapters;
     }
 
-    DXGI_SWAP_CHAIN_DESC create_swapchain_desc(tags::flipmodel_windowed, HWND hwnd, unsigned num_buffers, unsigned width, unsigned height) 
-    {           
-        // some preconditions.. 
-        if (num_buffers < 2 || num_buffers > 16) { throw std::logic_error{__func__}; }
-        //if ((height % 4) != 0) { throw std::logic_error{__func__}; }
+    raw::SwapChainDesc create_swapchain_desc(tags::flipmodel_windowed, HWND hwnd, unsigned num_buffers, unsigned width, unsigned height) 
+    {                       
+        if (num_buffers < 2 || num_buffers > 16) { throw std::logic_error{__func__}; }        
 
-        DXGI_SWAP_CHAIN_DESC desc{};        
+        raw::SwapChainDesc desc{};        
         desc.BufferDesc.Width = width;
         desc.BufferDesc.Height = height;   // Rumor suggests this must be a multiple of 4..     
         desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;        
@@ -84,35 +82,35 @@ namespace _12_0 {
         return desc;
     }
 
-    DXGI_SWAP_CHAIN_FULLSCREEN_DESC swchain_fullscreen_desc()
+    raw::SwapChainFullscreenDesc swchain_fullscreen_desc()
     {         
-        DXGI_SWAP_CHAIN_FULLSCREEN_DESC desc{};
+        raw::SwapChainFullscreenDesc desc{};
         desc.Windowed = true;
         desc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;        
         desc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
         return desc;
     }
 
-    D3D12_COMMAND_QUEUE_DESC command_queue_desc() 
+    raw::CommandQueueDesc command_queue_desc() 
     {
-        D3D12_COMMAND_QUEUE_DESC desc{};
+        raw::CommandQueueDesc desc{};
         desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
         desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
         return desc;
     }
 
-    D3D12_DESCRIPTOR_HEAP_DESC rtv_descriptor_heap_desc() 
+    raw::DescriptorHeapDesc rtv_descriptor_heap_desc() 
     {       
-        D3D12_DESCRIPTOR_HEAP_DESC desc{};
+        raw::DescriptorHeapDesc desc{};
 		desc.NumDescriptors = frame_count();
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_RTV;
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;		
         return desc;
     }
 
-    D3D12_DESCRIPTOR_HEAP_DESC resource_descriptor_heap_desc() 
+    raw::DescriptorHeapDesc resource_descriptor_heap_desc() 
     {       
-        D3D12_DESCRIPTOR_HEAP_DESC desc{};
+        raw::DescriptorHeapDesc desc{};
 		desc.NumDescriptors = 1;
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
 		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;		
@@ -121,8 +119,8 @@ namespace _12_0 {
 
     void report_live_objects(device& dev) 
     {
-        gtl::release_ptr<gtl::d3d::D3D12DebugDevice> debug_device;
-        dev->QueryInterface(__uuidof(gtl::d3d::D3D12DebugDevice),reinterpret_cast<void**>(&debug_device.expose_ptr()));            
+        gtl::release_ptr<raw::DebugDevice> debug_device;
+        dev->QueryInterface(__uuidof(raw::DebugDevice),void_ptr(debug_device));            
         debug_device->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);            
     }
 
@@ -136,7 +134,7 @@ namespace _12_0 {
         WaitForSingleObject(handle_,INFINITE);        
     }
     
-    release_ptr<D3DBlob> dummy_rootsig_1() 
+    release_ptr<raw::Blob> dummy_rootsig_1() 
     {        
         std::vector<CD3DX12_DESCRIPTOR_RANGE> table1_, table2_;
 		std::vector<CD3DX12_ROOT_PARAMETER> params_; 
@@ -164,15 +162,15 @@ namespace _12_0 {
 		CD3DX12_ROOT_SIGNATURE_DESC desc;
 		desc.Init(win::array_size(params_), params_.data(), 0, nullptr, flags_);    
 
-        release_ptr<D3DBlob> signature_;
-        release_ptr<D3DBlob> error_; // not currently using
+        release_ptr<raw::Blob> signature_;
+        release_ptr<raw::Blob> error_; // not currently using
         win::throw_on_fail(D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, 
                                                   &(signature_.expose_ptr()), &(error_.expose_ptr()))
                                                   ,__func__);
         return signature_;        
     }
 
-    release_ptr<D3DBlob> dummy_rootsig_2() 
+    release_ptr<raw::Blob> dummy_rootsig_2() 
     {
         std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
 		std::vector<CD3DX12_ROOT_PARAMETER> params_; 
@@ -198,8 +196,8 @@ namespace _12_0 {
 		rootSignatureDesc.Init(static_cast<UINT>(params_.size()), params_.data(), 0, nullptr, 
                                 flags_);
 
-        release_ptr<D3DBlob> signature;
-        release_ptr<D3DBlob> error;
+        release_ptr<raw::Blob> signature;
+        release_ptr<raw::Blob> error;
 
 		win::throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
                       ,__func__);
@@ -207,7 +205,7 @@ namespace _12_0 {
         return signature;
     }
 
-    release_ptr<D3DBlob> dummy_rootsig_3() 
+    release_ptr<raw::Blob> dummy_rootsig_3() 
     {        
         std::vector<CD3DX12_DESCRIPTOR_RANGE> table1_, table2_;
 		std::vector<CD3DX12_ROOT_PARAMETER> params_; 
@@ -236,8 +234,8 @@ namespace _12_0 {
 		CD3DX12_ROOT_SIGNATURE_DESC desc;
 		desc.Init(win::array_size(params_), params_.data(), 0, nullptr, flags_);    
 
-        release_ptr<D3DBlob> signature_;
-        release_ptr<D3DBlob> error_; // not currently using
+        release_ptr<raw::Blob> signature_;
+        release_ptr<raw::Blob> error_; // not currently using
         win::throw_on_fail(D3D12SerializeRootSignature(&desc, D3D_ROOT_SIGNATURE_VERSION_1, 
                                                   &(signature_.expose_ptr()), &(error_.expose_ptr()))
                                                   ,__func__);

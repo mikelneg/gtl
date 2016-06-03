@@ -12,8 +12,6 @@
 
 namespace gtl {
 namespace d3d {
-namespace _12_0 {
-
 
 synchronization_object::synchronization_object(command_queue& cqueue_, unsigned max_value_in_cycle, unsigned allowed_desync_)
 :   cqueue_{cqueue_},
@@ -66,4 +64,4 @@ void synchronization_object::wait_for_values_to_sync_at(uint64_t new_value)
     assert(last_set_value_ == fence_->GetCompletedValue());
 }
 
-}}} // namespaces
+}} // namespaces

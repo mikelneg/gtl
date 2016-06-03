@@ -41,10 +41,10 @@ namespace transitions {
         std::array<gtl::d3d::graphics_command_list,frame_count> mutable clist_;
         std::array<gtl::d3d::graphics_command_list,frame_count> mutable font_clist_;
                 
-        gtl::d3d::D3D12Viewport mutable viewport_;//{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f};
-        gtl::d3d::D3D12ScissorRect mutable scissor_;//{0,0,960,540};    
+        gtl::d3d::raw::Viewport mutable viewport_;//{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f};
+        gtl::d3d::raw::ScissorRect mutable scissor_;//{0,0,960,540};    
 
-        gtl::d3d::D3D12Viewport mutable text_viewport_;//{0.0f,0.0f,320.0f,240.0f,1.0f,1.0f};
+        gtl::d3d::raw::Viewport mutable text_viewport_;//{0.0f,0.0f,320.0f,240.0f,1.0f,1.0f};
 
 
         gtl::d3d::resource_descriptor_heap resource_heap_;

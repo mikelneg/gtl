@@ -14,7 +14,6 @@
 
 namespace gtl {
 namespace d3d {
-namespace _12_0 {
     
 class synchronization_object {    
     
@@ -59,6 +58,6 @@ private:
 };
 
 
-}}} // namespaces
+}} // namespaces
 #endif
 

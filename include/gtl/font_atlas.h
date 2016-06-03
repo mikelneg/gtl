@@ -183,10 +183,10 @@ namespace d3d {
         }
 
         void operator()(unsigned idx, float, gtl::d3d::graphics_command_list& cl,
-                        gtl::d3d::D3D12Viewport const& viewport,
-                        gtl::d3d::D3D12ScissorRect const& scissor,
+                        gtl::d3d::raw::Viewport const& viewport,
+                        gtl::d3d::raw::ScissorRect const& scissor,
                         float font_scale,
-                        D3D12_CPU_DESCRIPTOR_HANDLE const& rtv_handle) const
+                        raw::CpuDescriptorHandle const& rtv_handle) const
         {                                
             
             update_vertex_buffer(idx);

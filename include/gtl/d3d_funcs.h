@@ -8,30 +8,30 @@
     d3d support functions
 -----------------------------------------------------------------------------*/
 
-#include "d3d_default_implementation.h"
+#include <gtl/d3d_include.h>
 #include <gtl/d3d_types.h>
+#include <gtl/tags.h>
 #include <gtl/release_ptr.h>
 #include <gtl/win_tools.h>
+
+#include <ostream>
+#include <vector>
 
 namespace gtl {    
 namespace d3d {    
 
-namespace _12_0 {           
+namespace version_12_0 {           
 
-        namespace tags {
-            struct flipmodel_windowed{};
-        }
-
-        release_ptr<DXGIFactory> get_dxgi_factory();
-        release_ptr<DXGIAdapter> get_hw_adapter();                
+        release_ptr<raw::Factory> get_dxgi_factory();        
+        std::vector<raw::AdapterDesc> enumerate_adaptors();
         
-        DXGI_SWAP_CHAIN_DESC create_swapchain_desc(tags::flipmodel_windowed, HWND, unsigned num_buffers, unsigned width, unsigned height);
+        raw::SwapChainDesc create_swapchain_desc(tags::flipmodel_windowed, HWND, unsigned num_buffers, unsigned width, unsigned height);
  
-        D3D12_COMMAND_QUEUE_DESC command_queue_desc();
-        DXGI_SWAP_CHAIN_FULLSCREEN_DESC swchain_fullscreen_desc();            
+        raw::CommandQueueDesc command_queue_desc();
+        raw::SwapChainFullscreenDesc swchain_fullscreen_desc();            
 
-        D3D12_DESCRIPTOR_HEAP_DESC rtv_descriptor_heap_desc();
-        D3D12_DESCRIPTOR_HEAP_DESC resource_descriptor_heap_desc();
+        raw::DescriptorHeapDesc rtv_descriptor_heap_desc();
+        raw::DescriptorHeapDesc resource_descriptor_heap_desc();
 
         void report_live_objects(class device&);
         void wait_for_gpu(device&,command_queue&);
@@ -52,12 +52,10 @@ namespace _12_0 {
             return dev;
         }
         
-        release_ptr<D3DBlob> dummy_rootsig_1();
-        release_ptr<D3DBlob> dummy_rootsig_2();
-        release_ptr<D3DBlob> dummy_rootsig_3();
-        
+        release_ptr<raw::Blob> dummy_rootsig_1();
+        release_ptr<raw::Blob> dummy_rootsig_2();
+        release_ptr<raw::Blob> dummy_rootsig_3();        
 }
 
-//using namespace gtl::d3d::default; 
 }} // namespaces
 #endif

@@ -84,7 +84,11 @@ namespace detail {
             {}  break;                 
 
             case WM_LBUTTONDOWN: 
-            {}  break;            
+            {
+                handler_ref(hwnd).emplace_back(gtl::events::mouse_lbutton_down{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+                //The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the upper-left corner of the client area.
+                //The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the upper-left corner of the client area.
+            }  break;            
 
             case WM_CAPTURECHANGED: 
             {   return 0;            
@@ -95,7 +99,7 @@ namespace detail {
     
             case WM_MOUSEMOVE:  
             {   handler_ref(hwnd).emplace_back(gtl::events::mouse_at{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
-                return 0;
+                //return 0;
             }   break; 
             
             //case WM_NCMOUSEMOVE: break;                
