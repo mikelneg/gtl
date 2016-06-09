@@ -180,6 +180,11 @@ namespace version_12_0 {
         auto const& resource() const { return buffer; }
     };
 
+    class vertex_buffer : public release_ptr<raw::Resource> {        
+    public:
+        vertex_buffer(device&, command_queue&, void* begin, size_t size);
+    };    
+
     class srv : public release_ptr<raw::Resource> {
     public:
         srv(device&,std::vector<raw::CpuDescriptorHandle>,command_queue&,std::wstring);

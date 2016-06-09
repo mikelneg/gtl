@@ -24,23 +24,10 @@
 
 #include <boost/variant.hpp>
 
+#include <gtl/physics_units.h>
+
 namespace gtl {
     namespace physics {
-
-        //template <typename T>    
-        //using area = boost::units::quantity<boost::units::si::area,T>;              
-
-        template <typename T>
-        using length = boost::units::quantity<boost::units::si::length,T>;
-
-        template <typename T>
-        using dimensions = std::pair<length<T>,length<T>>;
-
-        template <typename T>
-        using position = std::pair<length<T>,length<T>>;
-        
-        template <typename T>
-        using angle = boost::units::quantity<boost::units::angle::radian_base_unit::unit_type,T>;
 
         namespace generators {                                                        
         
@@ -58,6 +45,11 @@ namespace gtl {
                 uint32_t id;                
             };
 
+            struct dynamic_jointed_boxes {                                                                                                
+                std::vector<dynamic_box> boxes_;
+                uint32_t id;                
+            };
+
             struct static_circle {
                 float x,y,r,a;
                 uint32_t id;                
@@ -68,13 +60,19 @@ namespace gtl {
                 uint32_t id;
             };
 
+            struct boost_object {
+                uint32_t id;
+            };
+
 
         }
 
         using generator = boost::variant<generators::static_box,
                                          generators::dynamic_box,
+                                         generators::dynamic_jointed_boxes,
                                          generators::static_circle,
-                                         generators::destroy_object_implode>;
+                                         generators::destroy_object_implode,
+                                         generators::boost_object>;
     }
 
     struct EntityInfo {

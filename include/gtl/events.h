@@ -28,6 +28,8 @@ namespace events {
         struct none {};        
         struct keydown { unsigned key; };
         struct mouse_lbutton_down { int64_t coord; };
+        struct mouse_rbutton_down { int64_t coord; };
+        struct mouse_wheel_scroll { int wheel_delta; int key_state; int x,y; };
         struct mouse_click { std::string id; int x,y; };
         struct mouse_at { int64_t coord; };   // TODO revisit: currently int64_t because windows uses hi and low bits to set both x and y coord..             
         struct mousedown {};
@@ -39,6 +41,8 @@ namespace events {
                                                none,
                                                keydown,
                                                mouse_lbutton_down,
+                                               mouse_rbutton_down,
+                                               mouse_wheel_scroll,
                                                mouse_click,
                                                mouse_at,
                                                mousedown,                                          

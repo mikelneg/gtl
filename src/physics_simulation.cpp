@@ -11,6 +11,7 @@
 #include <limits>
 #include <functional>
 #include <unordered_map>
+#include <algorithm>
 
 #include <cstdint>
 #include <cmath>
@@ -58,13 +59,25 @@ namespace {
     auto make_query_callback(T t) { return query_callback_helper<T>{std::move(t)}; }
 
 
+    inline 
+    void* to_user_data(b2Body* p) noexcept {
+        return p;
+    }
+
+    inline 
+    b2Body* from_user_data(void* p) noexcept {
+        return reinterpret_cast<b2Body*>(p);
+    }
+
+    using map_type = std::unordered_multimap<uint32_t,b2Body*>;
+
     struct box2d_generator_visitor : boost::static_visitor<b2Body*> {
 
         b2World& world_;
 
-        std::unordered_map<uint32_t,b2Body*>& entity_map_;
+        map_type& entity_map_;        
 
-        box2d_generator_visitor(b2World& w_, std::unordered_map<uint32_t,b2Body*>& map_) noexcept : world_{w_}, entity_map_{map_} {}
+        box2d_generator_visitor(b2World& w_, map_type& map_) noexcept : world_{w_}, entity_map_{map_} {}
 
         template <typename T>
         b2Body* operator()(T const& t) const { assert(false); return nullptr; }
@@ -88,15 +101,95 @@ namespace {
             shape_.SetAsBox(o.wh_.first / si::meters, o.wh_.second / si::meters);
             //shape_.SetAsBox(o.wh_.first.value(),o.wh_.second.value());//,b2Vec2{o.x,o.y},o.a);
 
+            // TODO b2EdgeShape instead of box..
+
             b2FixtureDef fixture_;
 
             fixture_.filter.categoryBits = collision_category::BOUNDARY;
             fixture_.filter.maskBits = collision_category::ENTITY;
             fixture_.shape = &shape_;
 
+            fixture_.userData = to_user_data(ptr); 
+
             ptr->CreateFixture(&fixture_);
 
             return ptr;            
+        }
+
+        b2Body* operator()(gtl::physics::generators::dynamic_jointed_boxes const& o) const {        
+            
+            using namespace boost::units;            
+            if (o.boxes_.size() < 2) { assert(false); return nullptr; }
+            
+            auto create_body = [&](auto& a, auto const& userdata) { 
+                                    b2BodyDef d;                                
+                                    d.position = b2Vec2{a.xy_.first / si::meters, a.xy_.second / si::meters};
+                                    d.angle = a.angle_ / si::radians;
+                                    d.userData = userdata; 
+                                    d.type = b2_dynamicBody;                         
+                                    return world_.CreateBody(&d);            
+                                };
+
+            auto do_the_rest = [&](auto& a, auto& body, auto const& userdata) { 
+                                    b2PolygonShape s;
+                                    s.SetAsBox(a.wh_.first / si::meters, a.wh_.second / si::meters);            
+                                    b2FixtureDef f;
+                                    f.filter.categoryBits = collision_category::ENTITY;
+                                    f.filter.maskBits = collision_category::ENTITY | 
+                                                        collision_category::SENSOR | 
+                                                        collision_category::BOUNDARY;
+                                    f.shape = &s;
+                                    f.userData = userdata; 
+                                    
+                                    f.isSensor = false;
+                                    f.restitution = 0.46f;
+                                    f.density = 1.0f;  // default numbers from the docs, revisit later..
+                                    f.friction = 0.3f; 
+                                               
+                                    body->CreateFixture(&f);
+                                                
+                                    body->SetLinearDamping(0.4f); // more completely invented numbers..
+                                    body->SetAngularDamping(0.5f);            
+                                    body->SetSleepingAllowed(true);        
+
+                                    body->ApplyLinearImpulse(b2Vec2{std::cos(a.angle_ / si::radians),
+                                                                    std::sin(a.angle_ / si::radians)},
+                                                                    body->GetLocalCenter(), true);
+                                };                                    
+
+            auto connect_bodies = [&](auto& a, auto& b) {
+                                        b2RevoluteJointDef d;
+                                        d.bodyA = a;
+                                        d.bodyB = b;
+                                        d.collideConnected = false;
+
+                                        d.localAnchorA = b2Vec2{-1.0,-1.0f};
+                                        d.localAnchorB = b2Vec2{1.0,1.0f};                                    
+                                        world_.CreateJoint(&d);
+                                    };
+
+            std::vector<b2Body*> body_ptrs_;
+            for (auto&& b : o.boxes_) {
+                body_ptrs_.emplace_back(create_body(b, reinterpret_cast<void*>(static_cast<uintptr_t>(b.id))) );                            
+            }
+            
+            //entity_map_.emplace(o.boxes_[0].id, body_ptrs_[0]);
+
+            for (unsigned i = 0; i < body_ptrs_.size(); ++i) {
+                do_the_rest(o.boxes_[i], body_ptrs_[i], body_ptrs_[0]); // all fixtures store the b2Body* for the root
+                entity_map_.emplace(o.boxes_[0].id, body_ptrs_[i]);
+            }
+        
+            auto n = std::begin(body_ptrs_);
+            auto m = n;
+            auto e = std::end(body_ptrs_);
+            if (m != e) std::advance(m,1);
+
+            for(; m != e; ++n, ++m) {
+                connect_bodies(*n,*m);
+            }
+
+            return body_ptrs_[0];            
         }
 
         b2Body* operator()(gtl::physics::generators::dynamic_box const& o) const {        
@@ -127,6 +220,7 @@ namespace {
                                        collision_category::SENSOR | 
                                        collision_category::BOUNDARY;
             fixture_.shape = &shape_;
+            fixture_.userData = to_user_data(ptr); 
             
             fixture_.isSensor = false;
             fixture_.restitution = 0.46f;
@@ -147,47 +241,58 @@ namespace {
 
         b2Body* operator()(gtl::physics::generators::destroy_object_implode const& o) const {
             
-            auto it = entity_map_.find(o.id);
-            if (it == entity_map_.end()) { return nullptr; }
+            auto range = entity_map_.equal_range(o.id);
+            if (range.first == range.second) { return nullptr; }
+                        
+            b2AABB body_aabb_{b2Vec2{FLT_MAX,FLT_MAX},b2Vec2{-FLT_MAX,-FLT_MAX}}; 
             
-            b2Body* body_ptr_ = it->second;
-
-            b2AABB body_aabb_;
-            body_aabb_.lowerBound = b2Vec2(FLT_MAX,FLT_MAX);
-            body_aabb_.upperBound = b2Vec2(-FLT_MAX,-FLT_MAX); 
-            
-            b2Fixture* fixture_ = body_ptr_->GetFixtureList();
-            while (fixture_)
-            {
-                body_aabb_.Combine(body_aabb_, fixture_->GetAABB(0)); // check this index for "chained" fixtures..
-                fixture_ = fixture_->GetNext();
+            for (auto it = range.first; it != range.second; ++it) {
+                b2Body* body_ptr_ = it->second;
+                b2Fixture* fixture_ = body_ptr_->GetFixtureList();
+                while (fixture_)
+                {
+                    body_aabb_.Combine(body_aabb_, fixture_->GetAABB(0)); // check this index for "chained" fixtures..
+                    fixture_ = fixture_->GetNext();
+                }
+                body_aabb_.lowerBound -= b2Vec2{12.0f,12.0f};
+                body_aabb_.upperBound += b2Vec2{12.0f,12.0f};            
             }
-
-            body_aabb_.lowerBound -= b2Vec2{12.0f,12.0f};
-            body_aabb_.upperBound += b2Vec2{12.0f,12.0f};            
-
+            
             auto implode_around_AABB = make_query_callback(
                 [&](b2Fixture* fixture_){                 
                     b2Body *b = fixture_->GetBody();
-                    //b->SetAwake(true);                        
+                    b->SetAwake(true);                        
                     b2Vec2 vec_{body_aabb_.GetCenter() - b->GetWorldCenter()};
-                    float mag_ = vec_.Normalize();
-                    
-                    vec_ *= ((1000.0f * body_ptr_->GetMass()) / mag_);// * body_ptr_->GetMass();                    
-                    
-                    //b->ApplyLinearImpulse(vec_, b->GetLocalCenter(),true);
-                    b->ApplyForceToCenter(vec_,true);
-                    //b->ApplyForce(vec_, b->GetLocalCenter(),true);
+                    float mag_ = vec_.Normalize();                    
+                    vec_ *= ((1000.0f * b->GetMass()) / mag_);                                        
+                    b->ApplyForceToCenter(vec_,true);                   
                     return true; // continue the query
             });
 
-            world_.QueryAABB(&implode_around_AABB, body_aabb_);
+            for (auto it = range.first; it != range.second; ++it) {
+                world_.DestroyBody(it->second);
+            }
 
-            world_.DestroyBody(body_ptr_);
             entity_map_.erase(o.id);
+
+            world_.QueryAABB(&implode_around_AABB, body_aabb_);
 
             return nullptr;
         }
+
+        b2Body* operator()(gtl::physics::generators::boost_object const& o) const {
+            
+            auto range = entity_map_.equal_range(o.id);
+            if (range.first == range.second) { return nullptr; }
+                                 
+            b2Body* main_body_ = (range.first)->second;
+
+            main_body_->ApplyLinearImpulse(b2Vec2{100.0f * std::cos(main_body_->GetAngle()),
+                                                  100.0f * std::sin(main_body_->GetAngle())},
+                                           main_body_->GetPosition(), true);
+           return nullptr;
+        }
+
 
     };
 
@@ -201,7 +306,8 @@ physics_simulation::physics_simulation(gtl::swap_vector<gtl::physics::generator>
     thread_ = std::thread{&simulation_thread<entity_type,gtl::physics::generator>,std::ref(entities_),std::ref(tasks_),std::ref(quit_)};
 }
 
-namespace {
+namespace {    
+
 
 template <typename T, typename U>
 static void simulation_thread(gtl::swap_vector<T>& swapvec_, 
@@ -211,7 +317,7 @@ static void simulation_thread(gtl::swap_vector<T>& swapvec_,
 {    
     //b2World world_{b2Vec2{0.0f,-9.8f}};  
     b2World world_{b2Vec2{0.0f,0.0f}};  
-    std::unordered_map<uint32_t,b2Body*> map_;
+    map_type map_;
 
     world_.SetAllowSleeping(true);
        
@@ -231,6 +337,9 @@ static void simulation_thread(gtl::swap_vector<T>& swapvec_,
     std::vector<T> positions_; 
     positions_.reserve(100);
 
+    std::vector<b2Body*> selected_bodies_;
+    selected_bodies_.reserve(100);
+
     int64_t max_wait_ = 0;
 
     auto query_bodies = [&](){     
@@ -240,9 +349,9 @@ static void simulation_thread(gtl::swap_vector<T>& swapvec_,
             b2Vec2 position = b->GetPosition();            
             uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(b->GetUserData()));
             // temporary
-            positions_.emplace_back(T{{position.x / 120.0f,
-                                       position.y / 120.0f,
-                                       0.01f,0.01f},
+            positions_.emplace_back(T{{position.x,
+                                       position.y,                                       
+                                       1.0f,1.0f},
                                       {1.0f, 1.0f, 1.0f, b->GetAngle()},index_});            
         }
         //swapvec_.swap_in(positions_);
@@ -255,13 +364,42 @@ static void simulation_thread(gtl::swap_vector<T>& swapvec_,
             b->SetAwake(true);                        
             b2Vec2 position = b->GetPosition();                           
             uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(b->GetUserData()));
+
+            //b2AABB aabb_ = fixture_->GetAABB(0);
+
             positions_.emplace_back(T{{position.x,
-                                       position.y,
-                                       0.01f,0.01f},
+                                       position.y,                                       
+                                       1.0f,1.0f},
                                        {1.0f, 1.0f, 1.0f, b->GetAngle()},index_});                                    
+            //positions_.emplace_back(T{{position.x,
+            //                           position.y,                                       
+            //                           aabb_.GetExtents().x,aabb_.GetExtents().y},
+            //                           {1.0f, 1.0f, 1.0f, 0.0f},index_});                                    
             return true; // continue the query
     });
-    
+
+
+    auto dump_fixtures = [&](b2Body& body_, auto& output_container_) {                                                        
+                            uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(body_.GetUserData()));
+                            
+                            auto range = map_.equal_range(index_);
+                            for (auto it = range.first; it != range.second; ++it) {
+                                b2Vec2 const& p = it->second->GetPosition();
+                                float const& angle = it->second->GetAngle();
+                                output_container_.emplace_back(T{{p.x, p.y, 1.0f, 1.0f},
+                                                                 {1.0f, 1.0f, 1.0f, angle}, 
+                                                                 index_});                          
+                            }
+                         };
+
+    auto query_bodies_around_AABB = make_query_callback(
+        [&](b2Fixture* fixture_){                 
+            b2Body * const body_ptr_ = from_user_data(fixture_->GetUserData());            
+            body_ptr_->SetAwake(true);                                               
+            selected_bodies_.emplace_back(body_ptr_);                        
+            return true; // continue the query
+        });           
+
     b2AABB aabb;
     aabb.lowerBound.Set(-60.0f, -60.0f);
     aabb.upperBound.Set(60.0f, 60.0f);    
@@ -271,7 +409,18 @@ static void simulation_thread(gtl::swap_vector<T>& swapvec_,
     while (quit_.test_and_set(std::memory_order_acquire)) {
         
         positions_.clear();
-        world_.QueryAABB(&query_around_AABB, aabb);
+        selected_bodies_.clear();
+        
+        world_.QueryAABB(&query_bodies_around_AABB, aabb);
+        
+        std::sort(begin(selected_bodies_),end(selected_bodies_));
+        auto new_end_ = std::unique(begin(selected_bodies_),end(selected_bodies_));
+        selected_bodies_.erase(new_end_,end(selected_bodies_));            
+
+        for (auto&& e : selected_bodies_) {
+            dump_fixtures(*e,positions_);
+        }
+
         //query_bodies();
         swapvec_.swap_in(positions_);
 

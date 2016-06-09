@@ -47,7 +47,8 @@ namespace version_12_0 {
         using SwapChainDesc       = DXGI_SWAP_CHAIN_DESC;        
         using SamplerDesc         = D3D12_SAMPLER_DESC;
         using CommandQueueDesc    = D3D12_COMMAND_QUEUE_DESC;
-        using SrvDesc             = D3D12_SHADER_RESOURCE_VIEW_DESC;
+        using SrvDesc             = D3D12_SHADER_RESOURCE_VIEW_DESC;  
+        using VertexBufferView    = D3D12_VERTEX_BUFFER_VIEW;
         using StreamOutputDesc    = D3D12_STREAM_OUTPUT_DESC;
         using RasterizerDesc      = D3D12_RASTERIZER_DESC;
         using BlendDesc           = D3D12_BLEND_DESC;

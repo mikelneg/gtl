@@ -81,7 +81,8 @@ window::window(HINSTANCE hinstance, unsigned width_px, unsigned height_px, const
   auto func = &gtl::win::detail::wndproc_impl<decltype(event_queue_)>;
   style.lpfnWndProc = func;
   style.hInstance = hinstance;        
-  style.lpszClassName = u8"window";    
+  style.lpszClassName = u8"window"; 
+  //style.hCursor = LoadCursor(NULL, IDC_ARROW);  
 
   if (RegisterClassEx(&style) == 0) { // failure returns 0
       throw std::runtime_error{__func__};
@@ -98,9 +99,9 @@ window::window(HINSTANCE hinstance, unsigned width_px, unsigned height_px, const
   if (!hwnd) {
       throw std::runtime_error{__func__};   
   }          
-  //SetCursor(NULL);    
+  //SetCursor(LoadCursor(NULL,IDC_ARROW));
   ShowCursor(true);
-  resize_window(hwnd, width_px, height_px); // remove for fullscreen                
+  resize_window(hwnd, width_px, height_px); // remove for fullscreen    
 }   
 
 

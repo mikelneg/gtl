@@ -25,6 +25,7 @@
 #include <gtl/copyable_atomic.h>
 
 #include <gtl/gui_rect_draw.h>
+#include <gtl/object_rendering_scene.h>
 
 #include <vn/math_utilities.h>
 
@@ -133,6 +134,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
         std::array<gtl::d3d::direct_command_allocator,frame_count> calloc_;
         std::array<gtl::d3d::graphics_command_list,frame_count> clist_;
         std::array<gtl::d3d::graphics_command_list,frame_count> mutable gui_rect_clist_;
+        std::array<gtl::d3d::graphics_command_list,frame_count> mutable object_effect_clist_;
         std::array<gtl::d3d::graphics_command_list,frame_count> mutable id_sampler_clist_;
 
         //std::array<std::atomic<int32_t>, frame_count> mutable ids_;
@@ -149,6 +151,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
         gtl::d3d::sampler sampler_;      
 
         gtl::d3d::rect_draw gui_rects_;
+        gtl::d3d::object_rendering_scene object_effect_;
 
         gtl::copyable_atomic<int64_t> mutable mouse_coord_;        
         
@@ -229,6 +232,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                 calloc_{{{dev_},{dev_},{dev_}}},
                 clist_{{{dev_,calloc_[0],pso_},{dev_,calloc_[1],pso_},{dev_,calloc_[2],pso_}}},
                 gui_rect_clist_{{{dev_,calloc_[0]},{dev_,calloc_[1]},{dev_,calloc_[2]}}},
+                object_effect_clist_{{{dev_,calloc_[0]},{dev_,calloc_[1]},{dev_,calloc_[2]}}},
                 id_sampler_clist_{{{dev_,calloc_[0]},{dev_,calloc_[1]},{dev_,calloc_[2]}}},
                 viewport_{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f},
                 scissor_{0,0,960,540},
@@ -237,7 +241,8 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                 id_layer_{swchain_, DXGI_FORMAT_R32_UINT, 3, gtl::d3d::tags::shader_visible{}},
                 sampler_heap_{dev_,1},
                 sampler_{dev_,sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
-                gui_rects_{dev_, cqueue_, root_sig_, physics_}
+                gui_rects_{dev_, cqueue_, root_sig_, physics_},
+                object_effect_{dev_, cqueue_, root_sig_, physics_}
         {            
             //
             dev_->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),
@@ -393,7 +398,10 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 //        }
         
         void draw(std::vector<ID3D12CommandList*>& v, 
-                  int idx, float f, gtl::d3d::rtv_descriptor_heap& rtv_heap_, std::atomic<uint32_t>& id_) const {            
+                  int idx, float f, gtl::d3d::rtv_descriptor_heap& rtv_heap_, 
+                  std::atomic<uint32_t>& id_,
+                  Eigen::Matrix4f const& camera) const {           
+
             update(cbuf_);
             cbuffer_[idx].update(reinterpret_cast<const char*>(&cbuf_),sizeof(cbuf_));  
 
@@ -471,7 +479,8 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             gui_rect_clist_[idx]->Reset(calloc_[idx].get(),nullptr);      
             gui_rect_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());                           
             
-            gui_rects_(idx,f,gui_rect_clist_[idx],viewport_,scissor_,handles);
+            // gui_rect_(idx,f,gui_rect_clist_[idx],viewport_,scissor_,camera,handles);
+            object_effect_(idx,f,gui_rect_clist_[idx],viewport_,scissor_,camera,handles);
                             
             D3D12_TEXTURE_COPY_LOCATION src{id_layer_, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX};
             D3D12_TEXTURE_COPY_LOCATION dst{id_readback_, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT, 
@@ -509,6 +518,13 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 
             gui_rect_clist_[idx]->Close();
 
+
+            //object_effect_clist_[idx]->Reset(calloc_[idx].get(),nullptr);      
+            //object_effect_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());                           
+            //                        
+            //object_effect_(idx, f, object_effect_clist_[idx],viewport_,scissor_,camera,handles);
+            //object_effect_clist_[idx]->Close();
+            //
             //
             //id_sampler_clist_[idx]->Reset(calloc_[idx].get(),nullptr);      
             //id_sampler_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());                           
@@ -518,6 +534,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             //
             v.emplace_back(clist_[idx].get());
             v.emplace_back(gui_rect_clist_[idx].get());
+            //v.emplace_back(object_effect_clist_[idx].get());
             //v.emplace_back(id_sampler_clist_[idx].get());
             
             //return v;
