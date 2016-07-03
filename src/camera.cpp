@@ -6,6 +6,23 @@
 namespace gtl {
 
     namespace {
+        
+    Eigen::Matrix4f make_ortho_proj_matrix(float n, float f) {
+        constexpr float l = -1.0f;
+        constexpr float r = 1.0f;
+
+        constexpr float t = -1.0f;
+        constexpr float b = 1.0f;
+
+        Eigen::Matrix4f matrix_;
+        matrix_ << 
+            2.0f / (r - l), 0.0f, 0.0f, 0.0f,
+            0.0f, 2.0f / (t - b), 0.0f, 0.0f,
+            0.0f, 0.0f, 1.0f / (f - n), 0.0f,
+            0.0f, 0.0f, -n / (f-n), 1.0f; //-(r+l)/(r-l),-(t+b)/(t-b),-(f+n)/(f-n), 1.0f;        
+        return matrix_;
+        }
+    
 
         Eigen::Matrix4f make_projection_matrix(float fov_y, float aspect_ratio, float z_near, float z_far) 
         {            
@@ -28,16 +45,20 @@ namespace gtl {
         }
 
     } // namespace
+    
 
     camera::camera(gtl::physics::position<float> center_, 
                    gtl::physics::dimensions<float> lens_dimensions_,
                    gtl::physics::angle<float> fov_,
                    gtl::physics::length<float> distance_to_lens_,
                    gtl::physics::length<float> distance_to_plane_)
-        :   transform_{make_projection_matrix(fov_ / boost::units::si::radians, 
-                                              lens_dimensions_.first / lens_dimensions_.second,
-                                              distance_to_lens_ / boost::units::si::meters, 
-            distance_to_plane_ / boost::units::si::meters)}
+        :   transform_{make_ortho_proj_matrix(distance_to_lens_ / boost::units::si::meters, 
+                                              distance_to_plane_ / boost::units::si::meters)}
+            //transform_{make_projection_matrix(fov_ / boost::units::si::radians, 
+            //                                  lens_dimensions_.first / lens_dimensions_.second,
+            //                                  distance_to_lens_ / boost::units::si::meters, 
+            //                                  distance_to_plane_ / boost::units::si::meters)}
+            //
                         //* Eigen::Affine3f{Eigen::Translation3f{center_.first / boost::units::si::meters,
                         //                                       center_.second / boost::units::si::meters,
                         //                                       distance_to_plane_ / boost::units::si::meters}}.matrix()}                                

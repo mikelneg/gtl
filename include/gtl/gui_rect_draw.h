@@ -60,7 +60,7 @@ namespace d3d {
         gtl::d3d::sampler sampler_;        
         
         gtl::physics_simulation& physics_;
-        std::vector<EntityInfo> mutable positions_;
+        render_data mutable render_data_;
         std::array<bool,3> mutable position_flags_;
 
         auto vertex_layout() {
@@ -199,7 +199,7 @@ namespace d3d {
             sampler_heap_{dev,1},            
             sampler_{dev,sampler_desc(),sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
             physics_{physics_},
-            positions_{}//physics_.copy_out()}
+            render_data_{}//physics_.copy_out()}
         {                                    
             
             //positions_.clear();
@@ -214,6 +214,8 @@ namespace d3d {
             //vbuffers_[1].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(EntityInfo));
             //vbuffers_[2].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(EntityInfo));
 
+            auto& positions_ = render_data_.entities_;
+
             vbuffers_[0].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
             vbuffers_[1].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
             vbuffers_[2].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
@@ -225,7 +227,9 @@ namespace d3d {
     
         void update_vertex_buffer(unsigned idx) const
         {
-            if (physics_.extract_positions(positions_)) {
+            auto& positions_ = render_data_.entities_;
+
+            if (physics_.extract_render_data(render_data_)) {
                 for (auto&& e : position_flags_) e = true; // set dirty
                 position_flags_[idx] = false;
                 //construct_vertices(positions_);
@@ -259,6 +263,8 @@ namespace d3d {
             cl->SetGraphicsRootDescriptorTable(2, texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());                                                                      
                         
             cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);                     
+
+            auto& positions_ = render_data_.entities_;
 
             D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(),static_cast<unsigned>(positions_.size() * sizeof(EntityInfo)),sizeof(EntityInfo)};
             cl->IASetVertexBuffers(0, 1, &cbv_);              

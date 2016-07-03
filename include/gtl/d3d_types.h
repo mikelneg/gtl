@@ -172,6 +172,7 @@ namespace version_12_0 {
         resource buffer;                
         unsigned char* cbv_data_ptr{};
     public:
+        constant_buffer(device&,std::size_t);
         constant_buffer(device&,resource_descriptor_heap&,std::size_t);
         constant_buffer(device&,raw::CpuDescriptorHandle,std::size_t);
         void update(char const*, std::size_t);
@@ -183,6 +184,11 @@ namespace version_12_0 {
     class vertex_buffer : public release_ptr<raw::Resource> {        
     public:
         vertex_buffer(device&, command_queue&, void* begin, size_t size);
+    };    
+
+    class index_buffer : public release_ptr<raw::Resource> {        
+    public:
+        index_buffer(device&, command_queue&, void* begin, size_t size);
     };    
 
     class srv : public release_ptr<raw::Resource> {

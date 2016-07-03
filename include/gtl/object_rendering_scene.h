@@ -15,6 +15,7 @@
 
 #include <gtl/physics_simulation.h>
 #include <gtl/camera.h>
+#include <gtl/mesh.h>
 
 #include <Eigen/Core>
 
@@ -26,24 +27,41 @@ namespace gtl {
 namespace d3d {
 
     class object_rendering_scene {        
-
+        
         static constexpr unsigned MAX_ENTITIES = 400;
+        static constexpr unsigned MAX_BONES = MAX_ENTITIES * 10; // TODO arbitrary number..
+     
         using vertex_type = Eigen::Vector4f;
+        
+
+        using matrix_type = Eigen::Matrix4f;
 
         template <typename T>
         using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;        
 
+
+        gtl::mesh mesh_object_;
+
         std::vector<D3D12_INPUT_ELEMENT_DESC> layout_;                
         
-        aligned_vector<vertex_type> mesh_;   
+        aligned_vector<vertex_type_bone> mesh_;   
+        aligned_vector<matrix_type> bones_;
+        std::vector<unsigned> indices_;
+
         gtl::d3d::vertex_buffer vbuffer_;
+        gtl::d3d::index_buffer ibuffer_;
 
         gtl::d3d::resource_descriptor_heap ibuffer_descriptors_;        
+        
         aligned_vector<EntityInfo> instance_data_;                
+        
         std::array<gtl::d3d::constant_buffer,3> mutable ibuffers_;        
         
         std::array<gtl::d3d::resource_descriptor_heap,3> cbheap_;
         std::array<gtl::d3d::constant_buffer, 3> mutable cbuffer_;       
+                
+        std::array<gtl::d3d::resource_descriptor_heap,3> bone_heap_;
+        std::array<gtl::d3d::constant_buffer, 3> mutable bone_buffer_;       
         
         gtl::d3d::resource_descriptor_heap texture_descriptor_heap_;        
         gtl::d3d::srv texture_;               
@@ -57,15 +75,25 @@ namespace d3d {
         gtl::d3d::sampler sampler_;        
         
         gtl::physics_simulation& physics_;
-        std::vector<EntityInfo> mutable positions_;
+        
+        //std::vector<EntityInfo> mutable positions_;
+        render_data mutable render_data_;
+        
         std::array<bool,3> mutable position_flags_;
+
 
         auto vertex_layout() {
             return std::vector<D3D12_INPUT_ELEMENT_DESC>{
                 {"VERTEX_POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                {"OBJECT_POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-                {"COLOR_ANGLE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-                {"OBJECT_ID", 0, DXGI_FORMAT_R32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1}
+                {"VERTEX_BONE_IDS", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                {"VERTEX_BONE_WEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                
+                {"BONE_ARRAY_OFFSET", 0, DXGI_FORMAT_R32_UINT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+                {"BONE_COUNT", 0, DXGI_FORMAT_R32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+                {"OBJECT_ID", 0, DXGI_FORMAT_R32G32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1}
+           //   {"OBJECT_POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+           //   {"MESH_ID", 0, DXGI_FORMAT_R32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+           //   {"COLOR_ANGLE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
             };                         
         }
   
@@ -158,8 +186,11 @@ namespace d3d {
         object_rendering_scene(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, 
                    gtl::d3d::root_signature& rsig, gtl::physics_simulation& physics_) 
         :   layout_(vertex_layout()),            
-            mesh_(raw_mesh(L"D:\\Meshes\\Monkey.raw")),
-            vbuffer_{dev,cqueue,mesh_.data(),mesh_.size() * sizeof(vertex_type)},            
+            mesh_object_("D:\\meshes\\deformed_armature.fbx",gtl::tags::fbx_format{}),
+            mesh_(mesh_object_.bone_vertices()),
+            indices_(mesh_object_.indices()),
+            vbuffer_{dev,cqueue,mesh_.data(),mesh_.size() * sizeof(vertex_type_bone)},            
+            ibuffer_{dev,cqueue,indices_.data(),indices_.size() * sizeof(unsigned)},
             ibuffer_descriptors_{dev,3,gtl::d3d::tags::shader_visible{}},
             ibuffers_{{{dev,ibuffer_descriptors_.get_handle(0), MAX_ENTITIES  * sizeof(EntityInfo)},
                        {dev,ibuffer_descriptors_.get_handle(1), MAX_ENTITIES  * sizeof(EntityInfo)},
@@ -167,6 +198,8 @@ namespace d3d {
             
             cbheap_{{{dev,1,gtl::d3d::tags::shader_visible{}},{dev,1,gtl::d3d::tags::shader_visible{}},{dev,1,gtl::d3d::tags::shader_visible{}}}},
             cbuffer_{{{dev,cbheap_[0],sizeof(gtl::camera)},{dev,cbheap_[1],sizeof(gtl::camera)},{dev,cbheap_[2],sizeof(gtl::camera)}}},                        
+            bone_heap_{{{dev,1,gtl::d3d::tags::shader_visible{}},{dev,1,gtl::d3d::tags::shader_visible{}},{dev,1,gtl::d3d::tags::shader_visible{}}}},
+            bone_buffer_{{{dev,bone_heap_[0],MAX_BONES * sizeof(Eigen::Matrix4f)},{dev,bone_heap_[1],MAX_BONES * sizeof(Eigen::Matrix4f)},{dev,bone_heap_[2],MAX_BONES * sizeof(Eigen::Matrix4f)}}},                        
             texture_descriptor_heap_{dev,1,gtl::d3d::tags::shader_visible{}},            
             texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue,                 
                 L"D:\\images\\palettes\\greenish_palette.dds"
@@ -180,7 +213,7 @@ namespace d3d {
             sampler_heap_{dev,1},            
             sampler_{dev,sampler_desc(),sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
             physics_{physics_},
-            positions_{}//physics_.copy_out()}
+            render_data_{}//physics_.copy_out()}            
         {                                    
             
             //positions_.clear();
@@ -195,6 +228,8 @@ namespace d3d {
             //vbuffers_[1].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(EntityInfo));
             //vbuffers_[2].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(EntityInfo));
 
+            auto& positions_ = render_data_.entities_;            
+
             ibuffers_[0].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
             ibuffers_[1].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
             ibuffers_[2].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
@@ -206,16 +241,22 @@ namespace d3d {
     
         void update_instance_buffer(unsigned idx) const
         {
-            if (physics_.extract_positions(positions_)) {
+            if (physics_.extract_render_data(render_data_)) {
                 for (auto&& e : position_flags_) e = true; // set dirty
                 position_flags_[idx] = false;
                 //construct_vertices(positions_);
+                auto& positions_ = render_data_.entities_;                
                 ibuffers_[idx].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
+                auto& bones_ = render_data_.bones_;
+                bone_buffer_[idx].update(reinterpret_cast<char*>(bones_.data()),bones_.size() * sizeof(Eigen::Matrix4f));
             } else {
                 if (position_flags_[idx]) {
                     position_flags_[idx] = false;
                     //construct_vertices(positions_);
-                    ibuffers_[idx].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
+                    auto& positions_ = render_data_.entities_;
+                    ibuffers_[idx].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));                    
+                    auto& bones_ = render_data_.bones_;
+                    bone_buffer_[idx].update(reinterpret_cast<char*>(bones_.data()),bones_.size() * sizeof(Eigen::Matrix4f));
                 }
             }
         }
@@ -238,14 +279,30 @@ namespace d3d {
             cl->SetGraphicsRootConstantBufferView(0, (cbuffer_[idx].resource())->GetGPUVirtualAddress());
             cl->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
             cl->SetGraphicsRootDescriptorTable(2, texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());                                                                      
-                        
-            cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);                     
             
+
+            uint32_t bone_count = 4;
+            cl->SetGraphicsRoot32BitConstants(5, 1, std::addressof(bone_count), 0);                                             
+
+            cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);                                             
+            
+
+            //cl->SetGraphicsRootConstantBufferView(4, (bone_buffer_[idx].resource())->GetGPUVirtualAddress());
+            cl->SetGraphicsRootShaderResourceView(4,(bone_buffer_[idx].resource())->GetGPUVirtualAddress());
+            
+            auto& positions_ = render_data_.entities_;            
             D3D12_VERTEX_BUFFER_VIEW iaviews_[] = {
-                    {vbuffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_.size() * sizeof(vertex_type)), sizeof(vertex_type)},
+                    {vbuffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_.size() * sizeof(vertex_type_bone)), sizeof(vertex_type_bone)},
                     {ibuffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(EntityInfo)),sizeof(EntityInfo)}};                        
             
-            cl->IASetVertexBuffers(0, 2, iaviews_);                          
+            cl->IASetVertexBuffers(0, 2, iaviews_); 
+
+            D3D12_INDEX_BUFFER_VIEW ibv{
+                ibuffer_->GetGPUVirtualAddress(),
+                static_cast<unsigned>(indices_.size()) * sizeof(unsigned),
+                DXGI_FORMAT_R32_UINT};
+
+            cl->IASetIndexBuffer(&ibv);
             
             auto viewports = { std::addressof(viewport) };
             cl->RSSetViewports(static_cast<unsigned>(viewports.size()),*viewports.begin());
@@ -256,8 +313,19 @@ namespace d3d {
             cl->RSSetScissorRects(1,&scissor);
             cl->OMSetRenderTargets(2, rtv_handle, false, nullptr);            
     
-            cl->DrawInstanced(static_cast<unsigned>(mesh_.size()), static_cast<unsigned>(positions_.size()), 0, 0);
+            //cl->DrawInstanced(static_cast<unsigned>(mesh_.size()), static_cast<unsigned>(positions_.size()), 0, 0);            
+            cl->DrawIndexedInstanced(static_cast<unsigned>(indices_.size()), // indexcountperinstance
+                                     static_cast<unsigned>(positions_.size()), // instancecount 
+                                     0,             // start index location
+                                     0,             // base vertex location
+                                     0);            // start instance location           
+
+            // MESH_ID must determine: which vertex buffer to bind, index count, bone count
+            // OBJECT_ID must determine: MESH_ID, bone offset, 
+
+
         }
+
     };
     
 }} // namespaces

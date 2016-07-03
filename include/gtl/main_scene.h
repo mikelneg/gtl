@@ -55,22 +55,25 @@ namespace scenes {
                     generators_.emplace_back(static_box{{-100.0f * si::meters, 0.0f * si::meters},{5.0f * si::meters, 200.0f * si::meters}, 0.0f * si::radians, 0});
                     generators_.emplace_back(static_box{ {100.0f * si::meters, 0.0f * si::meters},{5.0f * si::meters, 200.0f * si::meters}, 0.0f * si::radians, 0});
                     
-                    for (unsigned i = 0; i < 100; ++i) {                            
-                        generators_.emplace_back(dynamic_box{{vn::math::rand_neg_one_one() * 45 * si::meter,
-                                                              vn::math::rand_neg_one_one() * 45 * si::meter},
-                                                              {1.0f * si::meter, 
-                                                               1.0f * si::meter}, vn::math::rand_neg_one_one() * si::radians, i + 200 });
-                    }
+                    //for (unsigned i = 0; i < 100; ++i) {                            
+                    //    generators_.emplace_back(dynamic_box{{vn::math::rand_neg_one_one() * 45 * si::meter,
+                    //                                          vn::math::rand_neg_one_one() * 45 * si::meter},
+                    //                                          {1.0f * si::meter, 
+                    //                                           1.0f * si::meter}, vn::math::rand_neg_one_one() * si::radians, i + 200 });
+                    //}
 
-                    for (unsigned j = 0; j < 20; ++j) {
+                    for (unsigned j = 0; j < 160; ++j) { 
                         std::vector<dynamic_box> jointed_boxes_;
-                        for (unsigned i = 0; i < 10; ++i) {                            
-                            jointed_boxes_.emplace_back(dynamic_box{{vn::math::rand_neg_one_one() * 45 * si::meter,
-                                                                     vn::math::rand_neg_one_one() * 45 * si::meter},
+                        auto x = vn::math::rand_neg_one_one() * 45.0f * si::meter;
+                        auto y = vn::math::rand_neg_one_one() * 45.0f * si::meter;
+                        auto angle = 0.0f * si::radians; //vn::math::rand_neg_one_one() * si::radians;
+
+                        for (unsigned i = 0; i < 4; ++i) {                            
+                            jointed_boxes_.emplace_back(dynamic_box{{x,y - ((i * 1.0f) * si::meter)},
                                                                     {1.0f * si::meter, 
-                                                                     1.0f * si::meter}, vn::math::rand_neg_one_one() * si::radians, j + 600 });
+                                                                     1.0f * si::meter}, angle, j + 600 });
                         }              
-                        generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});
+                        generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});                        
                     }
 
                     return generators_; 

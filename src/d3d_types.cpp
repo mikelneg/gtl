@@ -109,7 +109,7 @@ namespace version_12_0 {
         raw::DescriptorHeapDesc desc{};
 		desc.NumDescriptors = num_descriptors;
 		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
-		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;                
+		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;        
         win::throw_on_fail(dev->CreateDescriptorHeap(&desc,__uuidof(type),void_ptr(*this)),__func__);
         increment_ = dev->GetDescriptorHandleIncrementSize(desc.Type);
         set_name(*get(),L"res_heap");               
@@ -354,6 +354,62 @@ namespace version_12_0 {
         set_name(*get(),L"vbuffer");               
     }
 
+    index_buffer::index_buffer(device& dev, command_queue& cqueue_, void* begin_, size_t size_)
+    {        
+        release_ptr<raw::Resource> upload_ibuffer_;                
+
+        HRESULT result2 = dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT),        
+                                                   D3D12_HEAP_FLAG_NONE,
+                                                   &raw::cx::ResourceDesc::Buffer(size_),  // buffer alignment is 64k..
+                                                   D3D12_RESOURCE_STATE_COPY_DEST,
+                                                   nullptr,
+                                                   __uuidof(type),
+                                                   void_ptr(*this));
+        win::throw_on_fail(result2,__func__);
+            
+        result2 = dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD),        
+                                                   D3D12_HEAP_FLAG_NONE,
+                                                   &raw::cx::ResourceDesc::Buffer(size_),  // buffer alignment is 64k..
+                                                   D3D12_RESOURCE_STATE_GENERIC_READ,
+                                                   nullptr,
+                                                   __uuidof(type),
+                                                   void_ptr(upload_ibuffer_));        
+        win::throw_on_fail(result2,__func__);
+        
+        void *buffer_ptr_{};
+        win::throw_on_fail(
+            upload_ibuffer_.get()->Map(0, nullptr, &buffer_ptr_), 
+            __func__);
+        //std::copy_n(begin_, size_, buffer_ptr_); 
+        std::memcpy(buffer_ptr_, begin_, size_);    	
+        upload_ibuffer_.get()->Unmap(0,nullptr);
+        
+        raw::ResourceBarrier barrierDesc{};
+
+        barrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrierDesc.Transition.pResource = get();
+        barrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+        barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_INDEX_BUFFER;
+              
+        gtl::d3d::direct_command_allocator calloc{dev};
+        gtl::d3d::graphics_command_list clist{dev,calloc};
+
+        clist->Reset(calloc.get(), nullptr);                
+        clist->CopyBufferRegion(get(),0,upload_ibuffer_.get(),0,size_);                  
+        clist->ResourceBarrier(1, &barrierDesc);                 
+        clist->DiscardResource(upload_ibuffer_.get(), nullptr);                
+        clist->Close();
+
+        raw::CommandList* ppCommandLists[] = { clist.get() };
+        cqueue_->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);                
+                
+        wait_for_gpu(dev,cqueue_);
+        
+        set_name(*get(),L"ibuffer");               
+    }
+
+
     srv::srv(device& dev, std::vector<raw::CpuDescriptorHandle> handles_, command_queue& cqueue_, std::wstring filename)
     {
         //win::throw_on_fail(dev->CreateCommittedResource(
@@ -545,6 +601,27 @@ namespace version_12_0 {
         assert(this->get()->GetCompletedValue() == new_value);
     }
             
+    constant_buffer::constant_buffer(device& dev, std::size_t cbuf_size)    
+    {        
+        win::throw_on_fail(dev->CreateCommittedResource(
+                            &raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD),
+                            D3D12_HEAP_FLAG_NONE,
+                            //D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS,                  
+                            &raw::cx::ResourceDesc::Buffer((cbuf_size + 255) & ~255), // constant alignment is 256
+	                        D3D12_RESOURCE_STATE_GENERIC_READ,
+                            //D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+	                        nullptr,
+                            __uuidof(resource::type),
+                            void_ptr(buffer))            
+                     ,__func__);
+
+		// Initialize and map the constant buffers. We don't unmap this until the
+		// app closes. Keeping things mapped for the lifetime of the resource is okay.
+        win::throw_on_fail(buffer.get()->Map(0, nullptr, reinterpret_cast<void**>(&cbv_data_ptr))
+                      ,__func__);
+        set_name(*(buffer.get()),L"cbuf_no_hndl");                               
+	}
+
 
     constant_buffer::constant_buffer(device& dev, raw::CpuDescriptorHandle descriptor_handle, std::size_t cbuf_size)    
     {        
@@ -561,7 +638,7 @@ namespace version_12_0 {
                      ,__func__);
 
         raw::ConstantBufferViewDesc cbvDesc{};
-	    cbvDesc.BufferLocation = buffer.get()->GetGPUVirtualAddress();
+	    cbvDesc.BufferLocation = buffer.get()->GetGPUVirtualAddress();        
 	    cbvDesc.SizeInBytes = (cbuf_size + 255) & ~255;	// CB size is required to be 256-byte aligned.
 	    //dev->CreateConstantBufferView(&cbvDesc, resource_heap.get()->GetCPUDescriptorHandleForHeapStart());
         dev->CreateConstantBufferView(&cbvDesc, descriptor_handle);
