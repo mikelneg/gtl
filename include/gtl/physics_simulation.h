@@ -10,12 +10,13 @@
 -----------------------------------------------------------------------------*/
 
 #include <vector>
+#include <thread>
+#include <atomic>
+#include <type_traits>
+
 #include <gtl/swap_vector.h>
 #include <vn/swap_object.h>
 
-#include <thread>
-
-#include <atomic>
 #include <Eigen/Core>
 
 #include <boost/units/quantity.hpp>
@@ -29,6 +30,91 @@
 #include <gtl/physics_units.h>
 
 namespace gtl {
+    
+struct EntityInfo {
+        //Eigen::Vector4f xywh_;
+        //Eigen::Vector4f rgb_angle_;                
+        
+        //uint32_t bone_offset_;
+        //uint32_t bone_count_;
+
+        union {
+            uintptr_t entity_data_;            
+            uint16_t arr[4]; 
+        };
+
+        //uintptr_t entity_data_; // 64 bit: <mesh_id, entity_id, material_id, EMPTY>
+                                // ..
+                                // 64 bit: <mesh_id, entity_id, material_id, ?? something_physics_consumes>
+                                // 64 bit: <mesh_id, entity_id, material_id, ?? something_rendering_consumes>
+        // EntityData... 
+        // uint32_t mesh_id_;
+        // uint32_t id_;
+        // etc..
+
+        template <int N>
+        uintptr_t pack(uint16_t v) noexcept {
+            return entity_data_ 
+        }
+
+        friend bool operator<(EntityInfo const& lhs, EntityInfo const& rhs) {
+            return lhs.entity_data_ < rhs.entity_data_;             
+        }        
+
+    };
+
+    struct InstanceInfo {       // HACK hackish..     
+        union {        
+            uintptr_t data;            
+            uint16_t arr[4];    // uint16_t <bone_offset, material_id, entity_id, mesh_id>                
+        };
+
+        explicit InstanceInfo(uintptr_t i, uint16_t p) noexcept : data{i} { pack<0>(p); }
+        constexpr explicit InstanceInfo(uintptr_t v) noexcept : data{v} {}
+        constexpr explicit InstanceInfo(uint16_t a, uint16_t b, uint16_t c, uint16_t d) noexcept : arr{a,b,c,d} {}
+
+        InstanceInfo() = default;
+        
+        constexpr InstanceInfo(InstanceInfo const& i) noexcept : data{i.data} {}
+
+        template <unsigned N>
+        InstanceInfo& pack(uint16_t i) noexcept {
+            static_assert(N <= std::extent<decltype(arr)>{},"");            
+            arr[N] = i;
+            return *this;
+        }        
+
+        template <unsigned N>
+        uint16_t unpack() const noexcept {
+            static_assert(N <= std::extent<decltype(arr)>{},"");            
+            return arr[N];
+        }
+
+        uint16_t bone_offset() const noexcept { return unpack<0>(); }
+        uint16_t material_id() const noexcept { return unpack<1>(); }
+        uint16_t entity_id() const noexcept { return unpack<2>(); }
+        uint16_t mesh_id() const noexcept { return unpack<3>(); }
+
+        InstanceInfo& pack_bone_offset(uint16_t x) noexcept { return pack<0>(x); }
+        InstanceInfo& pack_material_id(uint16_t x) noexcept { return pack<1>(x); }
+        InstanceInfo& pack_entity_id(uint16_t x) noexcept { return pack<2>(x); }
+        InstanceInfo& pack_mesh_id(uint16_t x) noexcept { return pack<3>(x); }
+
+        uintptr_t value() const noexcept { return data; }
+
+        //friend bool operator<(InstanceInfo const& lhs, InstanceInfo const& rhs) noexcept { 
+        //    return 
+        //}
+
+        friend std::ostream& operator<<(std::ostream& str, InstanceInfo const& d) { str << d.data; return str; }
+    };
+
+    static_assert(sizeof(EntityInfo) == sizeof(uint64_t), "EntityInfo not sized properly, should be 64 bits..");
+    static_assert(sizeof(InstanceInfo) == sizeof(uint64_t), "InstanceInfo not sized properly, should be 64 bits..");
+    
+    
+
+
     namespace physics {
 
         namespace generators {                                                        
@@ -37,33 +123,35 @@ namespace gtl {
                 position<float> xy_;
                 dimensions<float> wh_;
                 angle<float> angle_;                                               
-                uint32_t id;                
+                //uint32_t id;                
+                InstanceInfo info_;
             };
 
             struct dynamic_box {                                                                                
                 position<float> xy_;
                 dimensions<float> wh_;
                 angle<float> angle_;                
-                uint32_t id;                
+                //uint32_t id;                
+                InstanceInfo info_;
             };
 
             struct dynamic_jointed_boxes {                                                                                                
                 std::vector<dynamic_box> boxes_;
-                uint32_t id;                
+                InstanceInfo info_;
             };
 
             struct static_circle {
                 float x,y,r,a;
-                uint32_t id;                
+                InstanceInfo info_;
             };
 
 
             struct destroy_object_implode {
-                uint32_t id;
+                uint16_t id;
             };
 
             struct boost_object {
-                uint32_t id;
+                uint16_t id;
             };
 
 
@@ -77,24 +165,8 @@ namespace gtl {
                                          generators::boost_object>;
     }
 
-    struct EntityInfo {
-        //Eigen::Vector4f xywh_;
-        //Eigen::Vector4f rgb_angle_;                
-        uint32_t bone_offset_;
-        uint32_t bone_count_;
-
-        uintptr_t entity_data_; 
-        // EntityData... 
-        // uint32_t mesh_id_;
-        // uint32_t id_;
-        // etc..
-    };
-
-    static_assert(sizeof(EntityInfo) == sizeof(uintptr_t) * 2, "EntityInfo not packed properly..");
-
-    
     struct render_data {
-        std::vector<EntityInfo> entities_;
+        std::vector<InstanceInfo> entities_;
         std::vector<Eigen::Matrix4f> bones_;
 
         friend void swap(render_data& lhs, render_data& rhs) {
@@ -105,11 +177,8 @@ namespace gtl {
     };
 
     class physics_simulation {        
-        using entity_type = EntityInfo;
-
-        //gtl::swap_vector<> entities_;
-        //gtl::swap_vector<entity_type> entities_;
-
+        using entity_type = InstanceInfo;
+        
         vn::swap_object<render_data> render_data_;
                 
         std::atomic_flag quit_;
@@ -120,9 +189,6 @@ namespace gtl {
         physics_simulation(gtl::swap_vector<gtl::physics::generator>&);        
 
         bool extract_render_data(render_data& c) { return render_data_.swap_out(c); }
-        //bool extract_positions(std::vector<entity_type>& c) { return entities_.swap_out(c); }
-
-        // std::vector<entity_type> copy_out() { return rend.copy_out(); }
 
         ~physics_simulation() {
             quit_.clear();

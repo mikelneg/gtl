@@ -50,10 +50,10 @@ namespace scenes {
                     using namespace boost::units;
                     std::vector<gtl::physics::generator> generators_;
               
-                    generators_.emplace_back(static_box{{0.0f * si::meters, -100.0f * si::meters},{200.0f * si::meters, 5.0f * si::meters}, 0.0f * si::radians, 0});
-                    generators_.emplace_back(static_box{ {0.0f * si::meters, 100.0f * si::meters},{200.0f * si::meters, 5.0f * si::meters}, 0.0f * si::radians, 0});                
-                    generators_.emplace_back(static_box{{-100.0f * si::meters, 0.0f * si::meters},{5.0f * si::meters, 200.0f * si::meters}, 0.0f * si::radians, 0});
-                    generators_.emplace_back(static_box{ {100.0f * si::meters, 0.0f * si::meters},{5.0f * si::meters, 200.0f * si::meters}, 0.0f * si::radians, 0});
+                    generators_.emplace_back(static_box{{0.0f * si::meters, -100.0f * si::meters},{200.0f * si::meters, 5.0f * si::meters}, 0.0f * si::radians, {}});
+                    generators_.emplace_back(static_box{ {0.0f * si::meters, 100.0f * si::meters},{200.0f * si::meters, 5.0f * si::meters}, 0.0f * si::radians, {}});                
+                    generators_.emplace_back(static_box{{-100.0f * si::meters, 0.0f * si::meters},{5.0f * si::meters, 200.0f * si::meters}, 0.0f * si::radians, {}});
+                    generators_.emplace_back(static_box{ {100.0f * si::meters, 0.0f * si::meters},{5.0f * si::meters, 200.0f * si::meters}, 0.0f * si::radians, {}});
                     
                     //for (unsigned i = 0; i < 100; ++i) {                            
                     //    generators_.emplace_back(dynamic_box{{vn::math::rand_neg_one_one() * 45 * si::meter,
@@ -62,7 +62,7 @@ namespace scenes {
                     //                                           1.0f * si::meter}, vn::math::rand_neg_one_one() * si::radians, i + 200 });
                     //}
 
-                    for (unsigned j = 0; j < 160; ++j) { 
+                    for (unsigned j = 0; j < 80; ++j) { 
                         std::vector<dynamic_box> jointed_boxes_;
                         auto x = vn::math::rand_neg_one_one() * 45.0f * si::meter;
                         auto y = vn::math::rand_neg_one_one() * 45.0f * si::meter;
@@ -71,10 +71,31 @@ namespace scenes {
                         for (unsigned i = 0; i < 4; ++i) {                            
                             jointed_boxes_.emplace_back(dynamic_box{{x,y - ((i * 1.0f) * si::meter)},
                                                                     {1.0f * si::meter, 
-                                                                     1.0f * si::meter}, angle, j + 600 });
+                                                                     1.0f * si::meter}, angle, 
+                                                                    // HACK computes mesh+entity id 
+                                               InstanceInfo{}.pack_entity_id(j + 600)
+                                                                 .pack_mesh_id(0)});
                         }              
                         generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});                        
                     }
+
+                    for (unsigned j = 80; j < 160; ++j) { 
+                        std::vector<dynamic_box> jointed_boxes_;
+                        auto x = vn::math::rand_neg_one_one() * 45.0f * si::meter;
+                        auto y = vn::math::rand_neg_one_one() * 45.0f * si::meter;
+                        auto angle = 0.0f * si::radians; //vn::math::rand_neg_one_one() * si::radians;
+
+                        //for (unsigned i = 0; i < 4; ++i) {                            
+                          //  jointed_boxes_.emplace_back(
+                             generators_.emplace_back(dynamic_box{{x,y},
+                                                                    {1.0f * si::meter, 
+                                                                     1.0f * si::meter}, angle,                                                                     
+                                                   InstanceInfo{}.pack_entity_id(j + 600)
+                                                                 .pack_mesh_id(1)});
+                        //}              
+                        //generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});                        
+                    }
+
 
                     return generators_; 
                 }()}, // don't forget to call the lambda.. 
@@ -93,7 +114,9 @@ namespace scenes {
         template <typename F>
         void draw_callback(F func) const {
             func([&](auto&&...ps){                 
-                swirl_effect_.draw(std::forward<decltype(ps)>(ps)..., current_id_, physics_camera_.matrix() * Eigen::Affine3f{Eigen::Translation3f{0.0f,0.0f,camera_height_ / boost::units::si::meters}}.matrix());
+                swirl_effect_.draw(std::forward<decltype(ps)>(ps)..., 
+                                   current_id_, 
+                                   physics_camera_.matrix() * Eigen::Affine3f{Eigen::Translation3f{0.0f,0.0f,camera_height_ / boost::units::si::meters}}.matrix());
             });
         }
                 
@@ -119,7 +142,8 @@ namespace scenes {
                         
                         case k::A : std::cout << "swirl_effect(): A pressed, generating new object.. \n";                             
                                     task_local_.emplace_back(dynamic_box{{0.0f * si::meter, 0.0f * si::meter}, 
-                                                                         {0.5f * si::meter, 0.5f * si::meter}, 0.0f * si::radians, 888});
+                                                                         {0.5f * si::meter, 0.5f * si::meter}, 0.0f * si::radians, 
+                                                                InstanceInfo{}.pack_entity_id(888)});
                                     task_queue_.swap_in(task_local_);
                                     break;                        
                         
@@ -151,13 +175,13 @@ namespace scenes {
                     //task_local_.emplace_back(destroy_object_implode{id});
                     //task_queue_.swap_in(task_local_);
                 } else if (same_type(yield.get(),ev::mouse_lbutton_down{})) {
-                    uint32_t id = current_id_.load(std::memory_order_relaxed);
+                    uint16_t id = current_id_.load(std::memory_order_relaxed);
                     std::cout << "nuking object " << id << "\n";                    
                     task_local_.emplace_back(destroy_object_implode{id});
                     task_queue_.swap_in(task_local_);
 
                 } else if (same_type(yield.get(),ev::mouse_rbutton_down{})) {
-                    uint32_t id = current_id_.load(std::memory_order_relaxed);
+                    uint16_t id = current_id_.load(std::memory_order_relaxed);
                     std::cout << "boosting object " << id << "\n";                    
                     task_local_.emplace_back(boost_object{id});
                     task_queue_.swap_in(task_local_);

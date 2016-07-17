@@ -66,17 +66,17 @@ namespace {
     auto make_query_callback(T t) { return query_callback_helper<T>{std::move(t)}; }
 
 
-    inline 
-    void* to_user_data(b2Body* p) noexcept {
-        return p;
-    }
+    //inline 
+    //void* to_user_data(b2Body* p) noexcept {
+    //    return p;
+    //}
+    //
+    //inline 
+    //b2Body* from_user_data(void* p) noexcept {
+    //    return reinterpret_cast<b2Body*>(p);
+    //}
 
-    inline 
-    b2Body* from_user_data(void* p) noexcept {
-        return reinterpret_cast<b2Body*>(p);
-    }
-
-    using map_type = std::multimap<uint32_t,b2Body*>;
+    using map_type = std::multimap<uint16_t,b2Body*>;
 
     struct box2d_generator_visitor : boost::static_visitor<b2Body*> {
 
@@ -97,7 +97,7 @@ namespace {
 
             body_.position = b2Vec2{o.xy_.first / si::meters, o.xy_.second / si::meters};
             body_.angle = o.angle_ / si::radians; 
-            body_.userData = reinterpret_cast<void*>(static_cast<uintptr_t>(o.id)); 
+            body_.userData = reinterpret_cast<void*>(o.info_.value()); 
             body_.type = b2_staticBody;                        
             //body_.awake = true; // default
             // etc..
@@ -116,7 +116,7 @@ namespace {
             fixture_.filter.maskBits = collision_category::ENTITY;
             fixture_.shape = &shape_;
 
-            fixture_.userData = to_user_data(ptr); 
+            fixture_.userData = reinterpret_cast<void*>(ptr); 
 
             ptr->CreateFixture(&fixture_);
 
@@ -188,14 +188,14 @@ namespace {
 
             std::vector<b2Body*> body_ptrs_;
             for (auto&& b : o.boxes_) {
-                body_ptrs_.emplace_back(create_body(b, reinterpret_cast<void*>(static_cast<uintptr_t>(b.id))) );                            
+                body_ptrs_.emplace_back(create_body(b, reinterpret_cast<void*>(b.info_.value())) );                            
             }
             
             //entity_map_.emplace(o.boxes_[0].id, body_ptrs_[0]);
 
             for (unsigned i = 0; i < body_ptrs_.size(); ++i) {
                 do_the_rest(o.boxes_[i], body_ptrs_[i], body_ptrs_[0]); // all fixtures store the b2Body* for the root
-                entity_map_.emplace(o.boxes_[0].id, body_ptrs_[i]);                
+                entity_map_.emplace(o.boxes_[0].info_.entity_id(), body_ptrs_[i]);                
             }
         
             auto n = std::begin(body_ptrs_);
@@ -218,14 +218,14 @@ namespace {
 
             body_.position = b2Vec2{o.xy_.first / si::meters, o.xy_.second / si::meters};
             body_.angle = o.angle_ / si::radians;
-            body_.userData = reinterpret_cast<void*>(static_cast<uintptr_t>(o.id)); 
+            body_.userData = reinterpret_cast<void*>(o.info_.value()); 
             body_.type = b2_dynamicBody;             
             //body_.awake = true; // default
             // etc..
 
             b2Body* ptr = world_.CreateBody(&body_);            
 
-            entity_map_.emplace(o.id, ptr);
+            entity_map_.emplace(o.info_.entity_id(), ptr);
 
             b2PolygonShape shape_;
             shape_.SetAsBox(o.wh_.first / si::meters, o.wh_.second / si::meters);
@@ -238,7 +238,7 @@ namespace {
                                        collision_category::SENSOR | 
                                        collision_category::BOUNDARY;
             fixture_.shape = &shape_;
-            fixture_.userData = to_user_data(ptr); 
+            fixture_.userData = reinterpret_cast<void*>(ptr); 
             
             fixture_.isSensor = false;
             fixture_.restitution = 0.46f;
@@ -375,10 +375,10 @@ static void simulation_thread(vn::swap_object<T>& rend_data_,
         for (b2Body* b = world_.GetBodyList(); b; b = b->GetNext())
         {                    
             b2Vec2 position = b->GetPosition();            
-            uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(b->GetUserData()));
+            //uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(b->GetUserData()));
             // temporar            
         
-            //positions_.emplace_back(EntityInfo{{position.x,
+            //positions_.emplace_back(InstanceInfo{{position.x,
             //                           position.y,                                       
             //                           1.0f,1.0f},
             //                           0, // MESH_ID
@@ -397,7 +397,7 @@ static void simulation_thread(vn::swap_object<T>& rend_data_,
             //
             ////b2AABB aabb_ = fixture_->GetAABB(0);
             //
-            //positions_.emplace_back(EntityInfo{{position.x,
+            //positions_.emplace_back(InstanceInfo{{position.x,
             //                           position.y,                                       
             //                           1.0f,1.0f},
             //                           {1.0f, 1.0f, 1.0f, b->GetAngle()},index_});                                    
@@ -410,10 +410,10 @@ static void simulation_thread(vn::swap_object<T>& rend_data_,
             b2Body &body_ = *(fixture_->GetBody());
             body_.SetAwake(true);                                    
 
-            uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(body_.GetUserData()));
+            //uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(body_.GetUserData()));
             b2Vec2 const& p = body_.GetPosition();
 
-            //positions_.emplace_back(EntityInfo{{p.x, p.y, 1.0f, 1.0f},
+            //positions_.emplace_back(InstanceInfo{{p.x, p.y, 1.0f, 1.0f},
             //                                   //{1.0f, 1.0f, 1.0f, body_.GetAngle()},
             //                                   0, // MESH_ID
             //                                   static_cast<uint32_t>(bones_.size()),
@@ -430,31 +430,20 @@ static void simulation_thread(vn::swap_object<T>& rend_data_,
 
 
     auto dump_fixtures = [&](b2Body& body_) {                                                        
-                            uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(body_.GetUserData()));
-                            b2Vec2 const& p = body_.GetPosition();
+                            InstanceInfo instance{reinterpret_cast<uintptr_t>(body_.GetUserData()),
+                                                  static_cast<uint16_t>(bones_.size())};
+                                                                
+                            b2Vec2 const& p = body_.GetPosition();                            
 
-                            positions_.emplace_back(EntityInfo{static_cast<uint32_t>(bones_.size()),
-                                                               4, // will be changed.. // old stuff {p.x, p.y, 1.0f, 1.0f},
-                                                               reinterpret_cast<uintptr_t>(body_.GetUserData())}); // MESH_ID
-                                                               //{1.0f, 1.0f, 1.0f, body_.GetAngle()},                                                                
-                                                                //index_});                                                      
-                            //// single body addition..                            
-                            //Eigen::Matrix4f m = ( Eigen::Affine3f{Eigen::Translation3f{Eigen::Vector3f{p.x,p.y,1.0f}}}
-                            //                    * Eigen::Affine3f{Eigen::AngleAxisf{body_.GetAngle(),Eigen::Vector3f{0.0f,0.0f,1.0f}}}).matrix();//Eigen::Rotation2Df{body_.GetAngle()}.matrix();                                
-                            //
-                            //bones_.emplace_back(m.transpose());
-                          
-                            //uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(body_.GetUserData()));
-                            //
-                            //    positions_.emplace_back(EntityInfo{{p.x, p.y, 1.0f, 1.0f},
-                            //                                     {1.0f, 1.0f, 1.0f, angle},
-                            //                                    static_cast<uint32_t>(bones_.size()),
-                            //                                    index_});                                                      
-                            //
-
+                            positions_.emplace_back(instance);
+                                                        
+                                                        //       4, // will be changed.. // old stuff {p.x, p.y, 1.0f, 1.0f},
+                                                        //       reinterpret_cast<uintptr_t>(body_.GetUserData())}); // MESH_ID
+                                                        //       //{1.0f, 1.0f, 1.0f, body_.GetAngle()},                                                                
+                                                        //        //index_});                                                                  
 
                             // // all bodies..
-                            auto range = map_.equal_range(index_);
+                            auto range = map_.equal_range(instance.entity_id());
                             for (auto it = range.first; it != range.second; ++it) {
                                 b2Vec2 const& p = it->second->GetPosition();
                                 float const& angle = it->second->GetAngle();
@@ -466,7 +455,7 @@ static void simulation_thread(vn::swap_object<T>& rend_data_,
                                 bones_.emplace_back(m.transpose());                                                                
 
                                 
-                                //positions_.emplace_back(EntityInfo{{p.x, p.y, 1.0f, 1.0f},
+                                //positions_.emplace_back(InstanceInfo{{p.x, p.y, 1.0f, 1.0f},
                                  //                                  {1.0f, 1.0f, 1.0f, angle}, 
                                   //                                  index_});                          
                             }
@@ -474,7 +463,7 @@ static void simulation_thread(vn::swap_object<T>& rend_data_,
 
     auto query_bodies_around_AABB = make_query_callback(
         [&](b2Fixture* fixture_){                 
-            b2Body * const body_ptr_ = from_user_data(fixture_->GetUserData());            
+            b2Body * const body_ptr_ = reinterpret_cast<b2Body*>(fixture_->GetUserData());            
             body_ptr_->SetAwake(true);                                               
             selected_bodies_.emplace_back(body_ptr_);                        
             return true; // continue the query

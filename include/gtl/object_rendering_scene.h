@@ -15,12 +15,15 @@
 
 #include <gtl/physics_simulation.h>
 #include <gtl/camera.h>
-#include <gtl/mesh.h>
+#include <gtl/mesh_loader.h>
+#include <gtl/mesh_group.h>
 
 #include <Eigen/Core>
 
 #include <fstream>
 #include <string>
+
+#include <algorithm>
 
 
 namespace gtl {
@@ -39,23 +42,29 @@ namespace d3d {
         template <typename T>
         using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;        
 
-
-        gtl::mesh mesh_object_;
+        //gtl::mesh_loader mesh_object_;
+        //gtl::mesh_loader mesh_object_two_; // HACK moving to multiple mesh support..
+        gtl::mesh_group<aligned_vector<vertex_type_bone>,
+                        std::vector<unsigned>,
+                        std::string> mesh_group_;
 
         std::vector<D3D12_INPUT_ELEMENT_DESC> layout_;                
         
-        aligned_vector<vertex_type_bone> mesh_;   
-        aligned_vector<matrix_type> bones_;
-        std::vector<unsigned> indices_;
+        //aligned_vector<vertex_type_bone> mesh_;   
+        //aligned_vector<vertex_type_bone> mesh_two_;   
+
+        //aligned_vector<matrix_type> bones_;
+        //std::vector<unsigned> indices_;
 
         gtl::d3d::vertex_buffer vbuffer_;
-        gtl::d3d::index_buffer ibuffer_;
+        //gtl::d3d::vertex_buffer vbuffer_two_;
+        gtl::d3d::index_buffer index_buffer_;
 
         gtl::d3d::resource_descriptor_heap ibuffer_descriptors_;        
         
-        aligned_vector<EntityInfo> instance_data_;                
+        aligned_vector<InstanceInfo> instance_data_;                
         
-        std::array<gtl::d3d::constant_buffer,3> mutable ibuffers_;        
+        std::array<gtl::d3d::constant_buffer,3> mutable instance_buffers_;        
         
         std::array<gtl::d3d::resource_descriptor_heap,3> cbheap_;
         std::array<gtl::d3d::constant_buffer, 3> mutable cbuffer_;       
@@ -87,13 +96,14 @@ namespace d3d {
                 {"VERTEX_POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                 {"VERTEX_BONE_IDS", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                 {"VERTEX_BONE_WEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                
-                {"BONE_ARRAY_OFFSET", 0, DXGI_FORMAT_R32_UINT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-                {"BONE_COUNT", 0, DXGI_FORMAT_R32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-                {"OBJECT_ID", 0, DXGI_FORMAT_R32G32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1}
-           //   {"OBJECT_POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-           //   {"MESH_ID", 0, DXGI_FORMAT_R32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-           //   {"COLOR_ANGLE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+
+                {"INSTANCE_INFO", 0, DXGI_FORMAT_R16G16B16A16_UINT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+         //       {"BONE_ARRAY_OFFSET", 0, DXGI_FORMAT_R32_UINT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+         //       {"BONE_COUNT", 0, DXGI_FORMAT_R32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+         //       {"OBJECT_ID", 0, DXGI_FORMAT_R32G32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1}
+         //  //   {"OBJECT_POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+         //  //   {"MESH_ID", 0, DXGI_FORMAT_R32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+         //  //   {"COLOR_ANGLE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
             };                         
         }
   
@@ -185,14 +195,31 @@ namespace d3d {
     
         object_rendering_scene(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, 
                    gtl::d3d::root_signature& rsig, gtl::physics_simulation& physics_) 
-        :   layout_(vertex_layout()),            
-            mesh_object_("D:\\meshes\\deformed_armature.fbx",gtl::tags::fbx_format{}),
-            mesh_(mesh_object_.bone_vertices()),
-            indices_(mesh_object_.indices()),
-            vbuffer_{dev,cqueue,mesh_.data(),mesh_.size() * sizeof(vertex_type_bone)},            
-            ibuffer_{dev,cqueue,indices_.data(),indices_.size() * sizeof(unsigned)},
+        :   layout_(vertex_layout()),
+            mesh_group_{[](){
+                decltype(mesh_group_) ret;
+                {    
+                    gtl::mesh_loader m{"D:\\meshes\\deformed_armature.fbx",gtl::tags::fbx_format{}};
+                    ret.add_mesh("deformed_armature",m.bone_vertices(),m.indices(),m.bone_count());
+                }
+                {
+                   gtl::mesh_loader m{"D:\\meshes\\monkey.fbx",gtl::tags::fbx_format{}};
+                   ret.add_mesh("monkey_armature",m.bone_vertices(),m.indices(),m.bone_count());
+                }
+                return ret;
+            }()},
+            //mesh_object_("D:\\meshes\\deformed_armature.fbx",gtl::tags::fbx_format{}),
+            //mesh_object_two_("D:\\meshes\\deformed_armature.fbx",gtl::tags::fbx_format{}),
+            //mesh_(mesh_object_.bone_vertices()),
+            //mesh_two_(mesh_object_two_.bone_vertices()),
+            //indices_(mesh_object_.indices()),//[&](){ auto vec = mesh_object_.indices(); 
+                            //auto v = mesh_object_two_.indices(); 
+                            //vec.insert(begin(v),end(v),end(vec)); return vec; }()),
+            vbuffer_{dev,cqueue, static_cast<void*>(mesh_group_.vertex_data()),mesh_group_.vertex_count() * sizeof(vertex_type_bone)},            
+            //vbuffer_two_{dev,cqueue,mesh__.data(),mesh_two_.size() * sizeof(vertex_type_bone)},            
+            index_buffer_{dev,cqueue, static_cast<void*>(mesh_group_.index_data()), mesh_group_.index_count() * sizeof(uint32_t)},
             ibuffer_descriptors_{dev,3,gtl::d3d::tags::shader_visible{}},
-            ibuffers_{{{dev,ibuffer_descriptors_.get_handle(0), MAX_ENTITIES  * sizeof(EntityInfo)},
+            instance_buffers_{{{dev,ibuffer_descriptors_.get_handle(0), MAX_ENTITIES  * sizeof(EntityInfo)},
                        {dev,ibuffer_descriptors_.get_handle(1), MAX_ENTITIES  * sizeof(EntityInfo)},
                        {dev,ibuffer_descriptors_.get_handle(2), MAX_ENTITIES  * sizeof(EntityInfo)}}},
             
@@ -230,9 +257,9 @@ namespace d3d {
 
             auto& positions_ = render_data_.entities_;            
 
-            ibuffers_[0].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
-            ibuffers_[1].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
-            ibuffers_[2].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
+            instance_buffers_[0].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
+            instance_buffers_[1].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
+            instance_buffers_[2].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
 
             position_flags_[0] = false;         // dirty flags.. fix these..
             position_flags_[1] = false;
@@ -246,7 +273,7 @@ namespace d3d {
                 position_flags_[idx] = false;
                 //construct_vertices(positions_);
                 auto& positions_ = render_data_.entities_;                
-                ibuffers_[idx].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
+                instance_buffers_[idx].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
                 auto& bones_ = render_data_.bones_;
                 bone_buffer_[idx].update(reinterpret_cast<char*>(bones_.data()),bones_.size() * sizeof(Eigen::Matrix4f));
             } else {
@@ -254,7 +281,15 @@ namespace d3d {
                     position_flags_[idx] = false;
                     //construct_vertices(positions_);
                     auto& positions_ = render_data_.entities_;
-                    ibuffers_[idx].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));                    
+
+                    // sort..
+                    std::sort(begin(positions_),end(positions_),
+                        [](auto& lhs, auto& rhs){ 
+                            return lhs.mesh_id() < rhs.mesh_id(); 
+                        });
+                    //
+
+                    instance_buffers_[idx].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));                    
                     auto& bones_ = render_data_.bones_;
                     bone_buffer_[idx].update(reinterpret_cast<char*>(bones_.data()),bones_.size() * sizeof(Eigen::Matrix4f));
                 }
@@ -280,29 +315,30 @@ namespace d3d {
             cl->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
             cl->SetGraphicsRootDescriptorTable(2, texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());                                                                      
             
-
-            uint32_t bone_count = 4;
-            cl->SetGraphicsRoot32BitConstants(5, 1, std::addressof(bone_count), 0);                                             
-
+            
             cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);                                             
             
 
             //cl->SetGraphicsRootConstantBufferView(4, (bone_buffer_[idx].resource())->GetGPUVirtualAddress());
             cl->SetGraphicsRootShaderResourceView(4,(bone_buffer_[idx].resource())->GetGPUVirtualAddress());
+                        
+            //auto& positions_ = render_data_.entities_;            
+            //D3D12_VERTEX_BUFFER_VIEW iaviews_[] = {
+            //        {vbuffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_.size() * sizeof(vertex_type_bone)), sizeof(vertex_type_bone)},
+            //        {instance_buffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(EntityInfo)),sizeof(EntityInfo)}};                        
+            //
+            //D3D12_VERTEX_BUFFER_VIEW iaviews_two_[] = {
+            //        {vbuffer_two_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_two_.size() * sizeof(vertex_type_bone)), sizeof(vertex_type_bone)},
+            //        {instance_buffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(EntityInfo)),sizeof(EntityInfo)}};                        
             
-            auto& positions_ = render_data_.entities_;            
-            D3D12_VERTEX_BUFFER_VIEW iaviews_[] = {
-                    {vbuffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_.size() * sizeof(vertex_type_bone)), sizeof(vertex_type_bone)},
-                    {ibuffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(EntityInfo)),sizeof(EntityInfo)}};                        
             
-            cl->IASetVertexBuffers(0, 2, iaviews_); 
 
-            D3D12_INDEX_BUFFER_VIEW ibv{
-                ibuffer_->GetGPUVirtualAddress(),
-                static_cast<unsigned>(indices_.size()) * sizeof(unsigned),
-                DXGI_FORMAT_R32_UINT};
+            //D3D12_INDEX_BUFFER_VIEW ibv{
+            //    index_buffer_->GetGPUVirtualAddress(),
+            //    static_cast<unsigned>(indices_.size()) * sizeof(unsigned),
+            //    DXGI_FORMAT_R32_UINT};
 
-            cl->IASetIndexBuffer(&ibv);
+            //cl->IASetIndexBuffer(&ibv);
             
             auto viewports = { std::addressof(viewport) };
             cl->RSSetViewports(static_cast<unsigned>(viewports.size()),*viewports.begin());
@@ -312,18 +348,70 @@ namespace d3d {
 
             cl->RSSetScissorRects(1,&scissor);
             cl->OMSetRenderTargets(2, rtv_handle, false, nullptr);            
-    
+
+            
+            //std::vector<std::pair<unsigned,unsigned>> draw_info_;
+
+            std::array<uint16_t,2> counts{};
+
+            auto& positions_ = render_data_.entities_;            
+            for (auto&& e : positions_) {
+                counts[e.mesh_id()]++;
+            }
+
+            //std::equal_range 
+
+            unsigned counter{};
+            unsigned starter{};
+            
+            D3D12_VERTEX_BUFFER_VIEW iaviews_[] = {
+                        {vbuffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_group_.vertex_count() * sizeof(vertex_type_bone)), sizeof(vertex_type_bone)},
+                        {instance_buffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(EntityInfo)),sizeof(EntityInfo)}};                        
+                    
+                    D3D12_INDEX_BUFFER_VIEW ibv{
+                        index_buffer_->GetGPUVirtualAddress(),
+                        static_cast<unsigned>(mesh_group_.index_count()) * sizeof(uint32_t),
+                        DXGI_FORMAT_R32_UINT};
+
+                    cl->IASetIndexBuffer(&ibv);                        
+                    cl->IASetVertexBuffers(0, 2, iaviews_); 
+
+            mesh_group_.apply(
+                [&](auto const& key, auto const& voff, auto const& ioff, auto const& vcount, auto const& icount, auto const& bcount) 
+                {
+                    auto& positions_ = render_data_.entities_;            
+                          
+
+                    
+
+                    uint32_t bone_count = static_cast<uint32_t>(bcount);
+                    cl->SetGraphicsRoot32BitConstants(5, 1, std::addressof(bone_count), 0);                                                                   
+
+                    cl->DrawIndexedInstanced(static_cast<unsigned>(icount), // indexcountperinstance
+                                             counts[counter],
+                                             //static_cast<unsigned>(positions_.size()), // instancecount 
+                                             static_cast<unsigned>(ioff),   // start index location
+                                             static_cast<unsigned>(voff),   // base vertex location
+                                             starter);            // start instance location           
+                    
+                    starter += counts[counter++] - 1;
+                }
+
+            );
+
+            //for (auto b = begin(positions_), e = end(positions_); b != e; ++b) {
+            //    draw_info_.emplace_back((*b).entity_data_
+            //}            
+            
+            
+
+
             //cl->DrawInstanced(static_cast<unsigned>(mesh_.size()), static_cast<unsigned>(positions_.size()), 0, 0);            
-            cl->DrawIndexedInstanced(static_cast<unsigned>(indices_.size()), // indexcountperinstance
-                                     static_cast<unsigned>(positions_.size()), // instancecount 
-                                     0,             // start index location
-                                     0,             // base vertex location
-                                     0);            // start instance location           
-
-            // MESH_ID must determine: which vertex buffer to bind, index count, bone count
-            // OBJECT_ID must determine: MESH_ID, bone offset, 
-
-
+           // cl->DrawIndexedInstanced(static_cast<unsigned>(indices_.size()), // indexcountperinstance
+           //                          static_cast<unsigned>(positions_.size()), // instancecount 
+           //                          0,             // start index location
+           //                          0,             // base vertex location
+           //                          0);            // start instance location                
         }
 
     };

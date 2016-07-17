@@ -1,31 +1,29 @@
-#include "gtl/mesh.h"
+#include "gtl/mesh_loader.h"
 
-#include <functional>
-#include <memory>
 #include <iostream>
+#include <functional>
+#include <cassert>
+#include <memory>
 
 #include <Eigen/Core>
 
 #include <fbxsdk.h>
 
-
-#include <cassert>
-
 namespace gtl {
     
     namespace {
         template <typename T>
-        using fbx_ptr = std::unique_ptr<T,std::function<void(T*)>>;
+        using fbx_ptr = std::unique_ptr<T,std::function<void(T*)>>;       
     }
 
 
-    struct mesh::priv_impl {
+    struct mesh_loader::priv_impl {
         
         using bone = std::pair<uint32_t, float>; 
 
         std::vector<Eigen::Vector4f,Eigen::aligned_allocator<Eigen::Vector4f>> vertices;                
         std::vector<unsigned> indices;
-        std::vector<std::vector<bone>> bones;        
+        std::vector<std::vector<bone>> bones; 
 
         priv_impl(std::string filename, gtl::tags::fbx_format) 
         {                   
@@ -53,21 +51,21 @@ namespace gtl {
             auto m_ptr = child->GetNodeAttribute();
             auto m_type = m_ptr->GetAttributeType();
             if (m_type == FbxNodeAttribute::eMesh) {
-                fbx_ptr<FbxMesh> mesh{static_cast<FbxMesh*>(child->GetNodeAttribute()),do_nothing_ptr};                    
-                    auto* points = mesh->GetControlPoints();                                         
-                    for (int i = 0; i < mesh->GetControlPointsCount(); ++i) {
+                fbx_ptr<FbxMesh> mesh_loader{static_cast<FbxMesh*>(child->GetNodeAttribute()),do_nothing_ptr};                    
+                    auto* points = mesh_loader->GetControlPoints();                                         
+                    for (int i = 0; i < mesh_loader->GetControlPointsCount(); ++i) {
                         auto& p = points[i];
                         vertices.emplace_back(static_cast<float>(p[0]),static_cast<float>(p[1]),static_cast<float>(p[2]),1.0f);                        
                     }          
 
 
-                    for (int i = 0; i < mesh->GetPolygonCount(); ++i) {                                                                
-                        for (int j = 0, sz = mesh->GetPolygonSize(0); j < sz; ++j) {                            
-                            indices.emplace_back(mesh->GetPolygonVertex(i,j));                        
+                    for (int i = 0; i < mesh_loader->GetPolygonCount(); ++i) {                                                                
+                        for (int j = 0, sz = mesh_loader->GetPolygonSize(0); j < sz; ++j) {                            
+                            indices.emplace_back(mesh_loader->GetPolygonVertex(i,j));                        
                         }                                                
                     }
               
-                    fbx_ptr<FbxSkin> skin{static_cast<FbxSkin*>(mesh->GetDeformer(0,FbxDeformer::eSkin)), do_nothing_ptr};                                              
+                    fbx_ptr<FbxSkin> skin{static_cast<FbxSkin*>(mesh_loader->GetDeformer(0,FbxDeformer::eSkin)), do_nothing_ptr};                                              
                     for (int i = 0; i < skin->GetClusterCount(); ++i) {
                         auto cluster = skin->GetCluster(i);
                         auto ids = cluster->GetControlPointIndices();                        
@@ -81,21 +79,28 @@ namespace gtl {
                         bones.emplace_back(std::move(b));                              
                     }        
             } else { 
-                std::cout << "Not a mesh..\n"; 
+                std::cout << "Not a mesh_loader..\n"; 
             }         
         }
     };
 
-    mesh::mesh(std::string filename, gtl::tags::fbx_format) 
+    mesh_loader::mesh_loader(std::string filename, gtl::tags::fbx_format) 
         : impl_{std::make_unique<priv_impl>(std::move(filename), gtl::tags::fbx_format{})}
     {}
-     
-    std::vector<Eigen::Vector4f,Eigen::aligned_allocator<Eigen::Vector4f>> mesh::vertices() const 
+    
+    size_t mesh_loader::bone_count() const 
+    { 
+        return impl_->bones.size();
+    }
+
+    mesh_loader::aligned_vector<Eigen::Vector4f> 
+    mesh_loader::vertices() const 
     {
         return impl_->vertices;
     }
 
-    std::vector<vertex_type_bone,Eigen::aligned_allocator<vertex_type_bone>> mesh::bone_vertices() const 
+    mesh_loader::aligned_vector<vertex_type_bone> 
+    mesh_loader::bone_vertices() const 
     {
         std::vector<vertex_type_bone,Eigen::aligned_allocator<vertex_type_bone>> ret;        
 
@@ -117,15 +122,12 @@ namespace gtl {
         return ret;
     }
 
-    std::vector<unsigned> mesh::indices() const 
+    std::vector<unsigned> mesh_loader::indices() const 
     {
         return impl_->indices;
     }
 
-
-
-
-    mesh::~mesh() {}
+    mesh_loader::~mesh_loader() {}
 
 }
 
