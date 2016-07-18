@@ -22,6 +22,7 @@
 #include <vn/math_utilities.h>
 
 #include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <atomic>
 #include <cmath>
 
@@ -103,7 +104,7 @@ namespace scenes {
                             {1.0f * boost::units::si::meters, 1.0f * boost::units::si::meters},
                             gtl::physics::angle<float>{45.0f * boost::units::degree::degree},
                             {0.001f * boost::units::si::meters},
-                            {100.0f * boost::units::si::meters}},
+                            {10000.0f * boost::units::si::meters}},
             camera_height_{100.0f * boost::units::si::meters},
             physics_{task_queue_},
             swirl_effect_{dev,swchain,cqueue,physics_}            
@@ -116,7 +117,10 @@ namespace scenes {
             func([&](auto&&...ps){                 
                 swirl_effect_.draw(std::forward<decltype(ps)>(ps)..., 
                                    current_id_, 
-                                   physics_camera_.matrix() * Eigen::Affine3f{Eigen::Translation3f{0.0f,0.0f,camera_height_ / boost::units::si::meters}}.matrix());
+                    physics_camera_.matrix() * Eigen::Affine3f{Eigen::UniformScaling<float>(camera_height_ / boost::units::si::meters)}.matrix()); 
+                                             //   * Eigen::AngleAxisf{0.7f,Eigen::Vector3f{1.0f,0.0f,0.0f}}}.matrix());
+                                        // Eigen::Affine3f{Eigen::Translation3f{0.0f,0.0f,camera_height_ / boost::units::si::meters}}.matrix());
+                                                        
             });
         }
                 
@@ -170,7 +174,7 @@ namespace scenes {
                     //uint32_t id = current_id_.load(std::memory_order_relaxed);
                     gtl::events::mouse_wheel_scroll const& event_ = boost::get<ev::mouse_wheel_scroll>(yield.get().value());
                     std::cout << "mouse scroll : new delta = " << event_.wheel_delta << ", keystate == " << event_.key_state << "\n";                                        
-                    camera_height_ += (event_.wheel_delta > 0 ? -1.0f : 1.0f) * boost::units::si::meter;
+                    camera_height_ += (event_.wheel_delta > 0 ? -0.1f : 0.1f) * boost::units::si::meter;
                     std::cout << "camera's new height == " << camera_height_ / boost::units::si::meter << "\n";                    
                     //task_local_.emplace_back(destroy_object_implode{id});
                     //task_queue_.swap_in(task_local_);
