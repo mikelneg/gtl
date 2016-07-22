@@ -22,6 +22,7 @@ namespace gtl {
         using bone = std::pair<uint32_t, float>; 
 
         std::vector<Eigen::Vector4f,Eigen::aligned_allocator<Eigen::Vector4f>> vertices;                
+        std::vector<Eigen::Vector4f,Eigen::aligned_allocator<Eigen::Vector4f>> normals;                
         std::vector<unsigned> indices;
         std::vector<std::vector<bone>> bones; 
 
@@ -52,14 +53,34 @@ namespace gtl {
             auto m_type = m_ptr->GetAttributeType();
             if (m_type == FbxNodeAttribute::eMesh) {
                 fbx_ptr<FbxMesh> mesh_loader{static_cast<FbxMesh*>(child->GetNodeAttribute()),do_nothing_ptr};                    
-                    auto* points = mesh_loader->GetControlPoints();                                         
+                    
+                    mesh_loader->GenerateNormals(true,true,false);  // HACK needs better coordination between left/right handed transforms..
+
+                    auto* points = mesh_loader->GetControlPoints();                 
+                    
+                     
+
+                    //auto& norm = mesh_loader->GetElementNormal(0)->GetIndexArray();
+                    
+                    auto& norm = mesh_loader->GetLayer(0)->GetNormals()->GetDirectArray();
+
+
                     for (int i = 0; i < mesh_loader->GetControlPointsCount(); ++i) {
                         auto& p = points[i];
-                        vertices.emplace_back(static_cast<float>(p[0]),static_cast<float>(p[1]),static_cast<float>(p[2]),1.0f);                        
-                    }          
-
-
+                        vertices.emplace_back(static_cast<float>(p[0]), static_cast<float>(p[1]), -1.0f * static_cast<float>(p[2]),1.0f);                                                                                                
+                        //vertices.emplace_back(static_cast<float>(p[0]),static_cast<float>(p[2]), -1.0f * static_cast<float>(p[1]),1.0f);                                                                                                
+                        auto n = norm.GetAt(i);
+                        n.Normalize();
+                        //normals.emplace_back(-1.0f * static_cast<float>(n[0]), -1.0f * static_cast<float>(n[1]), static_cast<float>(n[2]),0.0f);
+                        normals.emplace_back(static_cast<float>(n[0]),static_cast<float>(n[1]), -1.0f * static_cast<float>(n[2]),0.0f);
+                        //normals.emplace_back(static_cast<float>(n[0]), static_cast<float>(n.mData[2]), static_cast<float>(n.mData[1]),0.0f);
+                    }                              
+                    
+                    
                     for (int i = 0; i < mesh_loader->GetPolygonCount(); ++i) {                                                                
+                        //indices.emplace_back(mesh_loader->GetPolygonVertex(i,0));                        
+                        //indices.emplace_back(mesh_loader->GetPolygonVertex(i,2));                        
+                        //indices.emplace_back(mesh_loader->GetPolygonVertex(i,1));                        
                         for (int j = 0, sz = mesh_loader->GetPolygonSize(0); j < sz; ++j) {                            
                             indices.emplace_back(mesh_loader->GetPolygonVertex(i,j));                        
                         }                                                
@@ -105,9 +126,10 @@ namespace gtl {
         std::vector<vertex_type_bone,Eigen::aligned_allocator<vertex_type_bone>> ret;        
 
         auto v_beg = begin(impl_->vertices);
+        auto n_beg = begin(impl_->normals);
 
-        for (unsigned i = 0, j = static_cast<unsigned>(impl_->vertices.size()); i < j; ++i, ++v_beg) {
-            ret.emplace_back(vertex_type_bone{*v_beg,Eigen::Vector4i{9999,9999,9999,9999},Eigen::Vector4f{0.0f,0.0f,0.0f,0.0f}});            
+        for (unsigned i = 0, j = static_cast<unsigned>(impl_->vertices.size()); i < j; ++i, ++v_beg, ++n_beg) {
+            ret.emplace_back(vertex_type_bone{*v_beg,*n_beg,Eigen::Vector4i{9999,9999,9999,9999},Eigen::Vector4f{0.0f,0.0f,0.0f,0.0f}});            
         }
 
         auto const& bones = impl_->bones;

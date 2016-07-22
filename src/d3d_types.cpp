@@ -115,6 +115,18 @@ namespace version_12_0 {
         set_name(*get(),L"res_heap");               
     }
 
+    resource_descriptor_heap::resource_descriptor_heap(device& dev, unsigned num_descriptors, d3d::tags::depth_stencil_view) 
+        : size_{num_descriptors}
+    {
+        raw::DescriptorHeapDesc desc{};
+		desc.NumDescriptors = num_descriptors;
+		desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_DSV;
+		desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;        
+        win::throw_on_fail(dev->CreateDescriptorHeap(&desc,__uuidof(type),void_ptr(*this)),__func__);
+        increment_ = dev->GetDescriptorHandleIncrementSize(desc.Type);
+        set_name(*get(),L"res_heap_dsv");               
+    }
+
     sampler_descriptor_heap::sampler_descriptor_heap(device& dev, unsigned num_descriptors) 
         : size_{num_descriptors}
     {
@@ -152,6 +164,18 @@ namespace version_12_0 {
             set_name(*(frames_[i].get()),L"swchain");                       
 	    }          
         get()->SetMaximumFrameLatency(num_buffers_);                  
+    }
+
+    std::pair<unsigned,unsigned> swap_chain::dimensions() const 
+    {
+        raw::SwapChainDesc desc;        
+        win::throw_on_fail(get()->GetDesc(&desc), __func__);    
+        return std::make_pair(static_cast<unsigned>(desc.BufferDesc.Width),static_cast<unsigned>(desc.BufferDesc.Height));                            
+    }
+    
+    unsigned swap_chain::frame_count() const 
+    {
+        return static_cast<unsigned>(frames_.size());        
     }
 
     direct_command_allocator::direct_command_allocator(device& dev)
@@ -298,7 +322,7 @@ namespace version_12_0 {
     {                        
         win::throw_on_fail(D3DReadFileToBlob(path.c_str(),&expose_ptr()),__func__);        
     }
-     
+
     vertex_buffer::vertex_buffer(device& dev, command_queue& cqueue_, void* begin_, size_t size_)
     {        
         release_ptr<raw::Resource> upload_vbuffer_;                
@@ -486,6 +510,54 @@ namespace version_12_0 {
         set_name(*get(),L"srv");               
     }
 
+    
+    depth_stencil_buffer::depth_stencil_buffer(swap_chain& swchain)
+        : buffer_views_{get_device(swchain),swchain.frame_count(),gtl::d3d::tags::depth_stencil_view{}}
+    {
+        auto dev = get_device(swchain);       
+        auto dims = swchain.dimensions();
+        auto frame_count = swchain.frame_count();
+
+        raw::cx::ResourceDesc desc{D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0,
+                                   static_cast<UINT>(dims.first), 
+                                   static_cast<UINT>(dims.second),
+                                   1, 
+                                   1, // mip levels
+                                   DXGI_FORMAT_D32_FLOAT, 1, 0, 
+                                   D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                                   D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE};
+
+        D3D12_CLEAR_VALUE clear_value;
+        clear_value.Format = DXGI_FORMAT_D32_FLOAT;
+        clear_value.DepthStencil.Depth = 1.0f;
+        clear_value.DepthStencil.Stencil = 0;
+        
+        raw::DsvDesc dsv_desc{};        
+        dsv_desc.Format = DXGI_FORMAT_D32_FLOAT;
+        dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;   
+        dsv_desc.Flags = D3D12_DSV_FLAG_NONE;
+
+        raw::cx::CpuDescriptorHandle handle_{buffer_views_->GetCPUDescriptorHandleForHeapStart()};
+        
+        for (unsigned i = 0; i < frame_count; ++i, handle_.Offset(buffer_views_.increment_value())) {
+        
+            resource tmp_resource;
+
+            win::throw_on_fail(dev->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+                                                       D3D12_HEAP_FLAG_NONE, 
+                                                       &desc,
+                                                       D3D12_RESOURCE_STATE_DEPTH_WRITE, 
+                                                       &clear_value,
+                                                       __uuidof(resource::type),
+                                                       void_ptr(tmp_resource)), __func__);
+                                    
+            dev->CreateDepthStencilView(tmp_resource,&dsv_desc,handle_);            
+            set_name(*tmp_resource,L"depth_stencil");               
+
+            buffers_.emplace_back(std::move(tmp_resource));            
+        }                
+    }  
+
     pipeline_state_object::pipeline_state_object(device& dev, root_signature& rsig, 
                                                  vertex_shader& vs, pixel_shader& ps)
     {        	    
@@ -665,11 +737,7 @@ namespace version_12_0 {
     {
         std::memcpy(cbv_data_ptr, src, size_);   	
     }
-
-
     
-
-
     sampler::sampler(device& dev, raw::CpuDescriptorHandle handle_)
     {
         raw::SamplerDesc desc{};        	            

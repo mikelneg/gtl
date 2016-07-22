@@ -8,14 +8,22 @@ namespace gtl {
     namespace {
         
     Eigen::Matrix4f make_ortho_proj_matrix(float n, float f) {
-        constexpr float l = -100.0f;
-        constexpr float r = 100.0f;
+//        constexpr float l = -10.0f;
+//        constexpr float r = 10.0f;
+//
+//        constexpr float t = 10.0f;
+//        constexpr float b = -10.0f;
 
-        constexpr float t = 100.0f;
-        constexpr float b = -100.0f;
+        float l = -10.0f;
+        float r = 10.0f;
 
-        n = 0.0f;   // HACK fix this, currently set externally (but meaningless..)
-        f = 200.0f;
+        float t = 10.0f;
+        float b = -10.0f;        
+
+        n = -10.0f;
+        f = 10.0f;
+        //n = -1.0f;   // HACK fix this, currently set externally (but meaningless..)
+        //f = 1.0f;
 
         // // D3DXMatrixOrthoLH()
         //   2/w  0    0           0
@@ -29,7 +37,11 @@ namespace gtl {
                    0.0f, 2.0f/(t-b), 0.0f, 0.0f,
                    0.0f, 0.0f, 1.0f/(f-n), 0.0f,
                    0.0f, 0.0f, n/(n-f),    1.0f;
-            //(l+r)/(l-r), (t+b)/(b-t), n/(n-f), 1.0f; //-(r+l)/(r-l),-(t+b)/(t-b),-(f+n)/(f-n), 1.0f;        
+
+        //matrix_ << 2.0f/(r-l), 0.0f, 0.0f, 0.0f,
+        //           0.0f, 2.0f/(t-b), 0.0f, 0.0f,
+        //           0.0f, 0.0f, 1.0f/(f-n), 0.0f,
+        //           0.0f, 0.0f, 0.0f, 1.0f;          
         return matrix_;
         }
     

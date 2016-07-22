@@ -11,6 +11,9 @@
 #include <vector>
 #include <string>
 #include <memory>
+
+#include <ostream>
+
 #include <Eigen/Core>
 #include <gtl/tags.h>
 
@@ -21,8 +24,15 @@ namespace gtl {
 
     struct vertex_type_bone {
         Eigen::Vector4f pos;
+        Eigen::Vector4f normal;  // HACK find a better way to organize this layout + direct3d input layout + etc..
         Eigen::Vector4i bone_ids;
         Eigen::Vector4f bone_weights;
+
+        friend std::ostream& operator<<(std::ostream& str, vertex_type_bone const& b) {
+            str << "pos(\n" << b.pos << ")\n"; 
+            str << "norm(\n" << b.normal << ")\n"; 
+            return str;
+        }
     };
 
     class mesh_loader {               // HACK hackish.. 

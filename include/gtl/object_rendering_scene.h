@@ -94,6 +94,7 @@ namespace d3d {
         auto vertex_layout() {
             return std::vector<D3D12_INPUT_ELEMENT_DESC>{
                 {"VERTEX_POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                {"VERTEX_NORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                 {"VERTEX_BONE_IDS", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                 {"VERTEX_BONE_WEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
 
@@ -117,7 +118,7 @@ namespace d3d {
 		                            
             desc_.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;  
             desc_.RasterizerState.FrontCounterClockwise = true;
-            desc_.RasterizerState.DepthClipEnable = false;
+            desc_.RasterizerState.DepthClipEnable = true;
             desc_.RasterizerState.AntialiasedLineEnable = false;            
 
             desc_.InputLayout.pInputElementDescs = &layout_[0];
@@ -136,8 +137,12 @@ namespace d3d {
        
             desc_.BlendState = blend_desc_;                                  
             
-            desc_.DepthStencilState.DepthEnable = FALSE;
+            desc_.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+            desc_.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+            desc_.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS;
+            desc_.DepthStencilState.DepthEnable = TRUE;
 		    desc_.DepthStencilState.StencilEnable = FALSE;
+
 		    desc_.SampleMask = UINT_MAX;                        
 		    desc_.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 		    
@@ -300,7 +305,8 @@ namespace d3d {
                         gtl::d3d::raw::Viewport const& viewport,
                         gtl::d3d::raw::ScissorRect const& scissor,                        
                         Eigen::Matrix4f const& camera,
-                        D3D12_CPU_DESCRIPTOR_HANDLE *rtv_handle) const
+                        D3D12_CPU_DESCRIPTOR_HANDLE *rtv_handle,
+                        D3D12_CPU_DESCRIPTOR_HANDLE const* dbv_handle) const
         {                                
             //update_camera_buffers(camera);
             cbuffer_[idx].update(reinterpret_cast<const char*>(&camera),sizeof(gtl::camera));  
@@ -347,8 +353,7 @@ namespace d3d {
             //cl->OMSetBlendFactor(blendvalues);
 
             cl->RSSetScissorRects(1,&scissor);
-            cl->OMSetRenderTargets(2, rtv_handle, false, nullptr);            
-
+            cl->OMSetRenderTargets(2, rtv_handle, false, dbv_handle);            
             
             //std::vector<std::pair<unsigned,unsigned>> draw_info_;
 

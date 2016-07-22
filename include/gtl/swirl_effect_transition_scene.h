@@ -128,6 +128,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 
         cbuffer mutable cbuf_;                            
         std::array<gtl::d3d::constant_buffer, frame_count> mutable cbuffer_;       
+        gtl::d3d::depth_stencil_buffer depth_buffers_;        
 
         gtl::d3d::pipeline_state_object pso_;
 
@@ -145,7 +146,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
         gtl::d3d::resource_descriptor_heap resource_heap_;
         gtl::d3d::srv texture_;     
         gtl::d3d::rtv_srv_texture2D mutable id_layer_;
-        gtl::d3d::resource mutable id_readback_;
+        gtl::d3d::resource mutable id_readback_;        
 
         gtl::d3d::sampler_descriptor_heap sampler_heap_;
         gtl::d3d::sampler sampler_;      
@@ -184,8 +185,9 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             //desc_.ScissorEnable = false;
             //desc_.MultisampleEnable = true;
             //desc_.AntialiasedLineEnable = true;
-            desc_.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;  
-            desc_.RasterizerState.DepthClipEnable = false;
+            desc_.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;  
+            desc_.RasterizerState.FrontCounterClockwise = false;
+            desc_.RasterizerState.DepthClipEnable = true;
             desc_.RasterizerState.AntialiasedLineEnable = true;            
             
             D3D12_BLEND_DESC blend_desc_ = {};//CD3DX12_BLEND_DESC(D3D12_DEFAULT);                  
@@ -199,10 +201,15 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                 blend_desc_.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;                 
                 blend_desc_.RenderTarget[0].BlendEnable = true;
        
-            desc_.BlendState = blend_desc_;                                  
-            
-            desc_.DepthStencilState.DepthEnable = FALSE;
+            desc_.BlendState = blend_desc_;                                                         
+
+            desc_.DSVFormat = DXGI_FORMAT_D32_FLOAT;
+            //desc_.DepthStencilState.FrontFace.StencilDepthFailOp;
+            desc_.DepthStencilState.DepthWriteMask = D3D12_DEPTH_WRITE_MASK_ALL;
+            desc_.DepthStencilState.DepthFunc = D3D12_COMPARISON_FUNC_LESS_EQUAL;
+            desc_.DepthStencilState.DepthEnable = TRUE;
 		    desc_.DepthStencilState.StencilEnable = FALSE;
+
 		    desc_.SampleMask = UINT_MAX;                        
 		    desc_.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;            
 		    //desc_.NumRenderTargets = 1; // swap chain & id system..
@@ -227,7 +234,8 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                 root_sig_{dev_, vshader_},
                 cbheap_{{{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}}}},                                                     
                 cbuf_{},                
-                cbuffer_{{{dev_,cbheap_[0],sizeof(cbuf_)},{dev_,cbheap_[1],sizeof(cbuf_)},{dev_,cbheap_[2],sizeof(cbuf_)}}},                        
+                cbuffer_{{{dev_,cbheap_[0],sizeof(cbuf_)},{dev_,cbheap_[1],sizeof(cbuf_)},{dev_,cbheap_[2],sizeof(cbuf_)}}},                                        
+                depth_buffers_{swchain_},    
                 pso_{dev_, pso_desc(dev_, root_sig_, vshader_, pshader_)},
                 calloc_{{{dev_},{dev_},{dev_}}},
                 clist_{{{dev_,calloc_[0],pso_},{dev_,calloc_[1],pso_},{dev_,calloc_[2],pso_}}},
@@ -238,14 +246,14 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                 scissor_{0,0,960,540},
                 resource_heap_{dev_,2,gtl::d3d::tags::shader_visible{}},
                 texture_{dev_,{resource_heap_->GetCPUDescriptorHandleForHeapStart()},cqueue_,L"D:\\images\\skyboxes\\Nightsky.dds"},
-                id_layer_{swchain_, DXGI_FORMAT_R32_UINT, 3, gtl::d3d::tags::shader_visible{}},
+                id_layer_{swchain_, DXGI_FORMAT_R32_UINT, 3, gtl::d3d::tags::shader_visible{}},                
                 sampler_heap_{dev_,1},
                 sampler_{dev_,sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
                 gui_rects_{dev_, cqueue_, root_sig_, physics_},
                 object_effect_{dev_, cqueue_, root_sig_, physics_}
         {            
             //
-            dev_->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),
+            dev_->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),    // TODO add d3d readback type
                                           D3D12_HEAP_FLAG_NONE,
                                           &CD3DX12_RESOURCE_DESC::Buffer(256),
                                           D3D12_RESOURCE_STATE_COPY_DEST,
@@ -470,9 +478,12 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 
             //cl->OMSetRenderTargets(2, handles, false, nullptr); // not issuing ids with this shader..
             float const clearvalues[]{0.0f,0.0f,0.0f,0.0f};
-            cl->ClearRenderTargetView(id_handle,clearvalues,0,nullptr);            
+            cl->ClearRenderTargetView(id_handle,clearvalues,0,nullptr);   
+            
+            auto const dbview_ = depth_buffers_.get_handle(idx);
+            cl->ClearDepthStencilView(dbview_,D3D12_CLEAR_FLAG_DEPTH,1.0f,0,0,nullptr);            
 
-            cl->OMSetRenderTargets(1, &rtv_handle, TRUE, nullptr);            
+            cl->OMSetRenderTargets(1, &rtv_handle, TRUE, std::addressof(dbview_));            
             cl->DrawInstanced(14, 1, 0, 0);             
             clist_[idx]->Close();            
             
@@ -480,7 +491,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             gui_rect_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());                           
             
             // gui_rect_(idx,f,gui_rect_clist_[idx],viewport_,scissor_,camera,handles);
-            object_effect_(idx,f,gui_rect_clist_[idx],viewport_,scissor_,camera,handles);
+            object_effect_(idx,f,gui_rect_clist_[idx],viewport_,scissor_,camera,handles,std::addressof(dbview_));
                             
             D3D12_TEXTURE_COPY_LOCATION src{id_layer_, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX};
             D3D12_TEXTURE_COPY_LOCATION dst{id_readback_, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT, 

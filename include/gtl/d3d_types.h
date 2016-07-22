@@ -32,6 +32,9 @@ namespace tags {
     struct shader_visible{};
     struct not_shader_visible{};    
     struct flipmodel_windowed{};
+
+    struct depth_stencil_view{};
+    struct cbv_srv_uav{};
 }
 
 namespace default = version_12_0;
@@ -76,9 +79,10 @@ namespace version_12_0 {
 
     class resource_descriptor_heap : public release_ptr<raw::DescriptorHeap> {
         unsigned increment_;
-        unsigned const size_;
+        unsigned const size_;  // TODO currently works with CBV_SRV_UAV types, not DSV (break into distinct types?)
     public:
         resource_descriptor_heap(device&, unsigned num_descriptors, d3d::tags::shader_visible);        
+        resource_descriptor_heap(device&, unsigned num_descriptors, d3d::tags::depth_stencil_view);        
         auto increment_value() const noexcept { return increment_; }
         auto size() const noexcept { return size_; }
         raw::CpuDescriptorHandle get_handle(unsigned n) { 
@@ -97,7 +101,6 @@ namespace version_12_0 {
         auto increment_value() const noexcept { return increment_; }
         auto size() const noexcept { return size_; }
     };
-
     
     class swap_chain : public release_ptr<raw::SwapChain> {                
         std::vector<resource> frames_;        
@@ -107,6 +110,8 @@ namespace version_12_0 {
         resource& get_current_resource() { return frames_[get()->GetCurrentBackBufferIndex()]; }
         rtv_descriptor_heap& rtv_heap() { return rtv_heap_; }
         void resize(int,int) { std::cout << "swapchain resizing..\n"; } // TODO implement
+        std::pair<unsigned,unsigned> dimensions() const;
+        unsigned frame_count() const;
     };    
     
     class direct_command_allocator : public release_ptr<raw::CommandAllocator> {
@@ -167,7 +172,7 @@ namespace version_12_0 {
         void synchronized_set(uint64_t new_value, command_queue&);
         void synchronized_increment(command_queue&);
     };
-
+    
     class constant_buffer {
         resource buffer;                
         unsigned char* cbv_data_ptr{};
@@ -180,7 +185,7 @@ namespace version_12_0 {
         auto& resource() { return buffer; }
         auto const& resource() const { return buffer; }
     };
-
+    
     class vertex_buffer : public release_ptr<raw::Resource> {        
     public:
         vertex_buffer(device&, command_queue&, void* begin, size_t size);
@@ -190,6 +195,19 @@ namespace version_12_0 {
     public:
         index_buffer(device&, command_queue&, void* begin, size_t size);
     };    
+
+    class depth_stencil_buffer {                                
+        std::vector<resource> buffers_; 
+        resource_descriptor_heap buffer_views_;
+    public:
+        depth_stencil_buffer(swap_chain&);
+        auto get_handle(unsigned n) const { 
+            assert(n < buffers_.size());
+            raw::cx::CpuDescriptorHandle handle{ buffer_views_->GetCPUDescriptorHandleForHeapStart() };
+            handle.Offset(n,buffer_views_.increment_value());
+            return handle;
+        }        
+    };        
 
     class srv : public release_ptr<raw::Resource> {
     public:

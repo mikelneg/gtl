@@ -48,6 +48,8 @@ namespace version_12_0 {
         using SamplerDesc         = D3D12_SAMPLER_DESC;
         using CommandQueueDesc    = D3D12_COMMAND_QUEUE_DESC;
         using SrvDesc             = D3D12_SHADER_RESOURCE_VIEW_DESC;  
+        using DepthStencilDesc    = D3D12_DEPTH_STENCIL_DESC;
+        using DsvDesc             = D3D12_DEPTH_STENCIL_VIEW_DESC;
         using VertexBufferView    = D3D12_VERTEX_BUFFER_VIEW;
         using StreamOutputDesc    = D3D12_STREAM_OUTPUT_DESC;
         using RasterizerDesc      = D3D12_RASTERIZER_DESC;
@@ -67,6 +69,7 @@ namespace version_12_0 {
             using RasterizerDesc      = CD3DX12_RASTERIZER_DESC;
             using BlendDesc           = CD3DX12_BLEND_DESC;
             using ResourceDesc        = CD3DX12_RESOURCE_DESC;
+            using DepthStencilDesc    = CD3DX12_DEPTH_STENCIL_DESC;            
         }        
     }     
 }         

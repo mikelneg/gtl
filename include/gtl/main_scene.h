@@ -104,8 +104,8 @@ namespace scenes {
                             {1.0f * boost::units::si::meters, 1.0f * boost::units::si::meters},
                             gtl::physics::angle<float>{45.0f * boost::units::degree::degree},
                             {0.001f * boost::units::si::meters},
-                            {10000.0f * boost::units::si::meters}},
-            camera_height_{100.0f * boost::units::si::meters},
+                            {100.0f * boost::units::si::meters}},
+            camera_height_{10.0f * boost::units::si::meters},
             physics_{task_queue_},
             swirl_effect_{dev,swchain,cqueue,physics_}            
         {}
@@ -115,12 +115,15 @@ namespace scenes {
         template <typename F>
         void draw_callback(F func) const {
             func([&](auto&&...ps){                 
-                swirl_effect_.draw(std::forward<decltype(ps)>(ps)..., 
-                                   current_id_, 
-                    physics_camera_.matrix() * Eigen::Affine3f{Eigen::UniformScaling<float>(camera_height_ / boost::units::si::meters)}.matrix()); 
-                                             //   * Eigen::AngleAxisf{0.7f,Eigen::Vector3f{1.0f,0.0f,0.0f}}}.matrix());
-                                        // Eigen::Affine3f{Eigen::Translation3f{0.0f,0.0f,camera_height_ / boost::units::si::meters}}.matrix());
-                                                        
+                Eigen::Matrix4f cam_transform_ = Eigen::Affine3f{Eigen::Scaling(1.0f / (camera_height_ / boost::units::si::meter)) //}.matrix();                                                                 
+                                                                 * Eigen::AngleAxisf{0.2f, Eigen::Vector3f{0.0f,0.0f,-1.0f}}
+                                                                 * Eigen::AngleAxisf{0.2f, Eigen::Vector3f{-1.0f,0.0f,0.0f}}}.matrix();           
+                
+                swirl_effect_.draw(std::forward<decltype(ps)>(ps)...,                                                                               current_id_, 
+                                   cam_transform_ * physics_camera_.matrix());
+                    //Eigen::Affine3f{Eigen::UniformScaling<float>(camera_height_ / boost::units::si::meters)}.matrix()); 
+                    //   * Eigen::AngleAxisf{0.7f,Eigen::Vector3f{1.0f,0.0f,0.0f}}}.matrix());
+                     // Eigen::Affine3f{Eigen::Translation3f{0.0f,0.0f,camera_height_ / boost::units::si::meters}}.matrix());                                                        
             });
         }
                 

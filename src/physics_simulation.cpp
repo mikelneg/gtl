@@ -419,7 +419,7 @@ static void simulation_thread(vn::swap_object<T>& rend_data_,
             //                                   static_cast<uint32_t>(bones_.size()),
             //                                   index_});                                                      
             // single body addition..                            
-            Eigen::Matrix4f m = ( Eigen::Affine3f{Eigen::Translation3f{Eigen::Vector3f{p.x,p.y,25.0f}}}
+            Eigen::Matrix4f m = ( Eigen::Affine3f{Eigen::Translation3f{Eigen::Vector3f{p.x,p.y,0.1f}}}    // HACK specify plane (0.1f) elsewhere..
                                 * Eigen::Affine3f{Eigen::AngleAxisf{body_.GetAngle(),Eigen::Vector3f{0.0f,0.0f,1.0f}}}).matrix();//Eigen::Rotation2Df{body_.GetAngle()}.matrix();                                
             
             bones_.emplace_back(m.transpose());                          
@@ -448,7 +448,7 @@ static void simulation_thread(vn::swap_object<T>& rend_data_,
                                 b2Vec2 const& p = it->second->GetPosition();
                                 float const& angle = it->second->GetAngle();
                                 
-                                Eigen::Matrix4f m = ( Eigen::Affine3f{Eigen::Translation3f{Eigen::Vector3f{p.x,p.y,25.0f}}}
+                                Eigen::Matrix4f m = ( Eigen::Affine3f{Eigen::Translation3f{Eigen::Vector3f{p.x,p.y,0.1f}}}
                                                     * Eigen::Affine3f{Eigen::AngleAxisf{angle,
                                                                              Eigen::Vector3f{0.0f,0.0f,1.0f}}}).matrix();      
 
