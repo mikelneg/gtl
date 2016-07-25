@@ -424,7 +424,6 @@ static void simulation_thread(vn::swap_object<T>& rend_data_,
             
             bones_.emplace_back(m.transpose());                          
 
-
             return true;
     });
 
@@ -436,13 +435,8 @@ static void simulation_thread(vn::swap_object<T>& rend_data_,
                             b2Vec2 const& p = body_.GetPosition();                            
 
                             positions_.emplace_back(instance);
-                                                        
-                                                        //       4, // will be changed.. // old stuff {p.x, p.y, 1.0f, 1.0f},
-                                                        //       reinterpret_cast<uintptr_t>(body_.GetUserData())}); // MESH_ID
-                                                        //       //{1.0f, 1.0f, 1.0f, body_.GetAngle()},                                                                
-                                                        //        //index_});                                                                  
-
-                            // // all bodies..
+                                                                                                                                                                        
+                            // process all bodies that participate in the entity..
                             auto range = map_.equal_range(instance.entity_id());
                             for (auto it = range.first; it != range.second; ++it) {
                                 b2Vec2 const& p = it->second->GetPosition();
@@ -453,11 +447,6 @@ static void simulation_thread(vn::swap_object<T>& rend_data_,
                                                                              Eigen::Vector3f{0.0f,0.0f,1.0f}}}).matrix();      
 
                                 bones_.emplace_back(m.transpose());                                                                
-
-                                
-                                //positions_.emplace_back(InstanceInfo{{p.x, p.y, 1.0f, 1.0f},
-                                 //                                  {1.0f, 1.0f, 1.0f, angle}, 
-                                  //                                  index_});                          
                             }
                          };
 
@@ -520,191 +509,3 @@ static void simulation_thread(vn::swap_object<T>& rend_data_,
 } // namespace 
 } // namespace
 
-
-/*
-
-
-static void simulation_thread(gtl::swap_vector<Eigen::Vector4f>& swapvec_, 
-                              std::vector<physics::generator> generators_,
-                              std::atomic_flag& quit_) 
-{    
-    b2World world_{b2Vec2{0.0f,-0.1f}};  
-    world_.SetAllowSleeping(true);
-    
-    
-    box2d_generator_visitor visitor_{world_};
-    for (auto&& e : generators_) {
-        apply_visitor(visitor_,e);
-    }
-    
-    //std::vector<b2BodyDef> wall_defs_; // ground_, ceiling_, left_wall_, right_wall_;
-    //
-    //wall_defs_.emplace_back(b2Vec2{0.0f,-25.0f},0.0f);
-    //wall_defs_.emplace_back(b2Vec2{0.0f,25.0f},0.0f);
-    //wall_defs_.emplace_back(b2Vec2{-25.0f,0.0f},0.0f);
-    //wall_defs_.emplace_back(b2Vec2{25.0f,0.0f},0.0f);
-    //
-    //std::vector<b2Body*> wall_bodies_;
-    //
-    //for (auto&& e : wall_defs_) {
-    //    wall_bodies_.emplace_back(world_.CreateBody(&e));
-    //    wall_bodies_.back()->SetUserData(reinterpret_cast<void*>(std::numeric_limits<uintptr_t>::max())); 
-    //}
-    //
-    ////b2Body* groundBody_ = world_.CreateBody(&ground_);
-    ////b2Body* ceilb_ = world_.CreateBody(&ceiling_);
-    ////b2Body* leftb_ = world_.CreateBody(&left_wall_);
-    ////b2Body* rightb_ = world_.CreateBody(&right_wall_);
-    //
-    //std::vector<b2PolygonShape> wall_shapes_;
-    //
-    //wall_shapes_.emplace_back();
-    //wall_shapes_.back().SetAsBox(60.0f, 1.0f);
-    //
-    //wall_shapes_.emplace_back();
-    //wall_shapes_.back().SetAsBox(60.0f, 1.0f);
-    //
-    //wall_shapes_.emplace_back();
-    //wall_shapes_.back().SetAsBox(1.0f, 60.0f);
-    //
-    //wall_shapes_.emplace_back();
-    //wall_shapes_.back().SetAsBox(1.0f, 60.0f);
-    //
-    //std::vector<b2FixtureDef> wall_fixtures_;
-    //
-    ////b2FixtureDef grounddef_{}, ceildef_{}, leftdef_{}, rightdef_{};
-    //
-    //for (auto&& e : wall_defs_) {
-    //    wall_fixtures_.emplace_back();
-    //    wall_fixtures_.back().filter.categoryBits = CollisionCategory::BOUNDARY;
-    //    wall_fixtures_.back().filter.maskBits = CollisionCategory::ENTITY;
-    //}
-    //
-    //for (unsigned i = 0; i < wall_shapes_.size(); ++i) {
-    //    wall_fixtures_[i].shape = &wall_shapes_[i];
-    //    wall_bodies_[i]->CreateFixture(&wall_fixtures_[i]);
-    //}               
-    //
-    //std::vector<b2Body*> bodies_;
-    //
-    //for (uintptr_t i = 0; i < positions_.size(); ++i) {
-    //    b2BodyDef body_;        
-    //    body_.type = b2_dynamicBody;
-    //    body_.position.Set(positions_[i].x() * 500.0f, positions_[i].y() * 500.0f); // TODO where did I get these??
-    //    body_.userData = reinterpret_cast<void*>(i); 
-    //    bodies_.emplace_back(world_.CreateBody(&body_));    
-    //
-    //    // // sensor stuff
-    //    //b2PolygonShape coneShape;
-    //    //b2FixtureDef coneFixture;
-    //    //
-    //    //std::vector<b2Vec2> cone_shape_ = get_cone_shape({0,0}, 4.0f, 10.0f, 4);
-    //    //
-    //    ////sensor_data_[i].x() = 1.0f; // distance // currently just carries color 
-    //    ////sensor_data_[i].y() = 30.0f; // angle
-    //    //
-    //    //coneShape.Set(cone_shape_.data(), static_cast<int32>(cone_shape_.size()));        
-    //    //
-    //    //
-    //    //b2CircleShape circleShape{};
-    //    //circleShape.m_radius = 3;
-    //    //
-    //    //coneFixture.shape = &coneShape;
-    //    //
-    //    //coneFixture.isSensor = true;
-    //    ////coneFixture.density = 0.0f;
-    //    //
-    //    ////coneFixture.filter.groupIndex = 1;
-    //    //coneFixture.filter.categoryBits = CollisionCategory::SENSOR;
-    //    //coneFixture.filter.maskBits = CollisionCategory::ENTITY;
-    //
-    //    // Bounding Box
-    //
-    //    b2PolygonShape bodyShape;
-    //    b2FixtureDef bodyFixture; 
-    //
-    //    bodyShape.SetAsBox(0.2f,0.2f);    // 0.002f scale 
-    //    bodyFixture.shape = &bodyShape;
-    //    bodyFixture.density = 2.0f;
-    //    bodyFixture.friction = 0.1f;
-    //    
-    //    bodyFixture.isSensor = false;
-    //    //bodyFixture.filter.groupIndex = 2;
-    //    bodyFixture.filter.categoryBits = CollisionCategory::ENTITY;
-    //    bodyFixture.filter.maskBits = CollisionCategory::ENTITY | CollisionCategory::SENSOR | CollisionCategory::BOUNDARY;
-    //
-    //    //if (i == 0) {
-    //    //    bodyPtr->CreateFixture(&coneFixture);
-    //    //    }
-    //    b2Body& b = *bodies_.back();
-    //    b.SetSleepingAllowed(true);
-    //    b.CreateFixture(&bodyFixture);                
-    //    b.SetLinearDamping(0.001f); // both were 2.0f
-    //    b.SetAngularDamping(0.001f);
-    //} 
-
-    float32 timeStep = 1.0f / 60.0f;
-    int32 velocityIterations = 8;
-    int32 positionIterations = 3;
-
-    //shared_data_.get_writer("sensors").write<game_utils::shared_types::positions>(sensors_);
-
-    //write(eds.sensors(),std::begin(sensor_data_),sensor_data_.size());       
-
-
-    std::vector<Eigen::Vector4f> positions_; positions_.reserve(100);
-
-    auto time_ = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(15);
-    
-    while (quit_.test_and_set(std::memory_order_acquire)) {
-
-        positions_.clear();
-
-        for (b2Body* b = world_.GetBodyList(); b; b = b->GetNext())
-        {                    
-            b2Vec2 position = b->GetPosition();
-            float angle = b->GetAngle();
-            
-            uintptr_t index_ = reinterpret_cast<uintptr_t>(b->GetUserData());
-
-            //if (index_ < std::numeric_limits<uintptr_t>::max()) {
-             //   positions_[index_].x() = position.x / 50.0f;
-             //   positions_[index_].y() = position.y / 50.0f;
-            //}
-            positions_.emplace_back(Eigen::Vector4f{position.x / 70.0f,
-                                                    position.y / 70.0f,
-                                                    0.02f,0.02f});            
-        }
-
-        swapvec_.swap_in(positions_);
-
-        world_.Step(timeStep, velocityIterations, positionIterations);
-                
-        //std::this_thread::sleep_for(std::chrono::milliseconds(100));
-  
-        //float32 angle = body->GetAngle();
- 
-        //--for (auto& e : orientation_data_) {
-        //--  g3d::Quaternionf object_rotation_ = 
-        //--    g3d::Quaternionf::FromTwoVectors(g3d::Vector3f{0.0001f,0.0001f,1.000001f}.normalized(),
-        //--                                     g3d::Vector3f{0.0f,0.0f,1.0f}.normalized());
-        //--
-        //--    e *= object_rotation_;
-        //--    e.normalize();
-        //--
-        //--    //e.position_.z() -= 0.00001f;
-        //--    //e.position_.y += game_utils::rand_neg_one_one();
-        //--    //e.position_.z += game_utils::rand_neg_one_one();
-        //--}
-        //blah_ = working_data_;
-        //push(working_data_,entity_data_);
-
-        auto now_ = std::chrono::high_resolution_clock::now();
-        if (now_ < time_) {            
-            std::this_thread::sleep_for(time_ - now_);
-            time_ = now_ + std::chrono::milliseconds(15);
-        }
-    }    
-}
-
-*/

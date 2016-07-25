@@ -124,7 +124,8 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
         gtl::d3d::pixel_shader pshader_;
         gtl::d3d::root_signature root_sig_;
        
-        std::array<gtl::d3d::resource_descriptor_heap,frame_count> cbheap_;
+        //std::array<gtl::d3d::resource_descriptor_heap,frame_count> cbheap_;
+        gtl::d3d::resource_descriptor_heap cbheap_;
 
         cbuffer mutable cbuf_;                            
         std::array<gtl::d3d::constant_buffer, frame_count> mutable cbuffer_;       
@@ -232,9 +233,10 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                 vshader_{L"D:\\Code\\D3D12_migration\\D3D12_migration\\Debug\\x64\\skybox_vs.cso"},
                 pshader_{L"D:\\Code\\D3D12_migration\\D3D12_migration\\Debug\\x64\\skybox_ps.cso"},
                 root_sig_{dev_, vshader_},
-                cbheap_{{{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}}}},                                                     
+                //cbheap_{{{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}}}},                                                     
+                cbheap_{dev_,frame_count,gtl::d3d::tags::shader_visible{}},
                 cbuf_{},                
-                cbuffer_{{{dev_,cbheap_[0],sizeof(cbuf_)},{dev_,cbheap_[1],sizeof(cbuf_)},{dev_,cbheap_[2],sizeof(cbuf_)}}},                                        
+                cbuffer_{{{dev_,cbheap_.get_handle(0),sizeof(cbuf_)},{dev_,cbheap_.get_handle(1),sizeof(cbuf_)},{dev_,cbheap_.get_handle(2),sizeof(cbuf_)}}},                                        
                 depth_buffers_{swchain_},    
                 pso_{dev_, pso_desc(dev_, root_sig_, vshader_, pshader_)},
                 calloc_{{{dev_},{dev_},{dev_}}},
@@ -480,7 +482,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             float const clearvalues[]{0.0f,0.0f,0.0f,0.0f};
             cl->ClearRenderTargetView(id_handle,clearvalues,0,nullptr);   
             
-            auto const dbview_ = depth_buffers_.get_handle(idx);
+            auto const dbview_ = depth_buffers_.get_handle();
             cl->ClearDepthStencilView(dbview_,D3D12_CLEAR_FLAG_DEPTH,1.0f,0,0,nullptr);            
 
             cl->OMSetRenderTargets(1, &rtv_handle, TRUE, std::addressof(dbview_));            

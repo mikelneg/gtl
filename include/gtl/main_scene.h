@@ -28,6 +28,8 @@
 
 #include <gtl/camera.h>
 
+//#include <GamePad.h>
+
 namespace gtl {
 namespace scenes {
 
@@ -72,8 +74,7 @@ namespace scenes {
                         for (unsigned i = 0; i < 4; ++i) {                            
                             jointed_boxes_.emplace_back(dynamic_box{{x,y - ((i * 1.0f) * si::meter)},
                                                                     {1.0f * si::meter, 
-                                                                     1.0f * si::meter}, angle, 
-                                                                    // HACK computes mesh+entity id 
+                                                                     1.0f * si::meter}, angle,                                                                     
                                                InstanceInfo{}.pack_entity_id(j + 600)
                                                                  .pack_mesh_id(0)});
                         }              
@@ -166,7 +167,7 @@ namespace scenes {
                                 // TODO add id system to renderer: (pos,angle,index) are returned from physics, the rest is stored on the
                                 //          other side
                         
-                                    //resource_callback_(gtl::commands::get_swap_chain{},
+                                    //resource_callback_(gtl::commands::get_swap_chain{}, // TODO implement global resizing..
                                     //                   [](auto& swchain_){ swchain_.resize(100,100); });                                                                        
                                     //resource_callback_(gtl::commands::get_some_resource{},[](auto& r) { r(); });
                                     break;

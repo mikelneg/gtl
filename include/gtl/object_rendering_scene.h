@@ -66,10 +66,12 @@ namespace d3d {
         
         std::array<gtl::d3d::constant_buffer,3> mutable instance_buffers_;        
         
-        std::array<gtl::d3d::resource_descriptor_heap,3> cbheap_;
+        //std::array<gtl::d3d::resource_descriptor_heap,3> cbheap_;
+        gtl::d3d::resource_descriptor_heap cbheap_;
         std::array<gtl::d3d::constant_buffer, 3> mutable cbuffer_;       
                 
-        std::array<gtl::d3d::resource_descriptor_heap,3> bone_heap_;
+        //std::array<gtl::d3d::resource_descriptor_heap,3> bone_heap_;
+        gtl::d3d::resource_descriptor_heap bone_heap_;
         std::array<gtl::d3d::constant_buffer, 3> mutable bone_buffer_;       
         
         gtl::d3d::resource_descriptor_heap texture_descriptor_heap_;        
@@ -228,38 +230,25 @@ namespace d3d {
                        {dev,ibuffer_descriptors_.get_handle(1), MAX_ENTITIES  * sizeof(EntityInfo)},
                        {dev,ibuffer_descriptors_.get_handle(2), MAX_ENTITIES  * sizeof(EntityInfo)}}},
             
-            cbheap_{{{dev,1,gtl::d3d::tags::shader_visible{}},{dev,1,gtl::d3d::tags::shader_visible{}},{dev,1,gtl::d3d::tags::shader_visible{}}}},
-            cbuffer_{{{dev,cbheap_[0],sizeof(gtl::camera)},{dev,cbheap_[1],sizeof(gtl::camera)},{dev,cbheap_[2],sizeof(gtl::camera)}}},                        
-            bone_heap_{{{dev,1,gtl::d3d::tags::shader_visible{}},{dev,1,gtl::d3d::tags::shader_visible{}},{dev,1,gtl::d3d::tags::shader_visible{}}}},
-            bone_buffer_{{{dev,bone_heap_[0],MAX_BONES * sizeof(Eigen::Matrix4f)},{dev,bone_heap_[1],MAX_BONES * sizeof(Eigen::Matrix4f)},{dev,bone_heap_[2],MAX_BONES * sizeof(Eigen::Matrix4f)}}},                        
+            cbheap_{dev,3,gtl::d3d::tags::shader_visible{}},
+            cbuffer_{{{dev,cbheap_.get_handle(0),sizeof(gtl::camera)},{dev,cbheap_.get_handle(1),sizeof(gtl::camera)},{dev,cbheap_.get_handle(2),sizeof(gtl::camera)}}},                        
+            bone_heap_{dev,3,gtl::d3d::tags::shader_visible{}},
+            bone_buffer_{{{dev,bone_heap_.get_handle(0),MAX_BONES * sizeof(Eigen::Matrix4f)},
+                          {dev,bone_heap_.get_handle(1),MAX_BONES * sizeof(Eigen::Matrix4f)},
+                          {dev,bone_heap_.get_handle(2),MAX_BONES * sizeof(Eigen::Matrix4f)}}},                        
             texture_descriptor_heap_{dev,1,gtl::d3d::tags::shader_visible{}},            
             texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue,                 
                 L"D:\\images\\palettes\\greenish_palette.dds"
                 },                        
-            //vshader_{L"object_rendering_scene_gui_vs.cso"},
-            //pshader_{L"object_rendering_scene_gui_ps.cso"},
             vshader_{L"object_rendering_scene_vs.cso"},            
-            pshader_{L"object_rendering_scene_ps.cso"},
-            //pso_{dev,pso_desc(dev,rsig,vshader_,pshader_)},
+            pshader_{L"object_rendering_scene_ps.cso"},            
             pso_{dev,pso_desc(dev,rsig, vshader_, pshader_)},
             sampler_heap_{dev,1},            
             sampler_{dev,sampler_desc(),sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
             physics_{physics_},
-            render_data_{}//physics_.copy_out()}            
+            render_data_{}
         {                                    
-            
-            //positions_.clear();
-
-            //for (size_t i = 0; i < 20; ++i) {    
-            //    positions_.emplace_back(Eigen::Vector4f{vn::math::rand_neg_one_one(),vn::math::rand_neg_one_one(),
-            //                            0.1f,0.1f});
-            //}
-
-            //construct_vertices(positions_);            
-            //vbuffers_[0].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(EntityInfo));
-            //vbuffers_[1].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(EntityInfo));
-            //vbuffers_[2].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(EntityInfo));
-
+                  
             auto& positions_ = render_data_.entities_;            
 
             instance_buffers_[0].update(reinterpret_cast<char*>(positions_.data()),positions_.size() * sizeof(EntityInfo));
@@ -399,7 +388,7 @@ namespace d3d {
                                              static_cast<unsigned>(voff),   // base vertex location
                                              starter);            // start instance location           
                     
-                    starter += counts[counter++] - 1;
+                    starter += counts[counter]; counter++;
                 }
 
             );

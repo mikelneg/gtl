@@ -196,16 +196,12 @@ namespace version_12_0 {
         index_buffer(device&, command_queue&, void* begin, size_t size);
     };    
 
-    class depth_stencil_buffer {                                
-        std::vector<resource> buffers_; 
-        resource_descriptor_heap buffer_views_;
+    class depth_stencil_buffer : public release_ptr<raw::Resource> {                                        
+        resource_descriptor_heap buffer_view_;        
     public:
         depth_stencil_buffer(swap_chain&);
-        auto get_handle(unsigned n) const { 
-            assert(n < buffers_.size());
-            raw::cx::CpuDescriptorHandle handle{ buffer_views_->GetCPUDescriptorHandleForHeapStart() };
-            handle.Offset(n,buffer_views_.increment_value());
-            return handle;
+        auto get_handle() const { 
+            return buffer_view_->GetCPUDescriptorHandleForHeapStart();
         }        
     };        
 

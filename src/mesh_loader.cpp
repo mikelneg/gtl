@@ -19,12 +19,33 @@ namespace gtl {
 
     struct mesh_loader::priv_impl {
         
-        using bone = std::pair<uint32_t, float>; 
+        using bone = std::pair<Eigen::Vector4i,Eigen::Vector4f>; 
+
+        struct control_point_bones {            
+            void push_bone(unsigned id, float weight) {
+                if (current_bone > 3) { return; } // TODO handle too many/too few bones..                
+                deforming_bone_ids[current_bone] = id;
+                deforming_bone_weights[current_bone] = weight;
+                
+                current_bone++;
+            }            
+            
+            control_point_bones() = default;
+
+            Eigen::Vector4i deforming_bone_ids{};
+            Eigen::Vector4f deforming_bone_weights{};
+            unsigned current_bone{};
+        };
+
+        std::vector<control_point_bones> cp_bones;
 
         std::vector<Eigen::Vector4f,Eigen::aligned_allocator<Eigen::Vector4f>> vertices;                
         std::vector<Eigen::Vector4f,Eigen::aligned_allocator<Eigen::Vector4f>> normals;                
-        std::vector<unsigned> indices;
-        std::vector<std::vector<bone>> bones; 
+        std::vector<uint32_t> indices;
+        std::vector<bone> vertex_bones; 
+
+        unsigned number_of_bones;
+
 
         priv_impl(std::string filename, gtl::tags::fbx_format) 
         {                   
@@ -40,65 +61,59 @@ namespace gtl {
             importer->Import(scene.get());
             fbx_ptr<FbxNode> root_node{scene->GetRootNode(),do_nothing_ptr};            
             fbx_ptr<FbxNode> child{root_node->GetChild(0),do_nothing_ptr};
-
-            auto print_vec = [](auto v, unsigned sz = 3){ 
-                std::cout << "(";
-                for (unsigned i = 0; i < sz; ++i) {
-                    std::cout << v[i] << ":";
-                }
-                std::cout << ")";
-            };
-    
+            
             auto m_ptr = child->GetNodeAttribute();
             auto m_type = m_ptr->GetAttributeType();
             if (m_type == FbxNodeAttribute::eMesh) {
-                fbx_ptr<FbxMesh> mesh_loader{static_cast<FbxMesh*>(child->GetNodeAttribute()),do_nothing_ptr};                    
-                    
-                    mesh_loader->GenerateNormals(true,true,false);  // HACK needs better coordination between left/right handed transforms..
+                              
+               fbx_ptr<FbxMesh> mesh_loader{static_cast<FbxMesh*>(child->GetNodeAttribute()),do_nothing_ptr};
+               fbx_ptr<FbxSkin> skin{static_cast<FbxSkin*>(mesh_loader->GetDeformer(0,FbxDeformer::eSkin)), do_nothing_ptr};                                                             
 
-                    auto* points = mesh_loader->GetControlPoints();                 
-                    
-                     
+               mesh_loader->GenerateNormals(true,true,false);
 
-                    //auto& norm = mesh_loader->GetElementNormal(0)->GetIndexArray();
-                    
-                    auto& norm = mesh_loader->GetLayer(0)->GetNormals()->GetDirectArray();
+               cp_bones.resize( mesh_loader->GetControlPointsCount() );
 
+               number_of_bones = skin->GetClusterCount();
 
-                    for (int i = 0; i < mesh_loader->GetControlPointsCount(); ++i) {
-                        auto& p = points[i];
-                        vertices.emplace_back(static_cast<float>(p[0]), static_cast<float>(p[1]), -1.0f * static_cast<float>(p[2]),1.0f);                                                                                                
-                        //vertices.emplace_back(static_cast<float>(p[0]),static_cast<float>(p[2]), -1.0f * static_cast<float>(p[1]),1.0f);                                                                                                
-                        auto n = norm.GetAt(i);
-                        n.Normalize();
-                        //normals.emplace_back(-1.0f * static_cast<float>(n[0]), -1.0f * static_cast<float>(n[1]), static_cast<float>(n[2]),0.0f);
-                        normals.emplace_back(static_cast<float>(n[0]),static_cast<float>(n[1]), -1.0f * static_cast<float>(n[2]),0.0f);
-                        //normals.emplace_back(static_cast<float>(n[0]), static_cast<float>(n.mData[2]), static_cast<float>(n.mData[1]),0.0f);
-                    }                              
+               for (unsigned bone_idx = 0, sz = skin->GetClusterCount(); bone_idx < sz; ++bone_idx) {
+                    auto* cluster = skin->GetCluster(bone_idx);                   
                     
-                    
-                    for (int i = 0; i < mesh_loader->GetPolygonCount(); ++i) {                                                                
-                        //indices.emplace_back(mesh_loader->GetPolygonVertex(i,0));                        
-                        //indices.emplace_back(mesh_loader->GetPolygonVertex(i,2));                        
-                        //indices.emplace_back(mesh_loader->GetPolygonVertex(i,1));                        
-                        for (int j = 0, sz = mesh_loader->GetPolygonSize(0); j < sz; ++j) {                            
-                            indices.emplace_back(mesh_loader->GetPolygonVertex(i,j));                        
-                        }                                                
+                    auto* deforming_indices = cluster->GetControlPointIndices();
+                    auto* deforming_weights = cluster->GetControlPointWeights();
+
+                    for (unsigned j = 0, sx = cluster->GetControlPointIndicesCount(); j < sx; ++j) {
+                        cp_bones[deforming_indices[j]].push_bone(bone_idx, static_cast<float>(deforming_weights[j]));
                     }
-              
-                    fbx_ptr<FbxSkin> skin{static_cast<FbxSkin*>(mesh_loader->GetDeformer(0,FbxDeformer::eSkin)), do_nothing_ptr};                                              
-                    for (int i = 0; i < skin->GetClusterCount(); ++i) {
-                        auto cluster = skin->GetCluster(i);
-                        auto ids = cluster->GetControlPointIndices();                        
-                        auto wghts = cluster->GetControlPointWeights();
+               }
+               
+               for (int i = 0; i < mesh_loader->GetPolygonCount(); ++i) {
+                    for (int j = 0, sz = mesh_loader->GetPolygonSize(i); j < sz; ++j) {                            
+                                                                                               
+                        auto control_point_index = mesh_loader->GetPolygonVertex(i,j);                      
+                        auto position = mesh_loader->GetControlPointAt(control_point_index);                                                                      
 
-                        std::vector<bone> b;
+                        fbxsdk::FbxVector4 normal;
+                        mesh_loader->GetPolygonVertexNormal(i,j,normal); 
+                        normal.Normalize();
+                                                
+                        vertices.emplace_back(static_cast<float>(position[0]),
+                                              static_cast<float>(position[1]),
+                                             -1.0f * static_cast<float>(position[2]),
+                                              1.0f);
 
-                        for (int j = 0; j < cluster->GetControlPointIndicesCount(); ++j) {    
-                            b.emplace_back(static_cast<uint32_t>(ids[j]),static_cast<float>(wghts[j]));                            
-                        }
-                        bones.emplace_back(std::move(b));                              
-                    }        
+                        normals.emplace_back(static_cast<float>(normal[0]),
+                                             static_cast<float>(normal[1]),
+                                            -1.0f * static_cast<float>(normal[2]),
+                                             0.0f);
+
+                        indices.emplace_back(j + (i * sz)); // TODO optimize meshes
+
+                        auto& bone_data = cp_bones[control_point_index];
+
+                        vertex_bones.emplace_back(bone_data.deforming_bone_ids,
+                                                  bone_data.deforming_bone_weights);                        
+                    }                    
+               }
             } else { 
                 std::cout << "Not a mesh_loader..\n"; 
             }         
@@ -111,7 +126,7 @@ namespace gtl {
     
     size_t mesh_loader::bone_count() const 
     { 
-        return impl_->bones.size();
+        return impl_->number_of_bones;
     }
 
     mesh_loader::aligned_vector<Eigen::Vector4f> 
@@ -126,25 +141,15 @@ namespace gtl {
         std::vector<vertex_type_bone,Eigen::aligned_allocator<vertex_type_bone>> ret;        
 
         auto v_beg = begin(impl_->vertices);
-        auto n_beg = begin(impl_->normals);
+        auto n_beg = begin(impl_->normals);        
 
         for (unsigned i = 0, j = static_cast<unsigned>(impl_->vertices.size()); i < j; ++i, ++v_beg, ++n_beg) {
-            ret.emplace_back(vertex_type_bone{*v_beg,*n_beg,Eigen::Vector4i{9999,9999,9999,9999},Eigen::Vector4f{0.0f,0.0f,0.0f,0.0f}});            
-        }
-
-        auto const& bones = impl_->bones;
-
-        for (unsigned i = 0, j = static_cast<unsigned>(bones.size()); i < j; ++i) {  // vec<vec<pair<id,weight>>; 
-            for (auto&& e : bones[i]) {                // vec<pair<id,weight>>
-                ret[e.first].bone_ids[i] = e.first;    // 
-                ret[e.first].bone_weights[i] = e.second;    // 
-            }
-        }
-        
+            ret.emplace_back(vertex_type_bone{*v_beg,*n_beg, impl_->vertex_bones[i].first, impl_->vertex_bones[i].second});                                
+        } 
         return ret;
     }
 
-    std::vector<unsigned> mesh_loader::indices() const 
+    std::vector<uint32_t> mesh_loader::indices() const 
     {
         return impl_->indices;
     }

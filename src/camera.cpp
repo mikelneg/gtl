@@ -14,14 +14,14 @@ namespace gtl {
 //        constexpr float t = 10.0f;
 //        constexpr float b = -10.0f;
 
-        float l = -10.0f;
-        float r = 10.0f;
+        float l = -1.0f;
+        float r = 1.0f;
 
-        float t = 10.0f;
-        float b = -10.0f;        
+        float t = 1.0f;
+        float b = -1.0f;        
 
-        n = -10.0f;
-        f = 10.0f;
+        n = -1.0f;
+        f = 1.0f;
         //n = -1.0f;   // HACK fix this, currently set externally (but meaningless..)
         //f = 1.0f;
 

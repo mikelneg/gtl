@@ -512,7 +512,7 @@ namespace version_12_0 {
 
     
     depth_stencil_buffer::depth_stencil_buffer(swap_chain& swchain)
-        : buffer_views_{get_device(swchain),swchain.frame_count(),gtl::d3d::tags::depth_stencil_view{}}
+        : buffer_view_{get_device(swchain),1,gtl::d3d::tags::depth_stencil_view{}}
     {
         auto dev = get_device(swchain);       
         auto dims = swchain.dimensions();
@@ -537,25 +537,16 @@ namespace version_12_0 {
         dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;   
         dsv_desc.Flags = D3D12_DSV_FLAG_NONE;
 
-        raw::cx::CpuDescriptorHandle handle_{buffer_views_->GetCPUDescriptorHandleForHeapStart()};
-        
-        for (unsigned i = 0; i < frame_count; ++i, handle_.Offset(buffer_views_.increment_value())) {
-        
-            resource tmp_resource;
-
-            win::throw_on_fail(dev->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+        win::throw_on_fail(dev->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
                                                        D3D12_HEAP_FLAG_NONE, 
                                                        &desc,
                                                        D3D12_RESOURCE_STATE_DEPTH_WRITE, 
                                                        &clear_value,
                                                        __uuidof(resource::type),
-                                                       void_ptr(tmp_resource)), __func__);
+                                                       void_ptr(*this)), __func__);
                                     
-            dev->CreateDepthStencilView(tmp_resource,&dsv_desc,handle_);            
-            set_name(*tmp_resource,L"depth_stencil");               
-
-            buffers_.emplace_back(std::move(tmp_resource));            
-        }                
+        dev->CreateDepthStencilView(get(),&dsv_desc,buffer_view_->GetCPUDescriptorHandleForHeapStart());            
+        set_name(*get(),L"depth_stencil");               
     }  
 
     pipeline_state_object::pipeline_state_object(device& dev, root_signature& rsig, 
