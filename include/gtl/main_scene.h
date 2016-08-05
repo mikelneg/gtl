@@ -28,7 +28,8 @@
 
 #include <gtl/camera.h>
 
-//#include <GamePad.h>
+#include <GamePad.h>
+
 
 namespace gtl {
 namespace scenes {
@@ -120,7 +121,7 @@ namespace scenes {
                                                                  * Eigen::AngleAxisf{0.2f, Eigen::Vector3f{0.0f,0.0f,-1.0f}}
                                                                  * Eigen::AngleAxisf{0.2f, Eigen::Vector3f{-1.0f,0.0f,0.0f}}}.matrix();           
                 
-                swirl_effect_.draw(std::forward<decltype(ps)>(ps)...,                                                                               current_id_, 
+                swirl_effect_.draw(std::forward<decltype(ps)>(ps)...,current_id_, 
                                    cam_transform_ * physics_camera_.matrix());
                     //Eigen::Affine3f{Eigen::UniformScaling<float>(camera_height_ / boost::units::si::meters)}.matrix()); 
                     //   * Eigen::AngleAxisf{0.7f,Eigen::Vector3f{1.0f,0.0f,0.0f}}}.matrix());
@@ -139,8 +140,13 @@ namespace scenes {
 
             std::vector<gtl::physics::generator> task_local_;
 
+            uint16_t selected_id{};
+
             std::cout << "swirl_effect event handler entered..\n"; 
             while (!same_type(yield().get(),ev::exit_immediately{})){                   
+
+                
+
                 if (same_type(yield.get(),ev::keydown{})){                     
                     switch( boost::get<ev::keydown>( yield.get().value() ).key ) {
                         case k::Escape : std::cout << "swirl_effect(): escape pressed, exiting all..\n"; 
@@ -183,17 +189,23 @@ namespace scenes {
                     //task_local_.emplace_back(destroy_object_implode{id});
                     //task_queue_.swap_in(task_local_);
                 } else if (same_type(yield.get(),ev::mouse_lbutton_down{})) {
-                    uint16_t id = current_id_.load(std::memory_order_relaxed);
-                    std::cout << "nuking object " << id << "\n";                    
-                    task_local_.emplace_back(destroy_object_implode{id});
-                    task_queue_.swap_in(task_local_);
-
+                    selected_id = current_id_.load(std::memory_order_relaxed);
+                    //std::cout << "nuking object " << id << "\n";                    
+                    std::cout << "selected object " << selected_id << "\n";  
+                    resource_callback_(gtl::commands::get_audio_adapter{}, [](auto& aud) { aud.play_effect("click"); });
+                    //task_local_.emplace_back(destroy_object_implode{id});
+                    //task_queue_.swap_in(task_local_);
                 } else if (same_type(yield.get(),ev::mouse_rbutton_down{})) {
                     uint16_t id = current_id_.load(std::memory_order_relaxed);
                     std::cout << "boosting object " << id << "\n";                    
                     task_local_.emplace_back(boost_object{id});
                     task_queue_.swap_in(task_local_);
-
+                } else if (same_type(yield.get(),ev::dpad_pressed{})) {       
+                    auto& dpad_press = boost::get<ev::dpad_pressed>(yield.get().value());
+                    std::cout << "dpad pressed.." << dpad_press.x << "," << dpad_press.y << "\n";
+                    //uint16_t id = current_id_.load(std::memory_order_relaxed);                  
+                    task_local_.emplace_back(boost_object_vec{selected_id,dpad_press.x,dpad_press.y});
+                    task_queue_.swap_in(task_local_);
                 } else if (same_type(yield.get(),ev::none{})) {
                     count++;                
                 } else if (same_type(yield.get(),ev::mouse_at{})) {

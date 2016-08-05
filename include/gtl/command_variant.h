@@ -15,6 +15,7 @@ namespace gtl {
 
     namespace commands {
         
+        struct get_audio_adapter {};
         struct get_some_resource {}; // TODO just for testing..
         struct get_swap_chain {};
         struct draw {};
@@ -23,7 +24,7 @@ namespace gtl {
         struct handle {};                       
     }
 
-    using command_variant = boost::variant<
+    using command_variant = boost::variant<commands::get_audio_adapter,
                                            commands::get_some_resource,    
                                            commands::get_swap_chain,
                                            commands::draw,

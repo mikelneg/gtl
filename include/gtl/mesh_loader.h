@@ -49,6 +49,8 @@ namespace gtl {
         aligned_vector<vertex_type_bone> bone_vertices() const;
         aligned_vector<Eigen::Vector4f> vertices() const;
         std::vector<uint32_t> indices() const;
+        std::vector<Eigen::Matrix4f> links() const; 
+        Eigen::Matrix4f mesh_transform() const;
         size_t bone_count() const;
     };
 

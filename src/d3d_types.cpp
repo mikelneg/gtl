@@ -12,6 +12,10 @@
 #include <d3dcompiler.h>
 
 #include <DDSTextureLoader.h>
+#include <ResourceUploadBatch.h>
+
+#include <DirectXHelpers.h>
+#include <d3dx12.h>
 
 #include <chrono>
 #include <string>
@@ -23,6 +27,8 @@
 #include <ostream>
 #include <cassert>
 #include <algorithm>
+#include <tuple>
+#include <utility>
 
 #include <gtl/d3d_ostream.h>
 
@@ -456,11 +462,22 @@ namespace version_12_0 {
         //IID_PPV_ARGS(exampleTexture.GetAddressOf()));
 
         release_ptr<raw::Resource> texture;        
-        raw::SrvDesc srvdesc{};        
-        
-        HRESULT result = DirectX::CreateDDSTextureFromFile(dev,filename.c_str(),&texture,&srvdesc);
-        win::throw_on_fail(result,__func__);
+                
+        DirectX::ResourceUploadBatch res_batch{dev};
 
+        res_batch.Begin();        
+
+        bool is_cube{};
+
+        HRESULT result = DirectX::CreateDDSTextureFromFile(dev,res_batch,filename.c_str(),&texture,false,
+                                                           0,nullptr,std::addressof(is_cube));
+
+        //HRESULT result = DirectX::CreateDDSTextureFromFile(dev,filename.c_str(),&texture,&srvdesc); // pre-directxtk function                              
+
+        res_batch.End(cqueue_);        
+
+        win::throw_on_fail(result,__func__);
+        
         raw::ResourceDesc desc = texture->GetDesc();
 
         HRESULT result2 = dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT),        
@@ -470,8 +487,8 @@ namespace version_12_0 {
                                                    nullptr,
                                                    __uuidof(type),
                                                    void_ptr(*this));
-        win::throw_on_fail(result2,__func__);
-            
+        win::throw_on_fail(result2,__func__);               
+
         raw::ResourceBarrier barrierDesc{};
 
         barrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -504,9 +521,140 @@ namespace version_12_0 {
         wait_for_gpu(dev,cqueue_);
                  
         for (auto&& h : handles_) {
-            dev->CreateShaderResourceView(get(), &srvdesc, h);               
+            //dev->CreateShaderResourceView(get(), &srvdesc, h);                           
+            DirectX::CreateShaderResourceView(dev,*this,h,is_cube);
         }
 
+        set_name(*get(),L"srv");               
+    }
+
+    srv::srv(device& dev, std::vector<raw::CpuDescriptorHandle> handles_, command_queue& cqueue_, std::tuple<std::vector<uint32_t>,unsigned,unsigned> data)
+    {
+        release_ptr<raw::Resource> texture;        
+                               
+        auto align = [](unsigned x) { return (x+255) & ~255; };
+        
+        unsigned width = std::get<1>(data), height = std::get<2>(data);
+
+        win::throw_on_fail(dev->CreateCommittedResource(
+                            &raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD),
+                            D3D12_HEAP_FLAG_NONE,                            
+                            &raw::cx::ResourceDesc::Buffer(align(align(width)*height*4)),
+	                        D3D12_RESOURCE_STATE_GENERIC_READ,
+                            //D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+	                        nullptr,
+                            __uuidof(resource::type),
+                            void_ptr(texture))            
+                     ,__func__);
+
+        
+
+		// Initialize and map the constant buffers. We don't unmap this until the
+		// app closes. Keeping things mapped for the lifetime of the resource is okay.
+        uint8_t* data_ptr{};
+        win::throw_on_fail(texture.get()->Map(0, nullptr, reinterpret_cast<void**>(&data_ptr))
+                      ,__func__);
+        //std::copy_n(std::get<0>(data).begin(),std::get<0>(data).size(),data_ptr);
+        
+
+        //
+
+
+D3D12_SUBRESOURCE_FOOTPRINT pitchedDesc{};
+pitchedDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+pitchedDesc.Width = width;
+pitchedDesc.Height = height;
+pitchedDesc.Depth = 1;
+pitchedDesc.RowPitch = ((width * sizeof(uint32_t))+255) & ~255;
+
+//
+// Note that the helper function UpdateSubresource in D3DX12.h, and ID3D12Device::GetCopyableFootprints 
+// can help applications fill out D3D12_SUBRESOURCE_FOOTPRINT and D3D12_PLACED_SUBRESOURCE_FOOTPRINT structures.
+//
+// Refer to the D3D12 Code example for the previous section "Uploading Different Types of Resources"
+// for the code for SuballocateFromBuffer.
+//
+
+uint8_t* pDataBegin = data_ptr;
+uint8_t* pDataCur = data_ptr;
+    
+pDataCur = reinterpret_cast<UINT8*>((reinterpret_cast<size_t>(pDataCur)+255) & ~255);
+
+D3D12_PLACED_SUBRESOURCE_FOOTPRINT placedTexture2D{};
+placedTexture2D.Offset = pDataCur - pDataBegin;
+placedTexture2D.Footprint = pitchedDesc;
+
+for (unsigned y = 0; y < height; y++)
+{
+  UINT8 *pScan = pDataBegin + placedTexture2D.Offset + y * pitchedDesc.RowPitch;
+  memcpy( pScan, std::get<0>(data).data() + (y * width), sizeof(DWORD) * width );
+}
+
+texture.get()->Unmap(0,nullptr);
+
+wait_for_gpu(dev,cqueue_);
+
+        auto desc = raw::cx::ResourceDesc::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM,width,height);
+
+        HRESULT result2 = dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT),        
+                                                   D3D12_HEAP_FLAG_NONE,
+                                                   &desc,
+                                                   D3D12_RESOURCE_STATE_COMMON,
+                                                   nullptr,
+                                                   __uuidof(type),
+                                                   void_ptr(*this));
+        win::throw_on_fail(result2,__func__);               
+    
+        raw::ResourceBarrier barrierDesc{};
+    
+        barrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+        barrierDesc.Transition.pResource = get();
+        barrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+        barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
+        barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+      
+        gtl::d3d::direct_command_allocator calloc{dev};
+        gtl::d3d::graphics_command_list clist{dev,calloc};
+    
+        wait_for_gpu(dev,cqueue_);
+
+        clist->Reset(calloc.get(), nullptr);        
+    
+        clist->ResourceBarrier(1, &barrierDesc);
+        //clist->CopyResource(get(), texture.get());
+//        clist->CopyBufferRegion(get(),0,texture.get(),0,std::get<0>(data).size());
+
+   
+        clist->CopyTextureRegion( 
+		    &CD3DX12_TEXTURE_COPY_LOCATION(get(),0), 
+		    0, 0, 0, 
+		    &CD3DX12_TEXTURE_COPY_LOCATION(texture.get(), placedTexture2D ), 
+		    nullptr );
+
+
+
+        //        
+                  
+        barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
+        barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
+        //The texture must be in D3D12_RESOURCE_STATE_GENERIC_READ before it can be sampled from
+        clist->ResourceBarrier(1, &barrierDesc); 
+        
+        //Tell the GPU that it can free the heap 
+        clist->DiscardResource(texture.get(), nullptr);        
+        
+        clist->Close();
+    
+        raw::CommandList* ppCommandLists[] = { clist.get() };
+        cqueue_->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);                
+                
+        wait_for_gpu(dev,cqueue_);
+                 
+        for (auto&& h : handles_) {
+            //dev->CreateShaderResourceView(get(), &srvdesc, h);                           
+            DirectX::CreateShaderResourceView(dev,*this,h,false);
+        }
+    
         set_name(*get(),L"srv");               
     }
 
@@ -713,6 +861,65 @@ namespace version_12_0 {
         set_name(*(buffer.get()),L"cbuf");                               
 	}
 
+    constant_buffer::constant_buffer(device& dev, raw::CpuDescriptorHandle descriptor_handle, std::size_t size, d3d::tags::shader_view)    
+    {        
+        win::throw_on_fail(dev->CreateCommittedResource(
+                            &raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD),
+                            D3D12_HEAP_FLAG_NONE,
+                            //D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS,                  
+                            &raw::cx::ResourceDesc::Buffer((size + 255) & ~255), // constant alignment is 256
+	                        D3D12_RESOURCE_STATE_GENERIC_READ,
+                            //D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+	                        nullptr,
+                            __uuidof(resource::type),
+                            void_ptr(buffer))            
+                     ,__func__);
+
+        //raw::ConstantBufferViewDesc cbvDesc{};
+        raw::SrvDesc srvDesc{};
+        srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
+        srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
+        srvDesc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+
+        srvDesc.Buffer.FirstElement = 0;
+        srvDesc.Buffer.Flags = D3D12_BUFFER_SRV_FLAG_RAW;
+        srvDesc.Buffer.NumElements = static_cast<UINT>(size) / 4;
+        srvDesc.Buffer.StructureByteStride = 0;
+
+    //typedef struct D3D12_SHADER_RESOURCE_VIEW_DESC
+    //{
+    //DXGI_FORMAT Format;
+    //D3D12_SRV_DIMENSION ViewDimension;
+    //UINT Shader4ComponentMapping;
+    //union 
+    //    {
+    //    D3D12_BUFFER_SRV Buffer;
+    //    D3D12_TEX1D_SRV Texture1D;
+    //    D3D12_TEX1D_ARRAY_SRV Texture1DArray;
+    //    D3D12_TEX2D_SRV Texture2D;
+    //    D3D12_TEX2D_ARRAY_SRV Texture2DArray;
+    //    D3D12_TEX2DMS_SRV Texture2DMS;
+    //    D3D12_TEX2DMS_ARRAY_SRV Texture2DMSArray;
+    //    D3D12_TEX3D_SRV Texture3D;
+    //    D3D12_TEXCUBE_SRV TextureCube;
+    //    D3D12_TEXCUBE_ARRAY_SRV TextureCubeArray;
+    //    } 	;
+    //} 	D3D12_SHADER_RESOURCE_VIEW_DESC;
+
+	    //srvDesc.BufferLocation = buffer.get()->GetGPUVirtualAddress();        
+	    //srvDesc.SizeInBytes = (cbuf_size + 255) & ~255;	// CB size is required to be 256-byte aligned.
+	    //dev->CreateConstantBufferView(&cbvDesc, resource_heap.get()->GetCPUDescriptorHandleForHeapStart());
+        //dev->CreateConstantBufferView(&cbvDesc, descriptor_handle);
+        dev->CreateShaderResourceView(buffer.get(), &srvDesc, descriptor_handle);
+    
+		// Initialize and map the constant buffers. We don't unmap this until the
+		// app closes. Keeping things mapped for the lifetime of the resource is okay.
+        win::throw_on_fail(buffer.get()->Map(0, nullptr, reinterpret_cast<void**>(&cbv_data_ptr))
+                      ,__func__);
+        set_name(*(buffer.get()),L"cbuf");                               
+	}
+
+
     constant_buffer::constant_buffer(device& dev, gtl::d3d::resource_descriptor_heap& rheap, std::size_t cbuf_size)    
         : constant_buffer(dev,rheap->GetCPUDescriptorHandleForHeapStart(),cbuf_size)
     { 
@@ -729,6 +936,12 @@ namespace version_12_0 {
         std::memcpy(cbv_data_ptr, src, size_);   	
     }
     
+    void constant_buffer::update(char const* src, std::size_t count, std::size_t offset) 
+    {
+        std::memcpy(cbv_data_ptr, src + offset, count);
+    }
+
+
     sampler::sampler(device& dev, raw::CpuDescriptorHandle handle_)
     {
         raw::SamplerDesc desc{};        	            

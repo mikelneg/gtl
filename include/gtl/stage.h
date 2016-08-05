@@ -36,6 +36,7 @@
 #include <vn/tuple_utilities.h>
 #include <vn/work_thread.h>
 
+#include <gtl/audio_adapter.h>
 
 namespace gtl {
 
@@ -61,7 +62,7 @@ class stage {
 public:
     
     template <typename SceneType>
-    stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, unsigned num_buffers, SceneType&);               
+    stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, unsigned num_buffers, SceneType&, gtl::win::audio_adapter& audio);               
 
     stage(stage&&) = delete;
     stage& operator=(stage&&) = delete;
@@ -72,7 +73,7 @@ public:
 
 
 template <typename SceneType>
-stage::stage(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, unsigned num_buffers, SceneType& scene_)
+stage::stage(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, unsigned num_buffers, SceneType& scene_, gtl::win::audio_adapter& audio)
     :   frame_rate_limiter_{std::chrono::milliseconds(9)},
         buffered_resource_{[&](){
             std::vector<resource_object> tmp; 
@@ -134,6 +135,10 @@ stage::stage(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, u
                 [&](gtl::commands::get_some_resource, auto&& f) {
                     //std::unique_lock<std::mutex> lock_{draw_thread_mutex_};
                     f([](){ std::cout << "look at me, all fancy..\n"; });
+                },
+                [&](gtl::commands::get_audio_adapter, auto&& f) {
+                    //std::unique_lock<std::mutex> lock_{draw_thread_mutex_};
+                    f(audio);
                 }
             );
             

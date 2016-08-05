@@ -38,7 +38,7 @@ namespace win {
                 if (msg.message == WM_QUIT) {                     
                     return; 
                 }
-                func(const_cast<decltype(event_queue_) const&>(event_queue_));
+                func(event_queue_);
                 event_queue_.clear();
             }
         }               

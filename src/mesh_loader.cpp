@@ -44,6 +44,9 @@ namespace gtl {
         std::vector<uint32_t> indices;
         std::vector<bone> vertex_bones; 
 
+        std::vector<Eigen::Matrix4f> transform_links;
+        Eigen::Matrix4f mesh_transform;
+
         unsigned number_of_bones;
 
 
@@ -80,6 +83,24 @@ namespace gtl {
                     
                     auto* deforming_indices = cluster->GetControlPointIndices();
                     auto* deforming_weights = cluster->GetControlPointWeights();
+
+                    //
+                    fbxsdk::FbxAMatrix trans_link_tmp,mesh_trans;
+                    cluster->GetTransformLinkMatrix(trans_link_tmp);                     
+                    cluster->GetTransformMatrix(mesh_trans);
+
+                    auto trans_link = trans_link_tmp;
+
+                    Eigen::Matrix4f matrix;
+                    for (int w = 0; w < 4; ++w) {
+                        for (int y = 0; y < 4; ++y) {
+                            matrix(w,y) = static_cast<float>(trans_link.Get(w,y));
+                            mesh_transform(w,y) = static_cast<float>(mesh_trans.Get(w,y));
+                    }}                    
+                    
+                    transform_links.emplace_back(matrix);                                                          
+                    
+                    //
 
                     for (unsigned j = 0, sx = cluster->GetControlPointIndicesCount(); j < sx; ++j) {
                         cp_bones[deforming_indices[j]].push_bone(bone_idx, static_cast<float>(deforming_weights[j]));
@@ -153,6 +174,17 @@ namespace gtl {
     {
         return impl_->indices;
     }
+
+    std::vector<Eigen::Matrix4f> mesh_loader::links() const 
+    {
+        return impl_->transform_links;
+    }
+
+    Eigen::Matrix4f mesh_loader::mesh_transform() const 
+    {
+        return impl_->mesh_transform;
+    }
+
 
     mesh_loader::~mesh_loader() {}
 

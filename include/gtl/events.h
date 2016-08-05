@@ -25,6 +25,8 @@ namespace events {
         struct focus_entity { std::string id; };
         struct exit_all {};
         //
+        struct dpad_pressed { float x,y; };
+        
         struct none {};        
         struct keydown { unsigned key; };
         struct mouse_lbutton_down { int64_t coord; };
@@ -39,6 +41,7 @@ namespace events {
 
     using event_variant_base_ = boost::variant<done, dump_contents, focus_entity, exit_all, 
                                                none,
+                                               dpad_pressed,
                                                keydown,
                                                mouse_lbutton_down,
                                                mouse_rbutton_down,

@@ -26,6 +26,7 @@
 
 #include <gtl/gui_rect_draw.h>
 #include <gtl/object_rendering_scene.h>
+#include <gtl/d3d_imgui_adapter.h>
 
 #include <vn/math_utilities.h>
 
@@ -137,6 +138,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
         std::array<gtl::d3d::graphics_command_list,frame_count> clist_;
         std::array<gtl::d3d::graphics_command_list,frame_count> mutable gui_rect_clist_;
         std::array<gtl::d3d::graphics_command_list,frame_count> mutable object_effect_clist_;
+        std::array<gtl::d3d::graphics_command_list,frame_count> mutable imgui_clist_;
         std::array<gtl::d3d::graphics_command_list,frame_count> mutable id_sampler_clist_;
 
         //std::array<std::atomic<int32_t>, frame_count> mutable ids_;
@@ -154,6 +156,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 
         gtl::d3d::rect_draw gui_rects_;
         gtl::d3d::object_rendering_scene object_effect_;
+        gtl::d3d::imgui_adapter imgui_;
 
         gtl::copyable_atomic<int64_t> mutable mouse_coord_;        
         
@@ -243,6 +246,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                 clist_{{{dev_,calloc_[0],pso_},{dev_,calloc_[1],pso_},{dev_,calloc_[2],pso_}}},
                 gui_rect_clist_{{{dev_,calloc_[0]},{dev_,calloc_[1]},{dev_,calloc_[2]}}},
                 object_effect_clist_{{{dev_,calloc_[0]},{dev_,calloc_[1]},{dev_,calloc_[2]}}},
+                imgui_clist_{{{dev_,calloc_[0]},{dev_,calloc_[1]},{dev_,calloc_[2]}}},
                 id_sampler_clist_{{{dev_,calloc_[0]},{dev_,calloc_[1]},{dev_,calloc_[2]}}},
                 viewport_{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f},
                 scissor_{0,0,960,540},
@@ -252,7 +256,8 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                 sampler_heap_{dev_,1},
                 sampler_{dev_,sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
                 gui_rects_{dev_, cqueue_, root_sig_, physics_},
-                object_effect_{dev_, cqueue_, root_sig_, physics_}
+                object_effect_{dev_, cqueue_, root_sig_, physics_},
+                imgui_{dev_, cqueue_, root_sig_}
         {            
             //
             dev_->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK),    // TODO add d3d readback type
@@ -531,6 +536,14 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 
             gui_rect_clist_[idx]->Close();
 
+            imgui_clist_[idx]->Reset(calloc_[idx].get(),nullptr);      
+            imgui_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());                           
+
+            imgui_(idx, f, imgui_clist_[idx],viewport_,scissor_,camera,handles,std::addressof(dbview_));
+
+            imgui_clist_[idx]->Close();
+            
+
 
             //object_effect_clist_[idx]->Reset(calloc_[idx].get(),nullptr);      
             //object_effect_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());                           
@@ -547,6 +560,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
             //
             v.emplace_back(clist_[idx].get());
             v.emplace_back(gui_rect_clist_[idx].get());
+            v.emplace_back(imgui_clist_[idx].get());
             //v.emplace_back(object_effect_clist_[idx].get());
             //v.emplace_back(id_sampler_clist_[idx].get());
             

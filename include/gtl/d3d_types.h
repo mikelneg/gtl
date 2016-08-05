@@ -24,6 +24,7 @@
 #include <string>
 #include <ostream>
 #include <cassert>
+#include <tuple>
 
 namespace gtl {        
 namespace d3d {    
@@ -33,12 +34,13 @@ namespace tags {
     struct not_shader_visible{};    
     struct flipmodel_windowed{};
 
+    struct shader_view{};
+
     struct depth_stencil_view{};
     struct cbv_srv_uav{};
 }
 
-namespace default = version_12_0;
-using namespace default;
+namespace default = version_12_0; // using namespace default; // below
 
 namespace version_12_0 {           
 
@@ -180,8 +182,10 @@ namespace version_12_0 {
         constant_buffer(device&,std::size_t);
         constant_buffer(device&,resource_descriptor_heap&,std::size_t);
         constant_buffer(device&,raw::CpuDescriptorHandle,std::size_t);
+        constant_buffer(device&,raw::CpuDescriptorHandle,std::size_t,d3d::tags::shader_view);
         void update(char const*, std::size_t);
         void update(std::pair<char*,size_t>);
+        void update(char const*, std::size_t count, std::size_t offset);
         auto& resource() { return buffer; }
         auto const& resource() const { return buffer; }
     };
@@ -189,11 +193,13 @@ namespace version_12_0 {
     class vertex_buffer : public release_ptr<raw::Resource> {        
     public:
         vertex_buffer(device&, command_queue&, void* begin, size_t size);
+        void update(char const*,std::size_t);
     };    
 
     class index_buffer : public release_ptr<raw::Resource> {        
     public:
         index_buffer(device&, command_queue&, void* begin, size_t size);
+        void update(char const*,std::size_t);
     };    
 
     class depth_stencil_buffer : public release_ptr<raw::Resource> {                                        
@@ -208,6 +214,7 @@ namespace version_12_0 {
     class srv : public release_ptr<raw::Resource> {
     public:
         srv(device&,std::vector<raw::CpuDescriptorHandle>,command_queue&,std::wstring);
+        srv(device&,std::vector<raw::CpuDescriptorHandle>,command_queue&,std::tuple<std::vector<uint32_t>,unsigned,unsigned>);
     };
         
     class sampler : public release_ptr<raw::Resource> {
@@ -236,6 +243,8 @@ namespace version_12_0 {
 
 
 }
+
+using namespace default;
 
 }} // namespaces
 #endif

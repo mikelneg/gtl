@@ -314,6 +314,20 @@ namespace {
            return nullptr;
         }
 
+        b2Body* operator()(gtl::physics::generators::boost_object_vec const& o) const {
+            
+            auto range = entity_map_.equal_range(o.id);
+            if (range.first == range.second) { return nullptr; }
+                                 
+            b2Body* main_body_ = (range.first)->second;
+            main_body_->SetAwake(true);
+
+            main_body_->ApplyLinearImpulse(b2Vec2{o.x,o.y},// o.x / 100.0f,o.y / 100.0f},
+                                                  main_body_->GetWorldCenter(), true);
+                                                  //main_body_->GetPosition(), true);
+           return nullptr;
+        }
+
 
     };
 

@@ -231,11 +231,13 @@ namespace d3d {
                        {dev,ibuffer_descriptors_.get_handle(2), MAX_ENTITIES  * sizeof(EntityInfo)}}},
             
             cbheap_{dev,3,gtl::d3d::tags::shader_visible{}},
-            cbuffer_{{{dev,cbheap_.get_handle(0),sizeof(gtl::camera)},{dev,cbheap_.get_handle(1),sizeof(gtl::camera)},{dev,cbheap_.get_handle(2),sizeof(gtl::camera)}}},                        
+            cbuffer_{{{dev,cbheap_.get_handle(0),sizeof(gtl::camera)},
+                      {dev,cbheap_.get_handle(1),sizeof(gtl::camera)},
+                      {dev,cbheap_.get_handle(2),sizeof(gtl::camera)}}},                        
             bone_heap_{dev,3,gtl::d3d::tags::shader_visible{}},
-            bone_buffer_{{{dev,bone_heap_.get_handle(0),MAX_BONES * sizeof(Eigen::Matrix4f)},
-                          {dev,bone_heap_.get_handle(1),MAX_BONES * sizeof(Eigen::Matrix4f)},
-                          {dev,bone_heap_.get_handle(2),MAX_BONES * sizeof(Eigen::Matrix4f)}}},                        
+                bone_buffer_{{{dev,bone_heap_.get_handle(0), MAX_BONES * sizeof(Eigen::Matrix4f), gtl::d3d::tags::shader_view{}},
+                          {dev,bone_heap_.get_handle(1), MAX_BONES * sizeof(Eigen::Matrix4f), gtl::d3d::tags::shader_view{}},
+                          {dev,bone_heap_.get_handle(2), MAX_BONES * sizeof(Eigen::Matrix4f), gtl::d3d::tags::shader_view{}}}},                        
             texture_descriptor_heap_{dev,1,gtl::d3d::tags::shader_visible{}},            
             texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue,                 
                 L"D:\\images\\palettes\\greenish_palette.dds"
