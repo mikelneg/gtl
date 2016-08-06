@@ -195,6 +195,14 @@ namespace d3d {
             sampler_heap_{dev,1},            
             sampler_{dev,sampler_desc(),sampler_heap_->GetCPUDescriptorHandleForHeapStart()}            
         {           
+            ImGui::NewFrame();
+            ImGui::Begin("Window Title Here");
+            ImGui::Text("Hello, world!");
+            ImGui::End();
+            ImGui::Render();            
+            update(0,ImGui::GetDrawData());             
+            update(1,ImGui::GetDrawData());             
+            update(2,ImGui::GetDrawData());             
 
         }
             
@@ -204,6 +212,7 @@ namespace d3d {
         {
             // HACK no bounds checking currently..
             idx_count = 0;      
+            vtx_count = 0;
             
             for (int n = 0, voffs = 0, ioffs = 0; n < draw_data->CmdListsCount; n++) {
                 auto* cmd_list = draw_data->CmdLists[n];
@@ -228,13 +237,15 @@ namespace d3d {
                         D3D12_CPU_DESCRIPTOR_HANDLE *rtv_handle,
                         D3D12_CPU_DESCRIPTOR_HANDLE const* dbv_handle) const 
         {         
+            
             ImGui::NewFrame();
             ImGui::Begin("Window Title Here");
             ImGui::Text("Hello, world!");
             ImGui::End();
             ImGui::Render();            
-            update(idx,ImGui::GetDrawData()); 
+            update(idx,ImGui::GetDrawData());             
             
+
             cl->SetPipelineState(pso_.get());
             auto heaps = { sampler_heap_.get(), texture_descriptor_heap_.get() };
         	cl->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());               
