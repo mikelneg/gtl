@@ -5,7 +5,7 @@
 
 #include <gtl/gtl_window.h>
 #include <gtl/d3d_types.h>
-#include <gtl/d3d_funcs.h>
+#include <gtl/d3d_helper_funcs.h>
 
 #include <boost/coroutine/asymmetric_coroutine.hpp>
 

@@ -58,7 +58,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
     //                                      D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
     //                                      D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY));    
 	
-    clist->RSSetViewports(win::array_size(viewports), *viewports.begin());
+    clist->RSSetViewports(win::extent(viewports), *viewports.begin());
 	clist->RSSetScissorRects(1, &scissor_rect);    
 
 	// Indicate that the back buffer will be used as a render target.
@@ -169,7 +169,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 //    //                                      D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 //    //                                      D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY));    
 //	
-//    clist->RSSetViewports(win::array_size(viewports), *viewports.begin());
+//    clist->RSSetViewports(win::extent(viewports), *viewports.begin());
 //	clist->RSSetScissorRects(1, &scissor_rect);    
 //
 //	// Indicate that the back buffer will be used as a render target.
@@ -295,7 +295,7 @@ void skybox_graphics_command_list(d3d::graphics_command_list& clist,
 //    //                                      D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,
 //    //                                      D3D12_RESOURCE_BARRIER_FLAG_BEGIN_ONLY));    
 //	
-//    clist->RSSetViewports(win::array_size(viewports), *viewports.begin());
+//    clist->RSSetViewports(win::extent(viewports), *viewports.begin());
 //	clist->RSSetScissorRects(1, &scissor_rect);    
 //
 //	// Indicate that the back buffer will be used as a render target.

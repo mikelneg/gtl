@@ -233,7 +233,7 @@ namespace transitions {
 /*
 #include <gtl/gtl_window.h>
 #include <gtl/d3d_types.h>
-#include <gtl/d3d_funcs.h>
+#include <gtl/d3d_helper_funcs.h>
 
 #include <gtl/synchronized.h>
 
@@ -439,7 +439,7 @@ int main(HINSTANCE hinst, HINSTANCE, LPSTR, int)
                                  clist_[idx]->Close();
 
                                  std::initializer_list<ID3D12CommandList*> clists{clist_[idx].get()};                                                                          
-                                 cqueue_->ExecuteCommandLists(gtl::win::array_size(clists), clists.begin()); 
+                                 cqueue_->ExecuteCommandLists(gtl::win::extent(clists), clists.begin()); 
                                  //swchain_->Present(0,0);
                                  };
 
@@ -469,7 +469,7 @@ int main(HINSTANCE hinst, HINSTANCE, LPSTR, int)
 
                                  std::initializer_list<ID3D12CommandList*> clists{cs_list_[idx].get()};                                         
                                  if (WaitForSingleObject(swchain_->GetFrameLatencyWaitableObject(),0) == WAIT_OBJECT_0) {                                                         	                    
-                                     cqueue_->ExecuteCommandLists(gtl::win::array_size(clists), clists.begin());
+                                     cqueue_->ExecuteCommandLists(gtl::win::extent(clists), clists.begin());
                                      swchain_->Present(0,0);
                                      return true;
                                  }            
@@ -566,7 +566,7 @@ int main(HINSTANCE hinst, HINSTANCE, LPSTR, int)
 
                                  std::initializer_list<ID3D12CommandList*> clists{clist_[idx].get()};                                         
                                  if (WaitForSingleObject(swchain_->GetFrameLatencyWaitableObject(),0) == WAIT_OBJECT_0) {                                                         	                    
-                                     cqueue_->ExecuteCommandLists(gtl::win::array_size(clists), clists.begin());
+                                     cqueue_->ExecuteCommandLists(gtl::win::extent(clists), clists.begin());
                                      swchain_->Present(0,0);
                                      return true;
                                  }            

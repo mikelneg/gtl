@@ -1,27 +1,27 @@
-#ifndef NSNLLSLSFW_GTL_D3D_SELECT_IMPLEMENTATION_H_
-#define NSNLLSLSFW_GTL_D3D_SELECT_IMPLEMENTATION_H_
+#ifndef NSNLLSLSFW_GTL_D3D_VERSION_H_
+#define NSNLLSLSFW_GTL_D3D_VERSION_H_
 
 /*-----------------------------------------------------------------------------
     Mikel Negugogor (http://github.com/mikelneg)                                      
-    Specifies default implementation in gtl::d3d
 
-    Does not need to be included directly 
+    "Version" namespaces with implementation information/specification
+    * Should not be directly included by user..
+        
 -----------------------------------------------------------------------------*/
 
-//#include <Windows.h>
 #include <d3d12.h> 
-#include <d3dx12.h> // not supplied by the sdk currently
+#include <d3dx12.h> // not supplied by the sdk (as of 8/2016)
 #include <dxgi1_4.h>
 
 namespace gtl {    
 namespace d3d {      
 
-namespace version_12_0 {
+namespace version_12_0 {    
     namespace raw {
         using Object              = ID3D12Object;
         using Factory             = IDXGIFactory4;
         using Device              = ID3D12Device;
-        using DebugDevice         = ID3D12DebugDevice;
+        using DebugDevice         = ID3D12DebugDevice;      
         using SwapChain           = IDXGISwapChain3;
         using Adapter             = IDXGIAdapter1;
         using AdapterDesc         = DXGI_ADAPTER_DESC1;

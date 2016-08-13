@@ -119,7 +119,8 @@ stage::stage(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, u
 
                     //            
                     cqueue_->ExecuteCommandLists(static_cast<unsigned>(draw_queue_.size()),draw_queue_.data());                                                
-                    synchronous_advance(sync_index);    // the command queue's update has to be sequenced before the frame is made ready                                   
+                    //synchronous_advance(sync_index);    // the command queue's update has to be sequenced before the frame is made ready                                   
+                    advance(sync_index); // HACK trying to figure out why this breaks..
                     //frame_state_.store(sig::frame_ready,std::memory_order_release);                            
                     
                     available(state_);

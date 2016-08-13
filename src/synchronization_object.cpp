@@ -4,7 +4,7 @@
 #include <cassert>
 #include <atomic>
 #include <gtl/d3d_types.h>
-#include <gtl/d3d_funcs.h>
+#include <gtl/d3d_helper_funcs.h>
 
 /*-----------------------------------------------------------------------------
     Mikel Negugogor (http://github.com/mikelneg)    

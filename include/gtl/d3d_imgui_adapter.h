@@ -211,21 +211,21 @@ namespace d3d {
         void update(unsigned idx, ImDrawData* draw_data) const 
         {
             // HACK no bounds checking currently..
-            idx_count = 0;      
-            vtx_count = 0;
+            //idx_count = 0;      
+            //vtx_count = 0;
             
-            for (int n = 0, voffs = 0, ioffs = 0; n < draw_data->CmdListsCount; n++) {
+            for (int n = 0, voffs = 0, ioffs = 0; n < draw_data->CmdListsCount; n++) {                
                 auto* cmd_list = draw_data->CmdLists[n];
                 vert_buffers_[idx].update(reinterpret_cast<char*>(&cmd_list->VtxBuffer[0]),
                                           cmd_list->VtxBuffer.size() * sizeof(ImDrawVert), voffs * sizeof(ImDrawVert));
                 idx_buffers_[idx].update(reinterpret_cast<char*>(&cmd_list->IdxBuffer[0]),
                                          cmd_list->IdxBuffer.size() * sizeof(ImDrawIdx), ioffs * sizeof(ImDrawIdx));
                 voffs += cmd_list->VtxBuffer.size();
-                ioffs += cmd_list->IdxBuffer.size();
-
-                idx_count += cmd_list->IdxBuffer.size();
-                vtx_count += cmd_list->VtxBuffer.size();
+                ioffs += cmd_list->IdxBuffer.size();                
             }
+
+            idx_count = draw_data->TotalIdxCount;
+            vtx_count = draw_data->TotalVtxCount;
         }
 
 
@@ -257,6 +257,7 @@ namespace d3d {
             cl->SetGraphicsRootDescriptorTable(2, texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());                                                                                              
             cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);                                                                     
             //
+            //cl->SetGraphicsRootShaderResourceView(4,cbuffer_[idx].resource()->GetGPUVirtualAddress());
             //cl->SetGraphicsRootShaderResourceView(4,(vert_buffers_[idx].resource())->GetGPUVirtualAddress());
             //cl->SetGraphicsRootShaderResourceView(6,(idx_buffers_[idx].resource())->GetGPUVirtualAddress());
                    

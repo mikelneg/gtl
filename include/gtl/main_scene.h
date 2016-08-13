@@ -210,6 +210,15 @@ namespace scenes {
                     count++;                
                 } else if (same_type(yield.get(),ev::mouse_at{})) {
                     swirl_effect_.set_mouse_coords(boost::get<ev::mouse_at>(yield.get().value()).coord);                    
+                } else if (same_type(yield.get(),ev::resize_swapchain{}) ) {
+                    //int nw = yield.get().value().new_width;
+                    //int nh = yield.get().value().new_height;
+                    //
+                    //resource_callback_(gtl::commands::get_swap_chain{},
+                    //                   [=](auto& swchain){ swchain.resize(nw,nh); });
+                    //
+                    //
+
                 }
             }            
             return gtl::events::exit_state{0};

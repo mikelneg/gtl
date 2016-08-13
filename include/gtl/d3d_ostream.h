@@ -9,7 +9,7 @@
     std::ostream formatting for various d3d types
 -----------------------------------------------------------------------------*/
 
-#include <gtl/d3d_include.h>
+#include <gtl/d3d_version.h>
 #include <ostream>
 
 namespace gtl {    

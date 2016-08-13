@@ -21,7 +21,7 @@
 
 #include <gtl/gtl_window.h>
 #include <gtl/d3d_types.h>
-#include <gtl/d3d_funcs.h>
+#include <gtl/d3d_helper_funcs.h>
 #include <gtl/copyable_atomic.h>
 
 #include <gtl/gui_rect_draw.h>
@@ -265,7 +265,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
                                           &CD3DX12_RESOURCE_DESC::Buffer(256),
                                           D3D12_RESOURCE_STATE_COPY_DEST,
                                           nullptr, __uuidof(gtl::d3d::resource::type),
-                                          void_ptr(id_readback_));            
+                                          expose_as_void_pp(id_readback_));            
             // cbuffer_[idx].update() -- 
             std::cout << "swirl_effect()\n";
         }
@@ -614,7 +614,7 @@ inline Eigen::Matrix4f makeProjectionMatrix(float fov_y, float aspect_ratio, flo
 /*
 #include <gtl/gtl_window.h>
 #include <gtl/d3d_types.h>
-#include <gtl/d3d_funcs.h>
+#include <gtl/d3d_helper_funcs.h>
 
 #include <gtl/synchronized.h>
 
@@ -820,7 +820,7 @@ int main(HINSTANCE hinst, HINSTANCE, LPSTR, int)
                                  clist_[idx]->Close();
 
                                  std::initializer_list<ID3D12CommandList*> clists{clist_[idx].get()};                                                                          
-                                 cqueue_->ExecuteCommandLists(gtl::win::array_size(clists), clists.begin()); 
+                                 cqueue_->ExecuteCommandLists(gtl::win::extent(clists), clists.begin()); 
                                  //swchain_->Present(0,0);
                                  };
 
@@ -850,7 +850,7 @@ int main(HINSTANCE hinst, HINSTANCE, LPSTR, int)
 
                                  std::initializer_list<ID3D12CommandList*> clists{cs_list_[idx].get()};                                         
                                  if (WaitForSingleObject(swchain_->GetFrameLatencyWaitableObject(),0) == WAIT_OBJECT_0) {                                                         	                    
-                                     cqueue_->ExecuteCommandLists(gtl::win::array_size(clists), clists.begin());
+                                     cqueue_->ExecuteCommandLists(gtl::win::extent(clists), clists.begin());
                                      swchain_->Present(0,0);
                                      return true;
                                  }            
@@ -947,7 +947,7 @@ int main(HINSTANCE hinst, HINSTANCE, LPSTR, int)
 
                                  std::initializer_list<ID3D12CommandList*> clists{clist_[idx].get()};                                         
                                  if (WaitForSingleObject(swchain_->GetFrameLatencyWaitableObject(),0) == WAIT_OBJECT_0) {                                                         	                    
-                                     cqueue_->ExecuteCommandLists(gtl::win::array_size(clists), clists.begin());
+                                     cqueue_->ExecuteCommandLists(gtl::win::extent(clists), clists.begin());
                                      swchain_->Present(0,0);
                                      return true;
                                  }            

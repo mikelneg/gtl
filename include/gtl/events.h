@@ -36,7 +36,8 @@ namespace events {
         struct mouse_at { int64_t coord; };   // TODO revisit: currently int64_t because windows uses hi and low bits to set both x and y coord..             
         struct mousedown {};
         struct exit_immediately {};
-        struct exit_state { int exitcode; };  
+        struct exit_state { int exitcode; };
+        struct resize_swapchain { int new_width,new_height; };
     }                
 
     using event_variant_base_ = boost::variant<done, dump_contents, focus_entity, exit_all, 
@@ -50,7 +51,8 @@ namespace events {
                                                mouse_at,
                                                mousedown,                                          
                                                exit_immediately,
-                                               exit_state>;
+                                               exit_state,
+                                               resize_swapchain>;
 
     //class event_variant : public event_variant_base_ {                
     //

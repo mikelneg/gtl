@@ -3,16 +3,18 @@
 
 /*-----------------------------------------------------------------------------
     Mikel Negugogor (http://github.com/mikelneg)                              
+
+    namespace gtl::d3d 
     
-    namespace gtl::d3d::version_12_0 
-        
-    Various "RAII" versions of D3D types
+    A collection of RAII conforming versions of standard d3d12 types.
+
 -----------------------------------------------------------------------------*/
 
-#include <gtl/d3d_include.h>
+#include <gtl/d3d_version.h>
+#include <gtl/d3d_tags.h>
 
 #include <gtl/tags.h>
-#include <gtl/release_ptr.h>
+#include <gtl/intrusive_ptr.h>
 #include <gtl/win_tools.h>
 
 #include <iostream> 
@@ -29,25 +31,45 @@
 namespace gtl {        
 namespace d3d {    
 
-namespace tags {
-    struct shader_visible{};
-    struct not_shader_visible{};    
-    struct flipmodel_windowed{};
-
-    struct shader_view{};
-
-    struct depth_stencil_view{};
-    struct cbv_srv_uav{};
+namespace detail { 
+    struct releaser {
+        template <typename T>
+        void operator()(T* t) const noexcept {
+            if (t) t->Release();         
+        }
+    };
 }
 
-namespace default = version_12_0; // using namespace default; // below
+template <typename T>
+using release_ptr = gtl::intrusive_ptr<T,detail::releaser>;
 
-namespace version_12_0 {           
+namespace default = version_12_0;   //using namespace default; appears below
+
+namespace version_12_0 {   
+    
+    class command_queue;
+    class device;
+    class fence;
+    class resource;
+    class swap_chain;
+    class dxgi_factory;
+
+    class rtv_descriptor_heap;
+    class resource_descriptor_heap;
+    class sampler_descriptor_heap;
+
+    class fence : public release_ptr<raw::Fence> {                
+    public:        
+        fence(device&);
+        fence(fence&& other) = default;
+        void synchronized_set(uint64_t new_value, command_queue&);
+        void synchronized_increment(command_queue&);
+    };
 
     class resource : public release_ptr<raw::Resource> {
-    public:        
+    public:
         resource() = default;
-        resource(resource&&) = default;
+        resource(resource&&) = default;               
     };
     
     class dxgi_factory : public release_ptr<raw::Factory> {
@@ -65,18 +87,26 @@ namespace version_12_0 {
     };    
                 
     class command_queue : public release_ptr<raw::CommandQueue> {        
+        fence fence_;   //  internal fence used to synchronize 
     public:
         command_queue(device&);
+        void synchronize();
     };
 
     class rtv_descriptor_heap : public release_ptr<raw::DescriptorHeap> {
         unsigned increment_;
-        unsigned const size_;
+        unsigned size_;
     public:
         rtv_descriptor_heap(device&, unsigned num_descriptors);       
-        rtv_descriptor_heap(device&, std::vector<resource>&);       
+        //rtv_descriptor_heap(device&, std::vector<resource>&);   
         auto increment_value() const noexcept { return increment_; }
         auto size() const noexcept { return size_; }        
+        raw::CpuDescriptorHandle get_handle(unsigned n) { 
+            assert(n < size_);
+            raw::cx::CpuDescriptorHandle handle{get()->GetCPUDescriptorHandleForHeapStart()};
+            handle.Offset(n,increment_value());
+            return handle;
+        }
     };
 
     class resource_descriptor_heap : public release_ptr<raw::DescriptorHeap> {
@@ -111,7 +141,7 @@ namespace version_12_0 {
         swap_chain(HWND, command_queue&, unsigned num_buffers); 
         resource& get_current_resource() { return frames_[get()->GetCurrentBackBufferIndex()]; }
         rtv_descriptor_heap& rtv_heap() { return rtv_heap_; }
-        void resize(int,int) { std::cout << "swapchain resizing..\n"; } // TODO implement
+        void resize(int,int);// { std::cout << "swapchain resizing..\n"; } // TODO implement
         std::pair<unsigned,unsigned> dimensions() const;
         unsigned frame_count() const;
     };    
@@ -166,15 +196,7 @@ namespace version_12_0 {
         graphics_command_list(device&, direct_command_allocator&);       
     };
      
-    class fence : public release_ptr<raw::Fence> {                
-    public:
-        fence(raw::Device&);
-        fence(device& dev) : fence(*dev) {}
-        fence(fence&& other) = default;
-        void synchronized_set(uint64_t new_value, command_queue&);
-        void synchronized_increment(command_queue&);
-    };
-    
+        
     class constant_buffer {
         resource buffer;                
         unsigned char* cbv_data_ptr{};
