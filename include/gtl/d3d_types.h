@@ -137,12 +137,15 @@ namespace version_12_0 {
     class swap_chain : public release_ptr<raw::SwapChain> {                
         std::vector<resource> frames_;        
         rtv_descriptor_heap rtv_heap_;
+        raw::Format format_;
     public:
         swap_chain(HWND, command_queue&, unsigned num_buffers); 
         resource& get_current_resource() { return frames_[get()->GetCurrentBackBufferIndex()]; }
         rtv_descriptor_heap& rtv_heap() { return rtv_heap_; }
-        void resize(int,int);// { std::cout << "swapchain resizing..\n"; } // TODO implement
+        D3D12_CPU_DESCRIPTOR_HANDLE get_current_handle() { return rtv_heap_.get_handle(get()->GetCurrentBackBufferIndex()); }
+        std::pair<int,int> resize(int,int);// { std::cout << "swapchain resizing..\n"; } // TODO implement
         std::pair<unsigned,unsigned> dimensions() const;
+        raw::Viewport viewport() const;
         unsigned frame_count() const;
     };    
     
@@ -196,7 +199,29 @@ namespace version_12_0 {
         graphics_command_list(device&, direct_command_allocator&);       
     };
      
+    class viewport : public raw::Viewport {
+    public:
+        viewport() = default;
+        viewport(viewport const&) = default;
+        viewport(raw::Viewport const& v) noexcept : raw::Viewport(v) {}
         
+        template <typename P>
+        bool contains(P const& point) const noexcept {
+            auto& x = point.first;
+            auto& y = point.second;
+            return (x >= TopLeftX && y >= TopLeftY 
+                                  && x < (TopLeftX + Width) 
+                                  && y < (TopLeftY + Height));             
+        } 
+        
+        template <typename T>
+        bool contains(T x, T y) const noexcept {
+            return (x >= TopLeftX && y >= TopLeftY 
+                                  && x < (TopLeftX + Width) 
+                                  && y < (TopLeftY + Height));             
+        } 
+    };
+
     class constant_buffer {
         resource buffer;                
         unsigned char* cbv_data_ptr{};
@@ -231,10 +256,12 @@ namespace version_12_0 {
         auto get_handle() const { 
             return buffer_view_->GetCPUDescriptorHandleForHeapStart();
         }        
+        void resize(int w, int h);
     };        
 
     class srv : public release_ptr<raw::Resource> {
     public:
+        srv& operator=(srv&& o) { this->reset(o.release()); return *this; }
         srv(device&,std::vector<raw::CpuDescriptorHandle>,command_queue&,std::wstring);
         srv(device&,std::vector<raw::CpuDescriptorHandle>,command_queue&,std::tuple<std::vector<uint32_t>,unsigned,unsigned>);
     };
@@ -249,9 +276,17 @@ namespace version_12_0 {
         rtv_descriptor_heap rtv_heap_;
         resource_descriptor_heap srv_heap_;
     public:
+        rtv_srv_texture2D& operator=(rtv_srv_texture2D&& o) { 
+            rtv_heap_.reset(o.rtv_heap_.release()); 
+            srv_heap_.reset(o.srv_heap_.release());             
+            this->reset(o.release()); 
+            return *this; 
+        }
         rtv_srv_texture2D(swap_chain&, unsigned num_buffers, d3d::tags::shader_visible);
-        rtv_srv_texture2D(swap_chain&, raw::Format, unsigned num_buffers, d3d::tags::shader_visible);
-
+        rtv_srv_texture2D(swap_chain&, raw::Format, unsigned num_buffers, d3d::tags::shader_visible);        
+        
+        void resize(int w, int h);
+        
         resource_descriptor_heap& srv_heap() { return srv_heap_; }
         rtv_descriptor_heap& rtv_heap() { return rtv_heap_; }
     };

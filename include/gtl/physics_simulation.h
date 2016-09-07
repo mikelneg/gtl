@@ -159,6 +159,11 @@ struct EntityInfo {
                 float x,y;
             };
 
+            struct drive_object_vec {
+                uint16_t id;
+                float x,y;
+            };
+
         }
 
         using generator = boost::variant<generators::static_box,
@@ -167,7 +172,8 @@ struct EntityInfo {
                                          generators::static_circle,
                                          generators::destroy_object_implode,
                                          generators::boost_object,
-                                         generators::boost_object_vec>;
+                                         generators::boost_object_vec,
+                                         generators::drive_object_vec>;
     }
 
     struct render_data {

@@ -8,9 +8,18 @@
 -----------------------------------------------------------------------------*/
 
 #include <array>
+#include <utility>
+
+#include <unordered_map>
+#include <string>
+#include <functional>
+#include <exception>
+#include <type_traits>
 
 #include <gtl/d3d_types.h>
+#include <gtl/d3d_helper_funcs.h>
 #include <gtl/camera.h>
+#include <gtl/keyboard_enum.h>
 
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 
@@ -24,8 +33,10 @@ namespace d3d {
         // texture
         // vertices    
         
-        static constexpr unsigned MAX_VERTS = 500;
-        static constexpr unsigned MAX_INDICES = 500;
+        constexpr static std::size_t frame_count = 3; // TODO place elsewhere..
+
+        static constexpr unsigned MAX_VERTS = 700;
+        static constexpr unsigned MAX_INDICES = 700;
 
         //struct vertex { float x,y; float u,v; uint32_t color; };
         using vertex_type = ImDrawVert;
@@ -46,17 +57,28 @@ namespace d3d {
 
         gtl::d3d::resource_descriptor_heap texture_descriptor_heap_;
         gtl::d3d::srv font_texture_;
-        
-
+                
         gtl::d3d::vertex_shader vshader_;        
         gtl::d3d::pixel_shader pshader_;
 
+        gtl::d3d::root_signature root_sig_;
         gtl::d3d::pipeline_state_object pso_;    
+
+        std::array<gtl::d3d::direct_command_allocator,frame_count> calloc_;        
+        std::array<gtl::d3d::graphics_command_list,frame_count> mutable clist_;        
                 
         gtl::d3d::sampler_descriptor_heap sampler_heap_;
         gtl::d3d::sampler sampler_;        
 
+        gtl::d3d::viewport viewport_;//{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f};
+        gtl::d3d::raw::ScissorRect scissor_;//{0,0,960,540};    
+
         unsigned mutable idx_count{},vtx_count{};
+
+        std::unordered_map<std::string,std::function<void()>> mutable callbacks_;
+
+        std::vector<char> mutable text_box_;
+        //std::string mutable text_box_;
 
         auto vertex_layout() {
             return std::vector<D3D12_INPUT_ELEMENT_DESC>{
@@ -142,11 +164,38 @@ namespace d3d {
         }
 
 
+        template <typename P>
+        auto get_font_bitmap(P const& point) {      
+            using std::get; 
+
+            ImGuiIO& io = ImGui::GetIO();
+            io.DisplaySize = ImVec2(static_cast<float>(get<0>(point)),static_cast<float>(get<1>(point))); // HACK get value from elsewhere..
+            io.RenderDrawListsFn = NULL;
+            io.Fonts->TexID = 0;                         
+            
+            unsigned char* pixels{};
+            int width{},height{},bytes_per_pixel{};
+            //io.Fonts->GetTexDataAsRGBA32(&pixels,&width,&height,&bytes_per_pixel);
+            io.Fonts->GetTexDataAsAlpha8(&pixels,&width,&height,&bytes_per_pixel);
+            std::vector<uint32_t> font_data; 
+            //width = 500;
+            //height = 500;
+            
+            font_data.reserve(width * height);
+            for (int m = 0; m < (height); ++m) {
+                for (int n = 0; n < (width); ++n) {                                            
+                    font_data.emplace_back(pixels[m * width + n]);                                        
+                }
+            }
+            auto p = font_data.data();
+            std::cout << "loaded..\n";
+            return std::make_tuple(std::move(font_data),static_cast<unsigned>(width),static_cast<unsigned>(height));
+        }
+
 
     public:      
         
-        imgui_adapter(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, 
-                      gtl::d3d::root_signature& rsig)
+        imgui_adapter(gtl::d3d::device& dev, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue)
             :   
             cbheap_{dev,3,gtl::d3d::tags::shader_visible{}},
             cbuffer_{{{dev,cbheap_.get_handle(0),sizeof(gtl::camera)},{dev,cbheap_.get_handle(1),sizeof(gtl::camera)},{dev,cbheap_.get_handle(2),sizeof(gtl::camera)}}},                        
@@ -164,56 +213,140 @@ namespace d3d {
             //font_texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue,                 
             //    L"D:\\images\\brutal.dds"
             //    }, 
-            font_texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, 
-                            [](){                                  
-                                ImGuiIO& io = ImGui::GetIO();
-                                io.DisplaySize = ImVec2(960.0f,540.0f);
-                                io.RenderDrawListsFn = NULL;
-                                io.Fonts->TexID = 0;                                
-            
-                                unsigned char* pixels{};
-                                int width{},height{},bytes_per_pixel{};
-                                //io.Fonts->GetTexDataAsRGBA32(&pixels,&width,&height,&bytes_per_pixel);
-                                io.Fonts->GetTexDataAsAlpha8(&pixels,&width,&height,&bytes_per_pixel);
-                                std::vector<uint32_t> font_data; 
-                                //width = 500;
-                                //height = 500;
-                                
-                                font_data.reserve(width * height);
-                                for (int m = 0; m < (height); ++m) {
-                                    for (int n = 0; n < (width); ++n) {                                            
-                                        font_data.emplace_back(pixels[m * width + n]);                                        
-                                    }
-                                }
-                                auto p = font_data.data();
-                                std::cout << "loaded..\n";
-                                return std::make_tuple(std::move(font_data),static_cast<unsigned>(width),static_cast<unsigned>(height));
-            }()},
+            font_texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, get_font_bitmap(swchain_.dimensions())},
             vshader_{L"imgui_vs.cso"},            
             pshader_{L"imgui_ps.cso"},                        
-            pso_{dev,pso_desc(dev,rsig, vshader_, pshader_)},
+            root_sig_{dev, vshader_},
+            pso_{dev,pso_desc(dev,root_sig_, vshader_, pshader_)},
+            calloc_{{{dev},{dev},{dev}}},
+            clist_{{{dev,calloc_[0],pso_},{dev,calloc_[1],pso_},{dev,calloc_[2],pso_}}},                            
             sampler_heap_{dev,1},            
-            sampler_{dev,sampler_desc(),sampler_heap_->GetCPUDescriptorHandleForHeapStart()}            
+            sampler_{dev,sampler_desc(),sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
+            viewport_{swchain_.viewport()},// {0.0f,0.0f,960.0f,540.0f,0.0f,1.0f},
+            scissor_{0,0,960,540} // HACK fixed values..                 
         {           
-            ImGui::NewFrame();
-            ImGui::Begin("Window Title Here");
-            ImGui::Text("Hello, world!");
-            ImGui::End();
-            ImGui::Render();            
-            update(0,ImGui::GetDrawData());             
-            update(1,ImGui::GetDrawData());             
-            update(2,ImGui::GetDrawData());             
+            auto& io = ImGui::GetIO();                        
 
-        }
+            io.KeyMap[ImGuiKey_Backspace] = keyboard::Backspace;
+            io.KeyMap[ImGuiKey_Enter] = keyboard::Enter;
+            //
+            //io.MousePos.x = 0.0f;
+            //io.MousePos.y = 0.0f;
+            //io.MouseDown[0] = false;
+            //io.MouseDrawCursor = false;            
+            //
+            //ImGui::NewFrame();
+            //ImGui::Begin("Window Title Here");            
+            //ImGui::Button("resize");
+            //ImGui::Text("Hello, world!");            
+            //ImGui::End();
+            //ImGui::Render();            
+            //update(0,ImGui::GetDrawData());             
+            //update(1,ImGui::GetDrawData());             
+            //update(2,ImGui::GetDrawData());        
+
             
+            std::string s{"hi there"};
+            text_box_.insert(end(text_box_),begin(s),end(s));
+            text_box_.resize(256);
+            //text_box_ = "hi there";
+        }
         
+        void insert_callback(std::string key, std::function<void()> func) {
+            if (callbacks_.count(key) == 0) {
+                callbacks_.insert(std::make_pair(std::move(key),std::move(func)));
+            } else {
+                throw std::runtime_error{"callback already registered for key"};
+            }
+        }
+        
+        void resize(int w, int h, gtl::d3d::command_queue& cqueue_) { // needs dev cqueue etc
+            font_texture_ = gtl::d3d::srv{get_device_from(cqueue_), {texture_descriptor_heap_.get_handle(0)}, cqueue_, get_font_bitmap(std::make_pair(w,h))};                            
+            viewport_.Width = static_cast<float>(w);
+            viewport_.Height = static_cast<float>(h);
+            scissor_ = gtl::d3d::raw::ScissorRect{0,0,w,h};            
+        }
+
+        void mouse_up(int x, int y) const {
+            auto& io = ImGui::GetIO();
+            io.MousePos.x = static_cast<float>(x);
+            io.MousePos.y = static_cast<float>(y);                        
+            io.MouseDown[0] = false;            
+        }
+
+        void mouse_down(int x, int y) const {
+            auto& io = ImGui::GetIO();
+            io.MousePos.x = static_cast<float>(x);
+            io.MousePos.y = static_cast<float>(y);                        
+            io.MouseDown[0] = true;               
+        }            
+
+        void mouse_move(int x, int y) const {
+            auto& io = ImGui::GetIO();
+            io.MousePos.x = static_cast<float>(x);
+            io.MousePos.y = static_cast<float>(y);                                 
+        }
+
+        void add_input_charcter(unsigned c) const {
+            auto& io = ImGui::GetIO();
+            io.AddInputCharacter(static_cast<ImWchar>(c));            
+        }
+
+        void key_up(gtl::keyboard::keyboard_enum k) const {
+            auto& io = ImGui::GetIO();
+            io.KeysDown[reinterpret_cast<std::underlying_type_t<decltype(k)>&>(k)] = false;
+        }
+
+        void key_down(gtl::keyboard::keyboard_enum k) const {
+            auto& io = ImGui::GetIO();
+            io.KeysDown[reinterpret_cast<std::underlying_type_t<decltype(k)>&>(k)] = true;
+        }
+
+        void imgui_render() const {
+            //auto& io = ImGui::GetIO();
+            //io.MouseDrawCursor = true;            
+
+            ImGui::NewFrame();          
+            
+            ImGui::Begin("Window Title Here");          
+
+            //ImGui::PushID(55);
+            if (ImGui::Button("resize")) {            
+                std::cout << "resize button pressed..\n"; 
+            }                 
+            //ImGui::PopID();
+            ImGui::PushID(44);
+            ImGui::InputText("input:",text_box_.data(),text_box_.size());
+            ImGui::PopID();
+            if (ImGui::IsItemActive()) {
+                callbacks_["steal_focus"]();
+            } else {
+                callbacks_["return_focus"]();
+            }            
+
+            ImGui::End();                               
+
+            ImGui::Render();                        
+        }
+
+//    ImVec2      MousePos;                   // Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)
+//    bool        MouseDown[5];               // Mouse buttons: left, right, middle + extras. ImGui itself mostly only uses left button (BeginPopupContext** are using right button). Others buttons allows us to track if the mouse is being used by your application + available to user as a convenience via IsMouse** API.
+//    float       MouseWheel;                 // Mouse wheel: 1 unit scrolls about 5 lines text.
+//    bool        MouseDrawCursor;            // Request ImGui to draw a mouse cursor for you (if you are on a platform without a mouse cursor).
+//    bool        KeyCtrl;                    // Keyboard modifier pressed: Control
+//    bool        KeyShift;                   // Keyboard modifier pressed: Shift
+//    bool        KeyAlt;                     // Keyboard modifier pressed: Alt
+//    bool        KeySuper;                   // Keyboard modifier pressed: Cmd/Super/Windows
+//    bool        KeysDown[512];              // Keyboard keys that are pressed (in whatever storage order you naturally have access to keyboard data)
+//    ImWchar     InputCharacters[16+1];      // List of characters input (translated by user from keypress+keyboard state). Fill using AddInputCharacter() helper.
+                      
 
         void update(unsigned idx, ImDrawData* draw_data) const 
         {
             // HACK no bounds checking currently..
             //idx_count = 0;      
-            //vtx_count = 0;
-            
+            //vtx_count = 0;            
+
             for (int n = 0, voffs = 0, ioffs = 0; n < draw_data->CmdListsCount; n++) {                
                 auto* cmd_list = draw_data->CmdLists[n];
                 vert_buffers_[idx].update(reinterpret_cast<char*>(&cmd_list->VtxBuffer[0]),
@@ -228,51 +361,50 @@ namespace d3d {
             vtx_count = draw_data->TotalVtxCount;
         }
 
+        
+        void draw(std::vector<ID3D12CommandList*>& v, unsigned idx, float, 
+                  D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle) const 
+        {                                             
+            imgui_render();
+            update(idx,ImGui::GetDrawData());                            
 
-        template <typename Camera> 
-        void operator()(unsigned idx, float, gtl::d3d::graphics_command_list& cl,
-                        gtl::d3d::raw::Viewport const& viewport,
-                        gtl::d3d::raw::ScissorRect const& scissor,                        
-                        Camera const&, // unused
-                        D3D12_CPU_DESCRIPTOR_HANDLE *rtv_handle,
-                        D3D12_CPU_DESCRIPTOR_HANDLE const* dbv_handle) const 
-        {         
+            calloc_[idx]->Reset();
+            clist_[idx]->Reset(calloc_[idx].get(),nullptr);      
+            clist_[idx]->SetGraphicsRootSignature(root_sig_.get());                           
+
+            //imgui_(idx, f, imgui_clist_[idx],viewport_,scissor_,camera,handles,std::addressof(dbview_));
+
             
-            ImGui::NewFrame();
-            ImGui::Begin("Window Title Here");
-            ImGui::Text("Hello, world!");
-            ImGui::End();
-            ImGui::Render();            
-            update(idx,ImGui::GetDrawData());             
             
 
-            cl->SetPipelineState(pso_.get());
+            clist_[idx]->SetPipelineState(pso_.get());
             auto heaps = { sampler_heap_.get(), texture_descriptor_heap_.get() };
-        	cl->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());               
-            //cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);            
-            //cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);            
-            cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);            
-            cl->SetGraphicsRootConstantBufferView(0, (cbuffer_[idx].resource())->GetGPUVirtualAddress());
-            cl->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
-            cl->SetGraphicsRootDescriptorTable(2, texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());                                                                                              
-            cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);                                                                     
+        	clist_[idx]->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());               
+            //clist_[idx]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);            
+            //clist_[idx]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);            
+            clist_[idx]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);            
+            clist_[idx]->SetGraphicsRootConstantBufferView(0, (cbuffer_[idx].resource())->GetGPUVirtualAddress());
+            clist_[idx]->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
+            clist_[idx]->SetGraphicsRootDescriptorTable(2, texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());                                                                                              
+            clist_[idx]->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport_), 0);                                                                     
             //
-            //cl->SetGraphicsRootShaderResourceView(4,cbuffer_[idx].resource()->GetGPUVirtualAddress());
-            //cl->SetGraphicsRootShaderResourceView(4,(vert_buffers_[idx].resource())->GetGPUVirtualAddress());
-            //cl->SetGraphicsRootShaderResourceView(6,(idx_buffers_[idx].resource())->GetGPUVirtualAddress());
+            //clist_[idx]->SetGraphicsRootShaderResourceView(4,cbuffer_[idx].resource()->GetGPUVirtualAddress());
+            //clist_[idx]->SetGraphicsRootShaderResourceView(4,(vert_buffers_[idx].resource())->GetGPUVirtualAddress());
+            //clist_[idx]->SetGraphicsRootShaderResourceView(6,(idx_buffers_[idx].resource())->GetGPUVirtualAddress());
                    
-            auto viewports = { std::addressof(viewport) };
-            cl->RSSetViewports(static_cast<unsigned>(viewports.size()),*viewports.begin());
+            auto viewports = { std::addressof(viewport_) };
+            clist_[idx]->RSSetViewports(static_cast<unsigned>(viewports.size()),*viewports.begin());
             
             //float blendvalues[]{f,f,f,f};
-            //cl->OMSetBlendFactor(blendvalues);
+            //clist_[idx]->OMSetBlendFactor(blendvalues);
 
-            cl->RSSetScissorRects(1,&scissor);
-            cl->OMSetRenderTargets(1, rtv_handle, false, dbv_handle);            
+        
+            clist_[idx]->RSSetScissorRects(1,&scissor_);
+            clist_[idx]->OMSetRenderTargets(1, std::addressof(rtv_handle), false, nullptr);            
                         
             
             
-            D3D12_VERTEX_BUFFER_VIEW v{vert_buffers_[idx].resource()->GetGPUVirtualAddress(),
+            D3D12_VERTEX_BUFFER_VIEW vview{vert_buffers_[idx].resource()->GetGPUVirtualAddress(),
                                        vtx_count * sizeof(vertex_type),
                                        sizeof(vertex_type)};
                     
@@ -280,11 +412,16 @@ namespace d3d {
                                         idx_count * sizeof(index_type),
                                         DXGI_FORMAT_R16_UINT};//DXGI_FORMAT_R32_UINT};
 
-            cl->IASetVertexBuffers(0, 1, &v); 
-            cl->IASetIndexBuffer(&ibv); 
+            clist_[idx]->IASetVertexBuffers(0, 1, &vview); 
+            clist_[idx]->IASetIndexBuffer(&ibv); 
 
-            //cl->DrawInstanced(6,1,0,0);            
-            cl->DrawIndexedInstanced(idx_count,1,0,0,0);
+            //clist_[idx]->DrawInstanced(6,1,0,0);            
+            clist_[idx]->DrawIndexedInstanced(idx_count,1,0,0,0);
+            
+
+            clist_[idx]->Close();
+
+            v.emplace_back(clist_[idx].get());
         }
        
 

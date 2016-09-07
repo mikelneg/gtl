@@ -19,6 +19,7 @@ class synchronization_object {
     
     gtl::d3d::command_queue& cqueue_;
     gtl::d3d::fence fence_;            
+    
     uint64_t last_set_value_{};    
     uint64_t const allowed_latency_{};
     uint64_t const cycle_length_{};
@@ -56,6 +57,70 @@ private:
     bool values_are_synchronized() const;
     void wait_for_values_to_sync_at(uint64_t new_value); // synchronizes
 };
+
+
+//////////
+
+class frame_synchronizer {  
+       
+    gtl::d3d::command_queue& cqueue_;        
+    gtl::d3d::fence fence_;            
+
+    uint64_t const tolerance_{};
+    uint64_t const cycle_length_{};
+
+    uint64_t mutable last_observed_value_{};
+    uint64_t last_set_value_{};                            
+    
+    class frame_index {
+        frame_synchronizer& parent_;
+        inline auto value() const { return parent_.periodic_value(); }
+        inline auto max_value() const { return parent_.max_value(); }
+        inline void submit() { parent_.submit(); }        
+        inline void synchronized_submit() { parent_.synchronized_submit(); }
+    public:
+        constexpr frame_index(frame_synchronizer& p) noexcept : parent_{p} {}
+        friend auto max_value(frame_index const& s) { return s.max_value(); }
+        friend auto value(frame_index const& s) { return s.value(); }
+        friend void submit(frame_index& s) { s.submit(); }            
+        friend void async_advance(frame_index& s) { s.submit(); }
+        friend void synchronized_submit(frame_index& s) { s.synchronized_submit(); }
+    };    
+
+    void submit(); // advances the value asynchronously
+    void synchronized_submit(); // advances the value synchronosouly                    
+    unsigned periodic_value() const;
+    unsigned max_value() const; 
+    bool synchronized() const;
+    void wait_for_values_to_sync_at(uint64_t new_value); // synchronizes        
+
+public:
+        
+    frame_synchronizer(gtl::d3d::command_queue&,                 
+                       unsigned max_index_value,    // maximum value in the set of cycled index values
+                       unsigned tolerance);         // maximum difference between submitted and completed frame indices
+
+    ~frame_synchronizer();  // synchronizes    
+
+    frame_synchronizer(frame_synchronizer&&) = delete;
+    frame_synchronizer& operator==(frame_synchronizer&&) = delete;             
+
+    template <typename F, typename G>
+    void operator()(F&& sync_call, G&& desync_call) {
+        if (synchronized()) {    
+            sync_call(frame_index{*this});
+        } else {             
+            desync_call();   
+        }        
+    } 
+
+    template <typename F>
+    void force_synchronize_then_call(F&& func) {
+        synchronized_submit();
+        func();
+    }
+};
+
 
 
 }} // namespaces

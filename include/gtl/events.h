@@ -27,13 +27,19 @@ namespace events {
         //
         struct dpad_pressed { float x,y; };
         
+        struct keep {};
+        struct revert {};
         struct none {};        
-        struct keydown { unsigned key; };
+        struct keydown { unsigned key; };        
         struct mouse_lbutton_down { int64_t coord; };
         struct mouse_rbutton_down { int64_t coord; };
+        
+        struct mouse_lbutton_up { int64_t coord; };
+        struct mouse_rbutton_up { int64_t coord; };
+        
         struct mouse_wheel_scroll { int wheel_delta; int key_state; int x,y; };
         struct mouse_click { std::string id; int x,y; };
-        struct mouse_at { int64_t coord; };   // TODO revisit: currently int64_t because windows uses hi and low bits to set both x and y coord..             
+        struct mouse_moved { int64_t coord; };   // TODO revisit: currently int64_t because windows uses hi and low bits to set both x and y coord..             
         struct mousedown {};
         struct exit_immediately {};
         struct exit_state { int exitcode; };
@@ -42,13 +48,17 @@ namespace events {
 
     using event_variant_base_ = boost::variant<done, dump_contents, focus_entity, exit_all, 
                                                none,
+                                               keep, 
+                                               revert,
                                                dpad_pressed,
-                                               keydown,
+                                               keydown,                                               
                                                mouse_lbutton_down,
-                                               mouse_rbutton_down,
+                                               mouse_rbutton_down,                                               
+                                               mouse_lbutton_up,
+                                               mouse_rbutton_up,                                               
                                                mouse_wheel_scroll,
                                                mouse_click,
-                                               mouse_at,
+                                               mouse_moved,
                                                mousedown,                                          
                                                exit_immediately,
                                                exit_state,

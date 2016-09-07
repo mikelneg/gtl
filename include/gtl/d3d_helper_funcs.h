@@ -62,7 +62,7 @@ namespace version_12_0 {
             win::throw_on_fail(t->GetDevice(__uuidof(device::type),expose_as_void_pp(dev))
                                ,__func__);                        
             return dev;
-        }                        
+        }                   
 }
 
 }} // namespaces

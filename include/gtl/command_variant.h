@@ -20,7 +20,7 @@ namespace gtl {
         struct get_swap_chain {};
         struct draw {};
 
-        struct resize {};
+        struct resize { int w,h; };
         struct handle {};                       
     }
 

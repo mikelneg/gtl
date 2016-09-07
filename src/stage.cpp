@@ -451,26 +451,26 @@ namespace gtl {
 
 void stage::present(gtl::d3d::swap_chain& swchain_, DXGI_PRESENT_PARAMETERS dxgi_pp)
 {          
-    frame_rate_limiter_(
-        [&swchain_, &dxgi_pp, this](){                 
-        draw_thread_.call_if_ready([&](auto& state_){
-                swchain_->Present1(0,0,std::addressof(dxgi_pp)); // potentially blocking 
-                consume(state_);        
-            },[](){});
-            //if (frame_state_.load(std::memory_order_acquire) == sig::frame_ready) {
-              //  frame_state_.store(sig::frame_consumed, std::memory_order_release);   
-             //   cv_.notify_one();
-            //}                
-        });    
+    frame_rate_limiter_([&swchain_, &dxgi_pp, this](){                 
+            
+        draw_thread_.if_available([&](auto& frame_state_){ // (auto& state_){  // consumes itself if not consumed..
+            swchain_->Present1(0,0,std::addressof(dxgi_pp)); // potentially blocking 
+            consume_and_notify(frame_state_);        
+        },[]{});                         
 
-    //frame_rate_limiter_(
-    //    [&swchain_, &dxgi_pp, this](){         
-    //        if (frame_state_.load(std::memory_order_acquire) == sig::frame_ready) {
-    //            swchain_->Present1(0,0,std::addressof(dxgi_pp)); // potentially blocking 
-    //            frame_state_.store(sig::frame_consumed, std::memory_order_release);   
-    //            cv_.notify_one();
-    //        }                
-    //    });    
+    });     
+}
+
+void stage::discard_frame_and_synchronize(gtl::d3d::swap_chain& swchain_)
+{
+    DXGI_PRESENT_PARAMETERS p{};
+
+//    auto waitable = swchain_->GetFrameLatencyWaitableObject();
+
+    swchain_->Present1(0,DXGI_PRESENT_RESTART,std::addressof(p));
+
+  //  WaitForSingleObject(waitable,INFINITE);
+
 }
 
 //void stage::event_handler(coro::pull_type& yield)

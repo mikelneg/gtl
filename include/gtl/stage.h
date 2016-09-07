@@ -15,6 +15,9 @@
 //#include <gtl/events.h>
 
 #include <gtl/event_handler.h>
+
+//#include <gtl/event_generator.h>
+
 #include <gtl/rate_limiter.h>
 
 #include <gtl/scene.h>
@@ -54,10 +57,12 @@ class stage {
     gtl::rate_limiter frame_rate_limiter_;
     std::vector<resource_object> buffered_resource_;
     std::vector<ID3D12CommandList*> draw_queue_;
-    gtl::d3d::synchronization_object synchronizer_;
+    //gtl::d3d::synchronization_object synchronizer_;
+    gtl::d3d::frame_synchronizer synchronizer_;
     
     vn::work_thread draw_thread_;
     gtl::coroutine::event_handler event_handler_; 
+    //gtl::event_generator<gtl::command_variant> event_generator_;
     
 public:
     
@@ -67,7 +72,9 @@ public:
     stage(stage&&) = delete;
     stage& operator=(stage&&) = delete;
     
-    void present(gtl::d3d::swap_chain&, DXGI_PRESENT_PARAMETERS);           
+    void present(gtl::d3d::swap_chain&, DXGI_PRESENT_PARAMETERS); 
+    void discard_frame_and_synchronize(gtl::d3d::swap_chain&);
+
     void dispatch_event(gtl::event const& e) { event_handler_.dispatch_event(e); }           
 };
 
@@ -83,55 +90,78 @@ stage::stage(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, u
             return tmp;
         }()},    
         synchronizer_{cqueue_, num_buffers-1, static_cast<unsigned>((std::max)(0,static_cast<int>(num_buffers)-2))},
-        draw_thread_{[&,this](auto& state_){ 
-                synchronizer_([&](auto& sync_index) {                        
-                    assert(value(sync_index) < buffered_resource_.size());
-                    resource_object& ro_ = buffered_resource_[value(sync_index)];        
-                    gtl::d3d::direct_command_allocator& calloc = ro_.calloc_;
-                    gtl::d3d::graphics_command_list& clb = ro_.clist_before_;
-                    gtl::d3d::graphics_command_list& cla = ro_.clist_after_;
-                    
-                    calloc->Reset();
-                    
-                    clb->Reset(calloc.get(), nullptr);            
+        draw_thread_{[&,this](auto& frame_state_){ 
+
+            synchronizer_([&](auto& frame_index) {                        
+                
+                auto const current_index = value(frame_index);
+
+                assert(current_index < buffered_resource_.size());
+
+                resource_object& ro_ = buffered_resource_[current_index];
+
+                gtl::d3d::direct_command_allocator& calloc = ro_.calloc_;
+                gtl::d3d::graphics_command_list& clb = ro_.clist_before_;
+                gtl::d3d::graphics_command_list& cla = ro_.clist_after_;
+                
+                calloc->Reset();
+                
+                clb->Reset(calloc.get(), nullptr);            
         
-                    clb->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                                      swchain_.get_current_resource(),                                           
-                                                      D3D12_RESOURCE_STATE_PRESENT,
-                                                      D3D12_RESOURCE_STATE_RENDER_TARGET));
+                clb->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+                                                  swchain_.get_current_resource(),                                           
+                                                  D3D12_RESOURCE_STATE_PRESENT,
+                                                  D3D12_RESOURCE_STATE_RENDER_TARGET));
 
-                    clb->Close();
-                    cla->Reset(calloc.get(), nullptr);            
+                clb->Close();
+                cla->Reset(calloc.get(), nullptr);            
 
-                    cla->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
-                                                      swchain_.get_current_resource(), 
-                                                      D3D12_RESOURCE_STATE_RENDER_TARGET, 
-                                                      D3D12_RESOURCE_STATE_PRESENT));            
-                    cla->Close();                                       
+                cla->ResourceBarrier(1, &CD3DX12_RESOURCE_BARRIER::Transition(
+                                                  swchain_.get_current_resource(), 
+                                                  D3D12_RESOURCE_STATE_RENDER_TARGET, 
+                                                  D3D12_RESOURCE_STATE_PRESENT));            
+                cla->Close();                                       
 
-                    draw_queue_.clear();
-                    draw_queue_.emplace_back(clb.get());                    
+                draw_queue_.clear();
+                draw_queue_.emplace_back(clb.get());                    
 
-                    // stage_.draw_callback(...); 
-                    scene_.draw_callback([&](auto f) { f(draw_queue_, static_cast<int>(value(sync_index)), 1.0f, swchain_.rtv_heap()); });
+                // stage_.draw_callback(...); 
+                //scene_.draw_callback([&](auto f) { f(draw_queue_, static_cast<int>(current_index), 1.0f, swchain_.rtv_heap()); });
+                scene_.draw_callback([&](auto f) { f(draw_queue_, static_cast<int>(current_index), 1.0f, swchain_.get_current_handle()); });
 
-                    draw_queue_.emplace_back(cla.get());    
+                draw_queue_.emplace_back(cla.get());    
 
-                    //            
-                    cqueue_->ExecuteCommandLists(static_cast<unsigned>(draw_queue_.size()),draw_queue_.data());                                                
-                    //synchronous_advance(sync_index);    // the command queue's update has to be sequenced before the frame is made ready                                   
-                    advance(sync_index); // HACK trying to figure out why this breaks..
-                    //frame_state_.store(sig::frame_ready,std::memory_order_release);                            
-                    
-                    available(state_);
-                    },[](){});
-        },[](){}},        
+                //            
+                cqueue_->ExecuteCommandLists(static_cast<unsigned>(draw_queue_.size()),draw_queue_.data());                                                
+                
+                async_advance(frame_index); // we advance the frame index..
+                make_available(frame_state_); // then we make the frame available                                    
+                
+            },[](){});
+
+        },[](){}},    
         event_handler_{[&](auto& yield){                        
             auto callback_handler_ = 
             vn::make_composite_function(
                 [&](gtl::commands::get_swap_chain, auto&& f) 
                 {
                     f(swchain_);            
+                },
+                [&](gtl::commands::resize r, auto&&) 
+                {
+                    draw_thread_.when_available([&](auto& frame_state_){                                                          
+                                            
+                        discard_frame_and_synchronize(swchain_);                        
+                                    
+                        auto dims = swchain_.resize(r.w, r.h);                        
+                        scene_.resize(dims.first,dims.second,cqueue_);
+
+                        //event_generator_.send_event(gtl::commands::resize);
+
+                        consume_and_notify(frame_state_); // screws up the present() 
+                    });  
+
+
                 },
                 [&](gtl::commands::get_some_resource, auto&& f) {
                     //std::unique_lock<std::mutex> lock_{draw_thread_mutex_};
@@ -148,6 +178,8 @@ stage::stage(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, u
 {            
         assert(num_buffers > 1);                            
         event_handler_.dispatch_event(gtl::events::none{});
+
+        //scene_.attach_listener(event_generator_);
 }
     
 
@@ -281,10 +313,10 @@ void stage::draw_thread_thread(SceneType const& scene_, gtl::d3d::device dev_, g
         //if (!quit_flag_.test_and_set(std::memory_order_acq_rel)) { return; }
         if (quit_flag_) { return; }
 
-        //synchronizer_([&buffered_resource_,&cqueue_,&swchain_,&main_scene_](auto& sync_index) {                        
-        synchronizer_([&](auto& sync_index) {                        
-            assert(value(sync_index) < buffered_resource_.size());
-            resource_object& ro_ = buffered_resource_[value(sync_index)];        
+        //synchronizer_([&buffered_resource_,&cqueue_,&swchain_,&main_scene_](auto& current_index) {                        
+        synchronizer_([&](auto& current_index) {                        
+            assert(value(current_index) < buffered_resource_.size());
+            resource_object& ro_ = buffered_resource_[value(current_index)];        
             gtl::d3d::direct_command_allocator& calloc = ro_.calloc_;
             gtl::d3d::graphics_command_list& clb = ro_.clist_before_;
             gtl::d3d::graphics_command_list& cla = ro_.clist_after_;
@@ -314,13 +346,13 @@ void stage::draw_thread_thread(SceneType const& scene_, gtl::d3d::device dev_, g
             v.emplace_back(clb.get());
             
             
-            scene_.draw_callback([&](auto f) { f(v, static_cast<int>(value(sync_index)), 1.0f, swchain_.rtv_heap()); });
+            scene_.draw_callback([&](auto f) { f(v, static_cast<int>(value(current_index)), 1.0f, swchain_.rtv_heap()); });
 
             v.emplace_back(cla.get());    
 
             //            
             cqueue_->ExecuteCommandLists(static_cast<unsigned>(v.size()),v.data());                                                
-            synchronous_advance(sync_index);    // the command queue's update has to be sequenced before the frame is made ready                                   
+            synchronous_advance(current_index);    // the command queue's update has to be sequenced before the frame is made ready                                   
             frame_state_.store(sig::frame_ready,std::memory_order_release);                            
        },[](){});
     }

@@ -50,7 +50,7 @@ namespace {
 
     template <typename T, typename U>
     static void simulation_thread(vn::swap_object<T>&, 
-                              gtl::swap_vector<U>& task_queue_,
+                              gtl::swap_vector<U>& physics_task_queue_,
                               std::atomic_flag& quit_);
 
 
@@ -328,6 +328,22 @@ namespace {
            return nullptr;
         }
 
+        b2Body* operator()(gtl::physics::generators::drive_object_vec const& o) const {
+            
+            auto range = entity_map_.equal_range(o.id);
+            if (range.first == range.second) { return nullptr; }
+                                 
+            b2Body* main_body_ = (range.first)->second;
+            main_body_->SetAwake(true);
+
+            main_body_->ApplyForce(b2Vec2{o.x,o.y},main_body_->GetWorldCenter(), true);
+            
+
+            //main_body_->ApplyLinearImpulse(b2Vec2{o.x,o.y},// o.x / 100.0f,o.y / 100.0f},
+            //                                      main_body_->GetWorldCenter(), true);
+                                                  //main_body_->GetPosition(), true);
+           return nullptr;
+        }
 
     };
 
@@ -348,7 +364,7 @@ namespace {
 
 template <typename T, typename U>
 static void simulation_thread(vn::swap_object<T>& rend_data_, 
-                              gtl::swap_vector<U>& task_queue_,
+                              gtl::swap_vector<U>& physics_task_queue_,
                               //std::vector<physics::generator> generators_,
                               std::atomic_flag& quit_) 
 {    
@@ -360,8 +376,8 @@ static void simulation_thread(vn::swap_object<T>& rend_data_,
        
     box2d_generator_visitor visitor_{world_,map_};
 
-    auto task_local_ = task_queue_.make_vector();
-    task_queue_.swap_out(task_local_);
+    auto task_local_ = physics_task_queue_.make_vector();
+    physics_task_queue_.swap_out(task_local_);
 
     for (auto&& e : task_local_) {
         apply_visitor(visitor_,e);
@@ -503,7 +519,7 @@ static void simulation_thread(vn::swap_object<T>& rend_data_,
         rend_data_.swap_in(local_rend_data_);
 
         task_local_.clear();
-        task_queue_.swap_out(task_local_);
+        physics_task_queue_.swap_out(task_local_);
         for (auto&& e : task_local_) {
             apply_visitor(visitor_,e);
         }            

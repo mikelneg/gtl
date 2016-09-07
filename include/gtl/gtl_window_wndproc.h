@@ -71,12 +71,25 @@ namespace detail {
             case WM_KEYUP:  
             {}  break;                                   
 
-            case WM_KEYDOWN:
+            case WM_CHAR:
             {   if ((HIWORD(lparam) & KF_REPEAT) < 1) { // block auto-repeat                    
-                    handler_ref(hwnd).emplace_back(keydown{static_cast<unsigned>(wparam)});    
+                    switch(wparam) {    
+                    case keyboard::Backspace :
+                    case keyboard::Enter :
+                          handler_ref(hwnd).emplace_back(keydown{static_cast<unsigned>(wparam)});    
+                          break;
+                    default:
+                          handler_ref(hwnd).emplace_back(keydown{static_cast<unsigned>(wparam)});   
+                          break;
+                    }
                 }     
                 return 0;
             }   break;            
+
+            case WM_KEYDOWN:
+            {   
+            }   break;            
+
 
             case WM_SYSKEYDOWN: 
             {}  break;            
@@ -107,15 +120,28 @@ namespace detail {
                 return 0; 
             }  break;            
 
+            case WM_LBUTTONUP: 
+            {
+                handler_ref(hwnd).emplace_back(gtl::events::mouse_lbutton_up{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+                //The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the upper-left corner of the client area.
+                //The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the upper-left corner of the client area.
+                return 0; 
+            }  break;            
+            
+            case WM_RBUTTONUP: 
+            {
+                handler_ref(hwnd).emplace_back(gtl::events::mouse_rbutton_up{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+                //The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the upper-left corner of the client area.
+                //The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the upper-left corner of the client area.
+                return 0; 
+            }  break;            
+
             case WM_CAPTURECHANGED: 
             {   return 0;            
             }   break; 
-
-            case WM_LBUTTONUP: 
-            {}  break;
-    
+           
             case WM_MOUSEMOVE:  
-            {   handler_ref(hwnd).emplace_back(gtl::events::mouse_at{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+            {   handler_ref(hwnd).emplace_back(gtl::events::mouse_moved{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
                 return 0;
             }   break; 
             
@@ -161,7 +187,7 @@ namespace detail {
             }   break;
 
             case WM_SIZE: 
-            {}  break;    
+            {}  std::cout <<  0; break;    
 
             case WM_MENUCHAR: 
             {}  return MAKELRESULT(0, MNC_CLOSE); // disable beep on alt-enter     

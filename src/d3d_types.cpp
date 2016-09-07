@@ -85,8 +85,8 @@ namespace version_12_0 {
             desc.BufferDesc.Width = width;
             desc.BufferDesc.Height = height;   // Rumor suggests this must be a multiple of 4..     
             desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;        
-            desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;        
-            //desc.BufferDesc.Scaling = DXGI_MODE_SCALING_CENTERED;        
+            //desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;        
+            desc.BufferDesc.Scaling = DXGI_MODE_SCALING_CENTERED;                    
             desc.OutputWindow = hwnd;        
             desc.BufferCount = num_buffers;    // Required to be 2-16
             desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; 
@@ -234,7 +234,7 @@ namespace version_12_0 {
         get()->SetMaximumFrameLatency(num_buffers_);        
     }
 
-    void swap_chain::resize(int new_width, int new_height) 
+    std::pair<int,int> swap_chain::resize(int new_width, int new_height) 
     {        
         // first release the current buffers
         auto sz = frame_count();
@@ -243,13 +243,80 @@ namespace version_12_0 {
         // then resize
         
         // HACK I should maintain old dimensions, verify new size, etc..
+        
+        DXGI_SWAP_CHAIN_DESC swdesc;
+        get()->GetDesc(&swdesc);
+
+
+        auto& hwnd = swdesc.OutputWindow;
+
+        RECT client_rect_{};
+        RECT window_rect_{};
+        
+        GetClientRect(hwnd, &client_rect_);
+        GetWindowRect(hwnd, &window_rect_);                
+                               
+        std::cout << "old client width == " << client_rect_.right - client_rect_.left << "\n";
+        std::cout << "old window width == " << window_rect_.right - window_rect_.left << "\n";
+
+
+        DXGI_MODE_DESC new_desc = swdesc.BufferDesc;
+        new_desc.Width = new_width;
+        new_desc.Height = new_height;
+                
+        this->get()->ResizeTarget(&new_desc);
+
+        GetClientRect(hwnd, &client_rect_);
+        GetWindowRect(hwnd, &window_rect_);                
+                               
+        std::cout << "new client width == " << client_rect_.right - client_rect_.left << "\n";
+        std::cout << "new window width == " << window_rect_.right - window_rect_.left << "\n";
+
+        //GetClientRect(hwnd, &client_rect_);
+        //GetWindowRect(hwnd, &window_rect_);                
+        //                       
+        //std::cout << "mid client width == " << client_rect_.right - client_rect_.left << "\n";
+        //std::cout << "mid window width == " << window_rect_.right - window_rect_.left << "\n";
+        //
+        //
+        //int dx = static_cast<int>((new_width - client_rect_.right) / 2);
+        //int dy = static_cast<int>((new_height - client_rect_.bottom) / 2);
+        //
+        //InflateRect(&window_rect_, dx, dy);
+        //        
+        //new_desc.Width = window_rect_.right - window_rect_.left;
+        //new_desc.Height = window_rect_.bottom - window_rect_.top;        
+        //       
+        //this->get()->ResizeTarget(&new_desc);
+        //
+        //GetClientRect(hwnd, &client_rect_);
+        //GetWindowRect(hwnd, &window_rect_);        
+        //
+        //std::cout << "new client width == " << client_rect_.right - client_rect_.left << "\n";
+        //std::cout << "new window width == " << window_rect_.right - window_rect_.left << "\n";
+
+       // waitable = get()->GetFrameLatencyWaitableObject();
+       // get()->Present1(0,DXGI_PRESENT_RESTART,std::addressof(p));
+       // WaitForSingleObject(waitable,INFINITE);       
+        
+//        DXGI_PRESENT_PARAMETERS p{};
+//        auto waitable = get()->GetFrameLatencyWaitableObject();
+//        get()->Present1(0,DXGI_PRESENT_RESTART,std::addressof(p));
+//        WaitForSingleObject(waitable,INFINITE);                     
+
 
         this->get()->ResizeBuffers(0, // maintains current buffer count
-                             new_width,new_height,
+                             0,0, // uses client area dimensions
                              DXGI_FORMAT_UNKNOWN, // maintains current buffer format
                              DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT // HACK verify this (it raises issues surrounding fullscreen/non-fullscreen)
                              );
         
+        
+  //      waitable = get()->GetFrameLatencyWaitableObject();
+  //      get()->Present1(0,DXGI_PRESENT_RESTART,std::addressof(p));
+  //      WaitForSingleObject(waitable,INFINITE);       
+
+
         // then repopulate rtv_heap
         auto dev_ = get_device_from(*this);
         for (unsigned i = 0; i < frames_.size(); ++i) {
@@ -260,6 +327,8 @@ namespace version_12_0 {
             set_debug_name(*(frames_[i].get()),L"swchain");                       
 	    }          
 
+
+        return std::make_pair(client_rect_.right - client_rect_.left, client_rect_.bottom - client_rect_.top);
     }
 
     std::pair<unsigned,unsigned> swap_chain::dimensions() const 
@@ -267,6 +336,15 @@ namespace version_12_0 {
         raw::SwapChainDesc desc;        
         win::throw_on_fail(get()->GetDesc(&desc), __func__);    
         return std::make_pair(static_cast<unsigned>(desc.BufferDesc.Width),static_cast<unsigned>(desc.BufferDesc.Height));                            
+    }
+
+    raw::Viewport swap_chain::viewport() const 
+    {
+        raw::SwapChainDesc desc;        
+        win::throw_on_fail(get()->GetDesc(&desc), __func__);    
+        return raw::Viewport{0.0f,0.0f,static_cast<float>(desc.BufferDesc.Width),
+                                       static_cast<float>(desc.BufferDesc.Height),
+                                       0.0f, 1.0f};     // HACK using fixed values; should be determined..
     }
     
     unsigned swap_chain::frame_count() const 
@@ -754,7 +832,7 @@ cqueue_.synchronize();
     {
         auto dev = get_device(swchain);       
         auto dims = swchain.dimensions();
-        auto frame_count = swchain.frame_count();
+        //auto frame_count = swchain.frame_count(); 
 
         raw::cx::ResourceDesc desc{D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0,
                                    static_cast<UINT>(dims.first), 
@@ -786,6 +864,46 @@ cqueue_.synchronize();
         dev->CreateDepthStencilView(get(),&dsv_desc,buffer_view_->GetCPUDescriptorHandleForHeapStart());            
         set_debug_name(*get(),L"depth_stencil");               
     }  
+
+    void depth_stencil_buffer::resize(int w, int h) {
+        
+        auto desc = this->get()->GetDesc();
+        auto dev = get_device_from(this->get());               
+        
+        desc.Height = h;
+        desc.Width = w;
+
+        //raw::cx::ResourceDesc desc{D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0,
+        //                           static_cast<UINT>(w), 
+        //                           static_cast<UINT>(h),
+        //                           1, 
+        //                           1, // mip levels
+        //                           DXGI_FORMAT_D32_FLOAT, 1, 0, 
+        //                           D3D12_TEXTURE_LAYOUT_UNKNOWN,
+        //                           D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE};
+
+        D3D12_CLEAR_VALUE clear_value;
+        clear_value.Format = desc.Format;
+        clear_value.DepthStencil.Depth = 1.0f;
+        clear_value.DepthStencil.Stencil = 0;
+        
+        raw::DsvDesc dsv_desc{};        
+        dsv_desc.Format = desc.Format;
+        dsv_desc.ViewDimension = D3D12_DSV_DIMENSION_TEXTURE2D;   
+        dsv_desc.Flags = D3D12_DSV_FLAG_NONE;
+
+        win::throw_on_fail(dev->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
+                                                       D3D12_HEAP_FLAG_NONE, 
+                                                       &desc,
+                                                       D3D12_RESOURCE_STATE_DEPTH_WRITE, 
+                                                       &clear_value,
+                                                       __uuidof(resource::type),
+                                                       expose_as_void_pp(*this)), __func__);
+                                    
+        dev->CreateDepthStencilView(get(),&dsv_desc,buffer_view_->GetCPUDescriptorHandleForHeapStart());            
+        set_debug_name(*get(),L"depth_stencil");               
+
+    }
 
     pipeline_state_object::pipeline_state_object(device& dev, root_signature& rsig, 
                                                  vertex_shader& vs, pixel_shader& ps)
@@ -1056,6 +1174,7 @@ cqueue_.synchronize();
         //set_debug_name(*get(),L"samplers");               
     }
 
+
     rtv_srv_texture2D::rtv_srv_texture2D(swap_chain& swchain, raw::Format format, unsigned num_buffers, d3d::tags::shader_visible)
         :   rtv_heap_{ get_device_from(swchain), num_buffers},
             srv_heap_{ get_device_from(swchain), 1, d3d::tags::shader_visible{}}
@@ -1108,6 +1227,55 @@ cqueue_.synchronize();
             rtv_handle.Offset(1, rtv_heap_.increment_value());
             
         }
+
+        set_debug_name(*get(), L"rtv_srv_tx2d");
+
+    }
+
+    void rtv_srv_texture2D::resize(int w, int h) {
+        auto desc = this->get()->GetDesc();
+        auto dev = get_device_from(this->get());
+ 
+        desc.Height = h;
+        desc.Width = w;        
+
+        auto const& num_buffers = desc.DepthOrArraySize;
+
+        D3D12_CLEAR_VALUE clear_value_{};
+        clear_value_.Format = desc.Format;
+
+        dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
+                                                   D3D12_HEAP_FLAG_NONE,                                    
+                                                   &desc,
+                                                   D3D12_RESOURCE_STATE_RENDER_TARGET,
+                                                   std::addressof(clear_value_),
+                                                   __uuidof(type),
+                                                   expose_as_void_pp(*this));
+
+        raw::cx::CpuDescriptorHandle rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
+        raw::cx::CpuDescriptorHandle srv_handle{srv_heap_->GetCPUDescriptorHandleForHeapStart()};                    
+
+        dev->CreateShaderResourceView(get(), nullptr, srv_handle);     
+
+        raw::RenderTargetViewDesc rtv_desc{};
+
+        rtv_desc.Format = desc.Format;
+        rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
+        rtv_desc.Texture2DArray.ArraySize = 1; // not num_buffers.. 
+        rtv_desc.Texture2DArray.MipSlice = 0;
+        //rtv_desc.Texture2DArray.FirstArraySlice = 0;        
+
+        auto calc = []( UINT MipSlice, UINT ArraySlice, UINT PlaneSlice, UINT MipLevels, UINT ArraySize )
+                        { 
+                            return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize; 
+                        };
+
+        for (UINT i = 0; i < num_buffers; ++i) {            
+            rtv_desc.Texture2DArray.FirstArraySlice = i;
+            dev->CreateRenderTargetView(get(), &rtv_desc, rtv_handle);
+            rtv_handle.Offset(1, rtv_heap_.increment_value());
+            
+        }        
 
         set_debug_name(*get(), L"rtv_srv_tx2d");
 

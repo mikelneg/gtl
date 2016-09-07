@@ -66,7 +66,7 @@ namespace transitions {
                 pshader_{L"D:\\Code\\D3D12_migration\\D3D12_migration\\Debug\\x64\\skybox_ps.cso"},
                 root_sig_{dev_, vshader_},
                 cbheap_{{{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}}}},                                                     
-                cbuf_{},                
+                cbuf_{960.0f/540.0f},                
                 cbuffer_{{{dev_,cbheap_[0],sizeof(cbuf_)},{dev_,cbheap_[1],sizeof(cbuf_)},{dev_,cbheap_[2],sizeof(cbuf_)}}},                        
                 pso_{dev_, root_sig_, vshader_, pshader_},
                 calloc_{{{dev_},{dev_},{dev_}}},
@@ -95,7 +95,7 @@ namespace transitions {
         ~twinkle_effect() { std::cout << "~twinkle_effect()\n"; }
 
         std::vector<ID3D12CommandList*> draw(int idx, float f, gtl::d3d::rtv_descriptor_heap& rtv_heap_) const {            
-            update(cbuf_);
+            update(cbuf_,viewport_.Width/viewport_.Height);
             cbuffer_[idx].update(reinterpret_cast<const char*>(&cbuf_),sizeof(cbuf_));
             //            
             std::vector<ID3D12CommandList*> v;
@@ -145,7 +145,7 @@ namespace transitions {
         }
         
         void draw(std::vector<ID3D12CommandList*>& v, int idx, float f, gtl::d3d::rtv_descriptor_heap& rtv_heap_) const {            
-            update(cbuf_);
+            update(cbuf_,viewport_.Width/viewport_.Height);
             cbuffer_[idx].update(reinterpret_cast<const char*>(&cbuf_),sizeof(cbuf_));
             //            
             
