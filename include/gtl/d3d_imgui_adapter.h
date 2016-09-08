@@ -21,14 +21,16 @@
 #include <gtl/camera.h>
 #include <gtl/keyboard_enum.h>
 
-#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+//#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+//
+//#include <imgui.h>
 
-#include <imgui.h>
+#include <gtl/imgui_adapter.h>
 
 
 namespace gtl {
 namespace d3d {
-    
+      
     class imgui_adapter {
         // texture
         // vertices    
@@ -73,11 +75,17 @@ namespace d3d {
         gtl::d3d::viewport viewport_;//{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f};
         gtl::d3d::raw::ScissorRect scissor_;//{0,0,960,540};    
 
-        unsigned mutable idx_count{},vtx_count{};
 
-        std::unordered_map<std::string,std::function<void()>> mutable callbacks_;
+        gtl::imgui_adapter& imgui_adapter_;
+        gtl::imgui_adapter::imgui_data mutable local_imgui_data_;
 
-        std::vector<char> mutable text_box_;
+
+        std::array<bool,frame_count> mutable imgui_dirty_flags_;
+        //unsigned mutable idx_count{},vtx_count{};
+
+        //std::unordered_map<std::string,std::function<void()>> mutable callbacks_;
+
+        
         //std::string mutable text_box_;
 
         auto vertex_layout() {
@@ -164,38 +172,38 @@ namespace d3d {
         }
 
 
-        template <typename P>
-        auto get_font_bitmap(P const& point) {      
-            using std::get; 
-
-            ImGuiIO& io = ImGui::GetIO();
-            io.DisplaySize = ImVec2(static_cast<float>(get<0>(point)),static_cast<float>(get<1>(point))); // HACK get value from elsewhere..
-            io.RenderDrawListsFn = NULL;
-            io.Fonts->TexID = 0;                         
-            
-            unsigned char* pixels{};
-            int width{},height{},bytes_per_pixel{};
-            //io.Fonts->GetTexDataAsRGBA32(&pixels,&width,&height,&bytes_per_pixel);
-            io.Fonts->GetTexDataAsAlpha8(&pixels,&width,&height,&bytes_per_pixel);
-            std::vector<uint32_t> font_data; 
-            //width = 500;
-            //height = 500;
-            
-            font_data.reserve(width * height);
-            for (int m = 0; m < (height); ++m) {
-                for (int n = 0; n < (width); ++n) {                                            
-                    font_data.emplace_back(pixels[m * width + n]);                                        
-                }
-            }
-            auto p = font_data.data();
-            std::cout << "loaded..\n";
-            return std::make_tuple(std::move(font_data),static_cast<unsigned>(width),static_cast<unsigned>(height));
-        }
+        //template <typename P>
+        //auto get_font_bitmap(P const& point) {      
+        //    using std::get; 
+        //
+        //    ImGuiIO& io = ImGui::GetIO();
+        //    io.DisplaySize = ImVec2(static_cast<float>(get<0>(point)),static_cast<float>(get<1>(point))); // HACK get value from elsewhere..
+        //    io.RenderDrawListsFn = NULL;
+        //    io.Fonts->TexID = 0;                         
+        //    
+        //    unsigned char* pixels{};
+        //    int width{},height{},bytes_per_pixel{};
+        //    //io.Fonts->GetTexDataAsRGBA32(&pixels,&width,&height,&bytes_per_pixel);
+        //    io.Fonts->GetTexDataAsAlpha8(&pixels,&width,&height,&bytes_per_pixel);
+        //    std::vector<uint32_t> font_data; 
+        //    //width = 500;
+        //    //height = 500;
+        //    
+        //    font_data.reserve(width * height);
+        //    for (int m = 0; m < (height); ++m) {
+        //        for (int n = 0; n < (width); ++n) {                                            
+        //            font_data.emplace_back(pixels[m * width + n]);                                        
+        //        }
+        //    }
+        //    auto p = font_data.data();
+        //    std::cout << "loaded..\n";
+        //    return std::make_tuple(std::move(font_data),static_cast<unsigned>(width),static_cast<unsigned>(height));
+        //}
 
 
     public:      
         
-        imgui_adapter(gtl::d3d::device& dev, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue)
+        imgui_adapter(gtl::d3d::device& dev, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue, gtl::imgui_adapter& imgui_)
             :   
             cbheap_{dev,3,gtl::d3d::tags::shader_visible{}},
             cbuffer_{{{dev,cbheap_.get_handle(0),sizeof(gtl::camera)},{dev,cbheap_.get_handle(1),sizeof(gtl::camera)},{dev,cbheap_.get_handle(2),sizeof(gtl::camera)}}},                        
@@ -213,7 +221,7 @@ namespace d3d {
             //font_texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue,                 
             //    L"D:\\images\\brutal.dds"
             //    }, 
-            font_texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, get_font_bitmap(swchain_.dimensions())},
+            font_texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, gtl::imgui_adapter::get_font_bitmap(swchain_.dimensions())},
             vshader_{L"imgui_vs.cso"},            
             pshader_{L"imgui_ps.cso"},                        
             root_sig_{dev, vshader_},
@@ -223,111 +231,92 @@ namespace d3d {
             sampler_heap_{dev,1},            
             sampler_{dev,sampler_desc(),sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
             viewport_{swchain_.viewport()},// {0.0f,0.0f,960.0f,540.0f,0.0f,1.0f},
-            scissor_{0,0,960,540} // HACK fixed values..                 
-        {           
-            auto& io = ImGui::GetIO();                        
-
-            io.KeyMap[ImGuiKey_Backspace] = keyboard::Backspace;
-            io.KeyMap[ImGuiKey_Enter] = keyboard::Enter;
-            //
-            //io.MousePos.x = 0.0f;
-            //io.MousePos.y = 0.0f;
-            //io.MouseDown[0] = false;
-            //io.MouseDrawCursor = false;            
-            //
-            //ImGui::NewFrame();
-            //ImGui::Begin("Window Title Here");            
-            //ImGui::Button("resize");
-            //ImGui::Text("Hello, world!");            
-            //ImGui::End();
-            //ImGui::Render();            
-            //update(0,ImGui::GetDrawData());             
-            //update(1,ImGui::GetDrawData());             
-            //update(2,ImGui::GetDrawData());        
-
-            
-            std::string s{"hi there"};
-            text_box_.insert(end(text_box_),begin(s),end(s));
-            text_box_.resize(256);
-            //text_box_ = "hi there";
+            scissor_{0,0,960,540}, // HACK fixed values..                 
+            imgui_adapter_{imgui_}
+        {
+            imgui_dirty_flags_.fill(true);
+            update(0);
+            update(1);
+            update(2);
         }
         
-        void insert_callback(std::string key, std::function<void()> func) {
-            if (callbacks_.count(key) == 0) {
-                callbacks_.insert(std::make_pair(std::move(key),std::move(func)));
-            } else {
-                throw std::runtime_error{"callback already registered for key"};
-            }
-        }
+        //void insert_callback(std::string key, std::function<void()> func) {
+        //    if (callbacks_.count(key) == 0) {
+        //        callbacks_.insert(std::make_pair(std::move(key),std::move(func)));
+        //    } else {
+        //        throw std::runtime_error{"callback already registered for key"};
+        //    }
+        //}
         
         void resize(int w, int h, gtl::d3d::command_queue& cqueue_) { // needs dev cqueue etc
-            font_texture_ = gtl::d3d::srv{get_device_from(cqueue_), {texture_descriptor_heap_.get_handle(0)}, cqueue_, get_font_bitmap(std::make_pair(w,h))};                            
+            font_texture_ = gtl::d3d::srv{get_device_from(cqueue_), {texture_descriptor_heap_.get_handle(0)}, cqueue_, gtl::imgui_adapter::get_font_bitmap(std::make_pair(w,h))};                            
             viewport_.Width = static_cast<float>(w);
             viewport_.Height = static_cast<float>(h);
             scissor_ = gtl::d3d::raw::ScissorRect{0,0,w,h};            
         }
 
-        void mouse_up(int x, int y) const {
-            auto& io = ImGui::GetIO();
-            io.MousePos.x = static_cast<float>(x);
-            io.MousePos.y = static_cast<float>(y);                        
-            io.MouseDown[0] = false;            
-        }
-
-        void mouse_down(int x, int y) const {
-            auto& io = ImGui::GetIO();
-            io.MousePos.x = static_cast<float>(x);
-            io.MousePos.y = static_cast<float>(y);                        
-            io.MouseDown[0] = true;               
-        }            
-
-        void mouse_move(int x, int y) const {
-            auto& io = ImGui::GetIO();
-            io.MousePos.x = static_cast<float>(x);
-            io.MousePos.y = static_cast<float>(y);                                 
-        }
-
-        void add_input_charcter(unsigned c) const {
-            auto& io = ImGui::GetIO();
-            io.AddInputCharacter(static_cast<ImWchar>(c));            
-        }
-
-        void key_up(gtl::keyboard::keyboard_enum k) const {
-            auto& io = ImGui::GetIO();
-            io.KeysDown[reinterpret_cast<std::underlying_type_t<decltype(k)>&>(k)] = false;
-        }
-
-        void key_down(gtl::keyboard::keyboard_enum k) const {
-            auto& io = ImGui::GetIO();
-            io.KeysDown[reinterpret_cast<std::underlying_type_t<decltype(k)>&>(k)] = true;
-        }
-
-        void imgui_render() const {
-            //auto& io = ImGui::GetIO();
-            //io.MouseDrawCursor = true;            
-
-            ImGui::NewFrame();          
-            
-            ImGui::Begin("Window Title Here");          
-
-            //ImGui::PushID(55);
-            if (ImGui::Button("resize")) {            
-                std::cout << "resize button pressed..\n"; 
-            }                 
-            //ImGui::PopID();
-            ImGui::PushID(44);
-            ImGui::InputText("input:",text_box_.data(),text_box_.size());
-            ImGui::PopID();
-            if (ImGui::IsItemActive()) {
-                callbacks_["steal_focus"]();
-            } else {
-                callbacks_["return_focus"]();
-            }            
-
-            ImGui::End();                               
-
-            ImGui::Render();                        
-        }
+        //void mouse_up(int x, int y) const {
+        //    auto& io = ImGui::GetIO();
+        //    io.MousePos.x = static_cast<float>(x);
+        //    io.MousePos.y = static_cast<float>(y);                        
+        //    io.MouseDown[0] = false;            
+        //}
+        //
+        //void mouse_down(int x, int y) const {
+        //    auto& io = ImGui::GetIO();
+        //    io.MousePos.x = static_cast<float>(x);
+        //    io.MousePos.y = static_cast<float>(y);                        
+        //    io.MouseDown[0] = true;               
+        //}            
+        //
+        //void mouse_move(int x, int y) const {
+        //    auto& io = ImGui::GetIO();
+        //    io.MousePos.x = static_cast<float>(x);
+        //    io.MousePos.y = static_cast<float>(y);                                 
+        //}
+        //
+        //void add_input_charcter(unsigned c) const {
+        //    auto& io = ImGui::GetIO();
+        //    io.AddInputCharacter(static_cast<ImWchar>(c));            
+        //}
+        //
+        //void key_up(gtl::keyboard::keyboard_enum k) const {
+        //    auto& io = ImGui::GetIO();
+        //    io.KeysDown[reinterpret_cast<std::underlying_type_t<decltype(k)>&>(k)] = false;
+        //}
+        //
+        //void key_down(gtl::keyboard::keyboard_enum k) const {
+        //    auto& io = ImGui::GetIO();
+        //    io.KeysDown[reinterpret_cast<std::underlying_type_t<decltype(k)>&>(k)] = true;
+        //}
+        //
+        //void imgui_render() const {
+        //    //auto& io = ImGui::GetIO();
+        //    //io.MouseDrawCursor = true;            
+        //
+        //    ImGui::NewFrame();          
+        //    
+        //    ImGui::Begin("Window Title Here");          
+        //
+        //    //ImGui::PushID(55);
+        //    if (ImGui::Button("resize")) {            
+        //        std::cout << "resize button pressed..\n"; 
+        //    }                 
+        //    //ImGui::PopID();
+        //    ImGui::PushID(44);
+        //    ImGui::InputText("input:",text_box_.data(),text_box_.size());
+        //    ImGui::PopID();
+        //    if (ImGui::IsItemActive()) {
+        //        callbacks_["steal_focus"]();
+        //    } else {
+        //        callbacks_["return_focus"]();
+        //    }            
+        //    ImGui::InputText("other:",other_box_.data(),other_box_.size());
+        //
+        //    ImGui::End();                               
+        //
+        //    ImGui::Render();                  // TODO implement copy-free buffer updating (instead of swap_object<vector> or whatever)      
+        //}
 
 //    ImVec2      MousePos;                   // Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)
 //    bool        MouseDown[5];               // Mouse buttons: left, right, middle + extras. ImGui itself mostly only uses left button (BeginPopupContext** are using right button). Others buttons allows us to track if the mouse is being used by your application + available to user as a convenience via IsMouse** API.
@@ -341,32 +330,42 @@ namespace d3d {
 //    ImWchar     InputCharacters[16+1];      // List of characters input (translated by user from keypress+keyboard state). Fill using AddInputCharacter() helper.
                       
 
-        void update(unsigned idx, ImDrawData* draw_data) const 
+        void update(unsigned idx) const 
         {
-            // HACK no bounds checking currently..
-            //idx_count = 0;      
-            //vtx_count = 0;            
-
-            for (int n = 0, voffs = 0, ioffs = 0; n < draw_data->CmdListsCount; n++) {                
-                auto* cmd_list = draw_data->CmdLists[n];
-                vert_buffers_[idx].update(reinterpret_cast<char*>(&cmd_list->VtxBuffer[0]),
-                                          cmd_list->VtxBuffer.size() * sizeof(ImDrawVert), voffs * sizeof(ImDrawVert));
-                idx_buffers_[idx].update(reinterpret_cast<char*>(&cmd_list->IdxBuffer[0]),
-                                         cmd_list->IdxBuffer.size() * sizeof(ImDrawIdx), ioffs * sizeof(ImDrawIdx));
-                voffs += cmd_list->VtxBuffer.size();
-                ioffs += cmd_list->IdxBuffer.size();                
+            if (imgui_adapter_.swap_out(local_imgui_data_)) {
+                imgui_dirty_flags_.fill(true);                                                
             }
 
-            idx_count = draw_data->TotalIdxCount;
-            vtx_count = draw_data->TotalVtxCount;
+            if (imgui_dirty_flags_[idx]) {
+
+                auto& verts = local_imgui_data_.vertices_;
+                auto& indices = local_imgui_data_.indices_;
+
+                vert_buffers_[idx].update(reinterpret_cast<char*>(verts.data()), verts.size() * sizeof(ImDrawVert));
+                idx_buffers_[idx].update(reinterpret_cast<char*>(indices.data()), indices.size() * sizeof(ImDrawIdx));
+
+                imgui_dirty_flags_[idx] = false;
+            }
+            
+//            for (int n = 0, voffs = 0, ioffs = 0; n < draw_data->CmdListsCount; n++) {                
+//                auto* cmd_list = draw_data->CmdLists[n];
+//                vert_buffers_[idx].update(reinterpret_cast<char*>(&cmd_list->VtxBuffer[0]),
+//                                          cmd_list->VtxBuffer.size() * sizeof(ImDrawVert), voffs * sizeof(ImDrawVert));
+//                idx_buffers_[idx].update(reinterpret_cast<char*>(&cmd_list->IdxBuffer[0]),
+//                                         cmd_list->IdxBuffer.size() * sizeof(ImDrawIdx), ioffs * sizeof(ImDrawIdx));
+//                voffs += cmd_list->VtxBuffer.size();
+//                ioffs += cmd_list->IdxBuffer.size();                
+//            }
+//
+//            idx_count = draw_data->TotalIdxCount;
+//            vtx_count = draw_data->TotalVtxCount;
         }
 
         
         void draw(std::vector<ID3D12CommandList*>& v, unsigned idx, float, 
                   D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle) const 
-        {                                             
-            imgui_render();
-            update(idx,ImGui::GetDrawData());                            
+        {                                                       
+            update(idx);                            
 
             calloc_[idx]->Reset();
             clist_[idx]->Reset(calloc_[idx].get(),nullptr);      
@@ -401,9 +400,11 @@ namespace d3d {
         
             clist_[idx]->RSSetScissorRects(1,&scissor_);
             clist_[idx]->OMSetRenderTargets(1, std::addressof(rtv_handle), false, nullptr);            
-                        
+                                    
             
-            
+            auto vtx_count = static_cast<unsigned>(local_imgui_data_.vertex_count());
+            auto idx_count = static_cast<unsigned>(local_imgui_data_.index_count());
+
             D3D12_VERTEX_BUFFER_VIEW vview{vert_buffers_[idx].resource()->GetGPUVirtualAddress(),
                                        vtx_count * sizeof(vertex_type),
                                        sizeof(vertex_type)};

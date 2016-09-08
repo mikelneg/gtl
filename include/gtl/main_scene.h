@@ -19,6 +19,7 @@
 
 #include <gtl/physics_simulation.h>
 #include <gtl/swap_vector.h>
+#include <vn/swap_object.h>
 
 //#include <gtl/event_listener.h>
 
@@ -30,10 +31,14 @@
 #include <atomic>
 #include <functional>
 #include <cmath>
+#include <vector>
 
 #include <gtl/camera.h>
 
 #include <GamePad.h>
+
+#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+#include <imgui.h>
 
 
 namespace gtl {
@@ -48,6 +53,8 @@ namespace scenes {
         gtl::physics::length<float> mutable camera_height_;            
 
         gtl::scenes::transitions::swirl_effect swirl_effect_;
+        
+        gtl::imgui_adapter mutable imgui_adapter_;
         gtl::d3d::imgui_adapter imgui_;
 
         std::atomic<uint32_t> mutable current_id_{};
@@ -55,6 +62,10 @@ namespace scenes {
         std::atomic<int> mutable focus_id_{};
 
         vn::single_consumer_queue<std::function<void()>> mutable draw_task_queue_;
+
+
+        //std::vector<char> mutable text_box_, other_box_;
+        
 
     public:        
                 
@@ -113,11 +124,19 @@ namespace scenes {
             camera_height_{10.0f * boost::units::si::meters},
             physics_{physics_task_queue_},
             swirl_effect_{dev,swchain,cqueue,physics_},
-            imgui_{dev, swchain, cqueue}
+            imgui_adapter_{},
+            imgui_{dev, swchain, cqueue, imgui_adapter_}
         {
-            imgui_.insert_callback("steal_focus", [&](){ focus_id_.store(1,std::memory_order_release); });
-            imgui_.insert_callback("return_focus", [&](){ focus_id_.store(0,std::memory_order_release); });
-            focus_id_.store(0,std::memory_order_release);
+            //imgui_.insert_callback("steal_focus", [&](){ focus_id_.store(1,std::memory_order_release); });
+            //imgui_.insert_callback("return_focus", [&](){ focus_id_.store(0,std::memory_order_release); });
+            //focus_id_.store(0,std::memory_order_release);
+
+            //std::string s{"hi there"};
+            //text_box_.insert(end(text_box_),begin(s),end(s));
+            //other_box_.insert(end(other_box_),begin(s),end(s));
+            //text_box_.resize(256);
+            //other_box_.resize(256);
+            imgui_adapter_.render();
         }
 
         main_scene(main_scene&&) = default;
@@ -130,9 +149,11 @@ namespace scenes {
                                                                  * Eigen::AngleAxisf{0.2f, Eigen::Vector3f{-1.0f,0.0f,0.0f}}}.matrix();           
                                                 
                 draw_task_queue_.consume([](auto&& f){ f(); });    // execute our waiting tasks..
-
+                
                 swirl_effect_.draw(ps...,current_id_, cam_transform_ * physics_camera_.matrix());                                    
                 
+
+                imgui_adapter_.render();
                 imgui_.draw(ps...);                    
             });
         }
@@ -169,7 +190,7 @@ namespace scenes {
                 }
             }
             return gtl::events::revert{};        
-        }
+        }          
 
         template <typename ResourceManager, typename YieldType>
         gtl::event handle_events(ResourceManager& resource_callback_, YieldType& yield) const {
@@ -237,7 +258,7 @@ namespace scenes {
                     }
                    } else if (f_id == 1){
                        std::cout << "imgui focus keypress..\n";
-                       draw_task_queue_.insert([c=boost::get<ev::keydown>(yield.get().value()).key,this](){ this->imgui_.add_input_charcter(c); });                       
+                       draw_task_queue_.insert([c=boost::get<ev::keydown>(yield.get().value()).key,this](){ this->imgui_adapter_.add_input_charcter(c); });                       
                    }
                 } else if (same_type(yield.get(),ev::mouse_wheel_scroll{})) {
                     //uint32_t id = current_id_.load(std::memory_order_relaxed);
@@ -256,7 +277,7 @@ namespace scenes {
                     int mx = GET_X_LPARAM(coord_);
                     int my = GET_Y_LPARAM(coord_);
 
-                    draw_task_queue_.insert([=,this](){ this->imgui_.mouse_down(mx,my); });
+                    draw_task_queue_.insert([=,this](){ this->imgui_adapter_.mouse_down(mx,my); });
                     resource_callback_(gtl::commands::get_audio_adapter{}, [](auto& aud) { aud.play_effect("click"); });
                     //task_local_.emplace_back(destroy_object_implode{id});
                     //physics_task_queue_.swap_in(task_local_);
@@ -265,7 +286,7 @@ namespace scenes {
                     auto& coord_ = boost::get<ev::mouse_lbutton_up>(yield.get().value()).coord; // HACK fix this 
                     int mx = GET_X_LPARAM(coord_);
                     int my = GET_Y_LPARAM(coord_);
-                    draw_task_queue_.insert([=,this](){ this->imgui_.mouse_up(mx,my); });
+                    draw_task_queue_.insert([=,this](){ this->imgui_adapter_.mouse_up(mx,my); });
                     
                 } else if (same_type(yield.get(),ev::mouse_rbutton_down{})) {
                     uint16_t id = current_id_.load(std::memory_order_relaxed);
@@ -286,7 +307,7 @@ namespace scenes {
                     auto& coord_ = boost::get<ev::mouse_moved>(yield.get().value()).coord; // HACK fix this 
                     int mx = GET_X_LPARAM(coord_);
                     int my = GET_Y_LPARAM(coord_);
-                    draw_task_queue_.insert([=,this](){ this->imgui_.mouse_move(mx,my); });
+                    draw_task_queue_.insert([=,this](){ this->imgui_adapter_.mouse_move(mx,my); });
                 } else if (same_type(yield.get(),ev::resize_swapchain{}) ) {
                     
                     

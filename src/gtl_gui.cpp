@@ -20,7 +20,7 @@
 
 namespace gtl { 
 namespace gui {  
-    
+    /*
     //namespace {
     //    static inline layer& parent(gui_channel_params& p) { return std::get<0>(p); }
     //    static inline event_pull& msg_source(gui_channel_params& p) { return std::get<1>(p); }
@@ -113,6 +113,6 @@ namespace gui {
     }
 
     void button::click(gui_listener_pull& p) const { func_(p); }
-
+    */
 }} // namespaces
 

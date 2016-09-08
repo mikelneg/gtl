@@ -24,7 +24,7 @@
 
 namespace gtl { 
 namespace gui {  
-    
+    /*
     class ui_variant;    
     // using ui_variant_base_type_ = boost::variant<empty, layer, textbox, button, std::unique_ptr<custom>>;
     
@@ -184,7 +184,7 @@ namespace gui {
 
     //
     
-
+    */
 }} // namespaces
 
 #endif 
