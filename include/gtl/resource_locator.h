@@ -11,55 +11,52 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
+#include <gtl/tags.h>
 #include <string>
 #include <type_traits>
-#include <gtl/tags.h>
 
 namespace gtl {
-     
-    class resource_locator {
 
-        using pt = boost::property_tree::ptree;
-        using data_type = pt::data_type;
+class resource_locator {
 
-        pt ptree_;
-        std::string filename_;
-        
-    public:
+    using pt = boost::property_tree::ptree;
+    using data_type = pt::data_type;
 
-        resource_locator(std::string filename, gtl::tags::xml_format)
-        : ptree_{},
-            filename_{std::move(filename)}
-        {
-            boost::property_tree::read_xml(filename_,ptree_);
-        }
+    pt ptree_;
+    std::string filename_;
 
-        template <typename T, typename ...Ts>
-        decltype(auto) get(Ts&&...ts) noexcept(noexcept(ptree_.get<T>(std::forward<Ts>(ts)...)))
-        {
-            return ptree_.get<T>(std::forward<Ts>(ts)...);
-        }
+public:
+    resource_locator(std::string filename, gtl::tags::xml_format)
+        : ptree_{}
+        , filename_{ std::move(filename) }
+    {
+        boost::property_tree::read_xml(filename_, ptree_);
+    }
 
-        template <typename P, typename F>
-        decltype(auto) get(P&& param, F func) noexcept(noexcept(func(ptree_.get<data_type>(std::forward<P>(param)))))
-        {   
-            return func(ptree_.get<data_type>(std::forward<P>(param)));
-        }
-         
-        //template <typename ...Ts>
-        //decltype(auto) get(Ts&&...ts) noexcept(noexcept(ptree_.get(std::forward<Ts>(ts)...)))
-        //{
-        //    return ptree_.get(std::forward<Ts>(ts)...);
-        //}
+    template <typename T, typename... Ts>
+    decltype(auto) get(Ts&&... ts) noexcept(noexcept(ptree_.get<T>(std::forward<Ts>(ts)...)))
+    {
+        return ptree_.get<T>(std::forward<Ts>(ts)...);
+    }
 
-        template <typename T, typename...Ts>
-        decltype(auto) get_optional(Ts&&...ts) noexcept(noexcept(ptree_.get_optional<T>(std::forward<Ts>(ts)...)))
-        {
-            return ptree_.get_optional<T>(std::forward<Ts>(ts)...);
-        }        
+    template <typename P, typename F>
+    decltype(auto) get(P&& param, F func) noexcept(noexcept(func(ptree_.get<data_type>(std::forward<P>(param)))))
+    {
+        return func(ptree_.get<data_type>(std::forward<P>(param)));
+    }
 
-    };
+    //template <typename ...Ts>
+    //decltype(auto) get(Ts&&...ts) noexcept(noexcept(ptree_.get(std::forward<Ts>(ts)...)))
+    //{
+    //    return ptree_.get(std::forward<Ts>(ts)...);
+    //}
+
+    template <typename T, typename... Ts>
+    decltype(auto) get_optional(Ts&&... ts) noexcept(noexcept(ptree_.get_optional<T>(std::forward<Ts>(ts)...)))
+    {
+        return ptree_.get_optional<T>(std::forward<Ts>(ts)...);
+    }
+};
 
 } // namespaces
 #endif
-

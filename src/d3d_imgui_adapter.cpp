@@ -1,6 +1,5 @@
 #include "gtl/d3d_imgui_adapter.h"
 
-
 /*-----------------------------------------------------------------------------
     Mikel Negugogor (http://github.com/mikelneg)    
 -----------------------------------------------------------------------------*/
@@ -8,8 +7,7 @@
 namespace gtl {
 namespace d3d {
 
-
-/*
+    /*
 
 // ImGui Win32 + DirectX11 binding
 // In this binding, ImTextureID is used to store a 'ID3D11ShaderResourceView*' texture identifier. Read the FAQ about ImTextureID in imgui.cpp.
@@ -19,8 +17,8 @@ namespace d3d {
 // If you are new to ImGui, see examples/README.txt and documentation at the top of imgui.cpp.
 // https://github.com/ocornut/imgui
 
-#include <imgui.h>
 #include "imgui_impl_dx11.h"
+#include <imgui.h>
 
 // DirectX
 #include <d3d11.h>
@@ -598,6 +596,5 @@ void ImGui_ImplDX11_NewFrame()
 
 
 */
-
-
-}} // namespaces
+}
+} // namespaces

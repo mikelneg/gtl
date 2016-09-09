@@ -17,25 +17,25 @@
                     
 -----------------------------------------------------------------------------*/
 
+#include <memory>
 #include <type_traits>
 #include <utility>
-#include <memory>
 
 #include <iostream>
 
 namespace gtl {
 namespace allocators {
-    
-    template <typename T, typename A = std::allocator<T>>
-    struct no_trivial_value_initialization : A {                
-        
-        template <typename R> 
+
+    template <typename T, typename A = std::allocator<T> >
+    struct no_trivial_value_initialization : A {
+
+        template <typename R>
         struct rebind {
-            using other = no_trivial_value_initialization<R,typename std::allocator_traits<A>::template rebind_alloc<R>>;
+            using other = no_trivial_value_initialization<R, typename std::allocator_traits<A>::template rebind_alloc<R> >;
         };
-    
+
         using A::A;
-    
+
         template <typename R>
         inline std::enable_if_t<std::is_trivially_default_constructible<R>::value>
         construct(R*) noexcept {} // do nothing
@@ -43,6 +43,6 @@ namespace allocators {
 
     template <typename T>
     using no_trivial_init = no_trivial_value_initialization<T>;
-        
-}} // namespaces
+}
+} // namespaces
 #endif

@@ -10,27 +10,25 @@
 
 #include <Eigen/Core>
 #include <gtl/physics_units.h>
-                     
-namespace gtl {    
 
-    class camera {         
+namespace gtl {
 
-        Eigen::Matrix4f transform_;
-                        
+class camera {
 
-    public:
+    Eigen::Matrix4f transform_;
 
-        camera(gtl::physics::position<float> center_, 
-               gtl::physics::dimensions<float> lens_dimensions_,
-               gtl::physics::angle<float> fov_,
-               gtl::physics::length<float> distance_to_lens_,
-               gtl::physics::length<float> distance_to_plane_);          
+public:
+    camera(gtl::physics::position<float> center_,
+        gtl::physics::dimensions<float> lens_dimensions_,
+        gtl::physics::angle<float> fov_,
+        gtl::physics::length<float> distance_to_lens_,
+        gtl::physics::length<float> distance_to_plane_);
 
-        Eigen::Matrix4f const& matrix() const {
-            return transform_;
-        }
-
-    };
+    Eigen::Matrix4f const& matrix() const
+    {
+        return transform_;
+    }
+};
 
 } // namespaces
 #endif

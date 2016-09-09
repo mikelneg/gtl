@@ -16,17 +16,16 @@
 #include <utility>
 
 namespace gtl {
-namespace caps {        
-        
+namespace caps {
+
     inline namespace cap_types_v0 {
-        using screen_resolution = std::pair<int,int>;
+        using screen_resolution = std::pair<int, int>;
     }
 
-    screen_resolution get_resolution();        
+    screen_resolution get_resolution();
     pix::ppi get_ppi();
-    
-    inline pix::ppi get_base_ppi() noexcept { return pix::ppi{96}; }
+
+    inline pix::ppi get_base_ppi() noexcept { return pix::ppi{ 96 }; }
 }
 } // namespace
 #endif
-

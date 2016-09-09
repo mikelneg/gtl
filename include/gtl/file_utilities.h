@@ -9,22 +9,21 @@
     file utilities
 -----------------------------------------------------------------------------*/
 
-#include <vector>
 #include <gtl/allocators.h>
 #include <gtl/tags.h>
+#include <vector>
 
 namespace gtl {
-namespace file {    
+namespace file {
 
-    using blob_type           = std::vector<char>;
-    using efficient_blob_type = std::vector<char,::gtl::allocators::no_trivial_value_initialization<char>>; 
+    using blob_type = std::vector<char>;
+    using efficient_blob_type = std::vector<char, ::gtl::allocators::no_trivial_value_initialization<char> >;
 
     blob_type get_file_blob(std::string full_path_filename);
-    efficient_blob_type get_file_blob(tags::no_initialization, std::string full_path_filename);        
-    
-    blob_type get_file_blob(std::wstring full_path_filename);
-    efficient_blob_type get_file_blob(tags::no_initialization, std::wstring full_path_filename);        
-    
+    efficient_blob_type get_file_blob(tags::no_initialization, std::string full_path_filename);
 
-}} // namespaces                    
+    blob_type get_file_blob(std::wstring full_path_filename);
+    efficient_blob_type get_file_blob(tags::no_initialization, std::wstring full_path_filename);
+}
+} // namespaces
 #endif

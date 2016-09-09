@@ -6,11 +6,7 @@
     Mikel Negugogor (http://github.com/mikelneg)                              
 -----------------------------------------------------------------------------*/
 
-namespace gtl {    
+namespace gtl {
 namespace win {
-
-        
-
-
-
-}} // namespaces
+}
+} // namespaces

@@ -1,25 +1,23 @@
 #include "gtl/resource_locator.h"
 
+#include <boost/foreach.hpp>
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
-#include <string>
-#include <set>
 #include <exception>
 #include <iostream>
+#include <set>
+#include <string>
 
 namespace gtl {
 
-    //resource_locator::resource_locator(std::string filename, gtl::tags::xml_format) 
-    //    :   ptree_{},
-    //        filename_{std::move(filename)}
-    //{
-    //    boost::property_tree::read_xml(filename_,ptree_);                
-    //}
-    
+//resource_locator::resource_locator(std::string filename, gtl::tags::xml_format)
+//    :   ptree_{},
+//        filename_{std::move(filename)}
+//{
+//    boost::property_tree::read_xml(filename_,ptree_);
+//}
 
-
-} // namespaces 
+} // namespaces
 
 /*
 

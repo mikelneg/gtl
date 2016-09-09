@@ -3,43 +3,41 @@
 
 /*-----------------------------------------------------------------------------
     Mikel Negugogor (http://github.com/mikelneg)
-    
+
     class gtl::win::audio_adapter
-        
+
 -----------------------------------------------------------------------------*/
 
 #include <memory>
-#include <unordered_map>
 #include <string>
+#include <unordered_map>
 
-#include <gtl/events.h>
+//#include <gtl/events.h>
 
 #include <gtl/tags.h>
 
 namespace gtl {
 namespace win {
 
-class audio_adapter {
-  
-    struct priv_impl;
+    class audio_adapter {
 
-    std::unique_ptr<priv_impl> audio_engine;    
-    bool uninitialize_in_dtor;
+        struct priv_impl;
 
-public:    
-    audio_adapter(audio_adapter&&);
-    audio_adapter();
-    audio_adapter(gtl::tags::debug);
-    ~audio_adapter();
+        std::unique_ptr<priv_impl> audio_engine;
+        bool uninitialize_in_dtor;
 
-    void update();
-    void add_effect(std::string name, std::wstring wav_file);
-    void play_effect(std::string name); 
+    public:
+        audio_adapter(audio_adapter&&);
+        audio_adapter();
+        audio_adapter(gtl::tags::debug);
+        ~audio_adapter();
 
-    audio_adapter& operator=(audio_adapter&&) = delete;
-};
+        void update();
+        void add_effect(std::string name, std::wstring wav_file);
+        void play_effect(std::string name);
 
-                                      
-
-}} // namespace
+        audio_adapter& operator=(audio_adapter&&) = delete;
+    };
+}
+} // namespace
 #endif

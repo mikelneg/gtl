@@ -2,18 +2,15 @@
 #define HWAGLBVWOIGRIW_GTL_D3D_CAPS_H_
 
 /*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                                  
+    Mikel Negugogor (http://github.com/mikelneg)
 -----------------------------------------------------------------------------*/
-
-#include <gtl/d3d_default_implementation.h>
 
 namespace gtl {
 namespace d3d {
-namespace _12_0 {
+    namespace _12_0 {
 
-    // for later  
-
-}}} // namespaces 
+        // for later
+    }
+}
+} // namespaces
 #endif
-
-

@@ -10,23 +10,30 @@
 
 namespace gtl {
 namespace tags {
-    
+
     template <typename T>
     struct construct {
         // TODO revisit this; used to prevent copy initialization from empty lists
         // e.g., prevents void blah(construct<T>); from being called with blah({});
-        constexpr explicit construct() noexcept {} 
+        constexpr explicit construct() noexcept {}
     };
 
-    struct no_initialization {};
-    struct uninitialized {};
-    struct debug {};
-    struct release {};
+    struct no_initialization {
+    };
+    struct uninitialized {
+    };
+    struct debug {
+    };
+    struct release {
+    };
 
-    struct contiguous {};
-    struct discontiguous {};
+    struct contiguous {
+    };
+    struct discontiguous {
+    };
 
-    struct xml_format {};
-
-}} // namespaces
+    struct xml_format {
+    };
+}
+} // namespaces
 #endif
