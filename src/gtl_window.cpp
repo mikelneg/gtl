@@ -1,3 +1,10 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #include "gtl/gtl_window.h"
 
 #include <gtl/keyboard_enum.h>
@@ -11,10 +18,6 @@
 #include <utility>
 #include <windows.h>
 #include <windowsx.h>
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)    
------------------------------------------------------------------------------*/
 
 namespace gtl {
 namespace win {
@@ -44,35 +47,31 @@ namespace win {
 
             InflateRect(&window_rect_, dx, dy);
             SetWindowPos(hwnd, HWND_TOP, 200, 0,
-                window_rect_.right - window_rect_.left,
-                window_rect_.bottom - window_rect_.top,
-                SWP_SHOWWINDOW | SWP_NOZORDER);
+                         window_rect_.right - window_rect_.left,
+                         window_rect_.bottom - window_rect_.top,
+                         SWP_SHOWWINDOW | SWP_NOZORDER);
         }
 
         static HWND CreateFullscreenWindow(HWND hwnd, HINSTANCE hinst, const char* class_name, const char* caption, void* sneaky)
         { // adapted from Raymond Chen: http://blogs.msdn.com/b/oldnewthing/archive/2005/05/05/414910.aspx
             HMONITOR hmon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
-            MONITORINFO mi = { sizeof(mi) };
+            MONITORINFO mi = {sizeof(mi)};
             if (!GetMonitorInfo(hmon, &mi))
                 return NULL;
             return CreateWindow(class_name,
-                caption,
-                WS_POPUP | WS_VISIBLE,
-                mi.rcMonitor.left,
-                mi.rcMonitor.top,
-                mi.rcMonitor.right - mi.rcMonitor.left,
-                mi.rcMonitor.bottom - mi.rcMonitor.top,
-                hwnd, NULL, hinst, sneaky);
+                                caption,
+                                WS_POPUP | WS_VISIBLE,
+                                mi.rcMonitor.left,
+                                mi.rcMonitor.top,
+                                mi.rcMonitor.right - mi.rcMonitor.left,
+                                mi.rcMonitor.bottom - mi.rcMonitor.top,
+                                hwnd, NULL, hinst, sneaky);
         }
 
     } // unnamed namespace
 
     window::window(HINSTANCE hinstance, unsigned width_px, unsigned height_px, const char* caption)
-        : hwnd{}
-        , msg{}
-        , width_px{ width_px }
-        , height_px{ height_px }
-        , event_queue_{}
+        : hwnd{}, msg{}, width_px{width_px}, height_px{height_px}, event_queue_{}
     {
         auto style = default_wndclassex();
         auto func = &gtl::win::detail::wndproc_impl<decltype(event_queue_)>;
@@ -81,20 +80,22 @@ namespace win {
         style.lpszClassName = u8"window";
         //style.hCursor = LoadCursor(NULL, IDC_ARROW);
 
-        if (RegisterClassEx(&style) == 0) { // failure returns 0
-            throw std::runtime_error{ __func__ };
+        if (RegisterClassEx(&style) == 0)
+        { // failure returns 0
+            throw std::runtime_error{__func__};
         }
         //hwnd = CreateFullscreenWindow(hwnd,hinstance,style.lpszClassName,caption,this);
         hwnd = CreateWindow(style.lpszClassName, caption,
-            //WS_VISIBLE,
-            WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME,
-            0, 0, // dummy positions, adjusted later with ResizeWindow()
-            0, 0, // dummy width and height, adjusted later with ResizeWindow()
-            nullptr, nullptr, // hWndParent and hMenu
-            hinstance,
-            std::addressof(event_queue_)); // smuggle into wndproc()
-        if (!hwnd) {
-            throw std::runtime_error{ __func__ };
+                            //WS_VISIBLE,
+                            WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME,
+                            0, 0,             // dummy positions, adjusted later with ResizeWindow()
+                            0, 0,             // dummy width and height, adjusted later with ResizeWindow()
+                            nullptr, nullptr, // hWndParent and hMenu
+                            hinstance,
+                            std::addressof(event_queue_)); // smuggle into wndproc()
+        if (!hwnd)
+        {
+            throw std::runtime_error{__func__};
         }
         //SetCursor(LoadCursor(NULL,IDC_ARROW));
         ShowCursor(true);
@@ -103,7 +104,8 @@ namespace win {
 
     window::~window()
     {
-        if (msg.message != WM_QUIT) { // we must have thrown..
+        if (msg.message != WM_QUIT)
+        { // we must have thrown..
             // assert(std::uncaught_exceptions());
             PostMessage(hwnd, WM_CLOSE, 0, 0);
             //PostQuitMessage(0);

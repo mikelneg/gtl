@@ -1,14 +1,18 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef WLSFBWIFW_GTL_PIX_H_
 #define WLSFBWIFW_GTL_PIX_H_
 
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-    
-    namespace gtl::pix
-    
-        + not being used -- might revisit..
+/*-------------------------------------------------------------
 
------------------------------------------------------------------------------*/
+not used -- keeping for reference
+
+---------------------------------------------------------------*/
 
 #include "literals.h"
 
@@ -25,9 +29,18 @@ namespace pix {
 
         public:
             using type = T;
-            constexpr explicit value_base(T const& v) noexcept : value{ v } {}
-            constexpr explicit operator T() const noexcept { return value; }
-            friend constexpr T value(value_base const& t) noexcept { return t.operator T(); }
+            constexpr explicit value_base(T const& v) noexcept
+                : value{v}
+            {
+            }
+            constexpr explicit operator T() const noexcept
+            {
+                return value;
+            }
+            friend constexpr T value(value_base const& t) noexcept
+            {
+                return t.operator T();
+            }
         };
     }
 

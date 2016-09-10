@@ -1,3 +1,10 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #include "gtl/stage.h"
 
 #include <gtl/events.h>
@@ -35,10 +42,6 @@
 #include <gtl/events.h>
 #include <vn/work_thread.h>
 
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)    
------------------------------------------------------------------------------*/
-
 namespace gtl {
 
 namespace {
@@ -49,10 +52,14 @@ namespace {
         //empty_scene& operator=(empty_scene const&) = default;
 
         template <typename... Ts>
-        constexpr empty_scene(Ts&&...) noexcept {}
+        constexpr empty_scene(Ts&&...) noexcept
+        {
+        }
 
         template <typename... Ts>
-        void operator()(Ts const&...) const {}
+        void operator()(Ts const&...) const
+        {
+        }
     };
 }
 
@@ -444,11 +451,11 @@ void stage::present(gtl::d3d::swap_chain& swchain_, DXGI_PRESENT_PARAMETERS dxgi
 {
     frame_rate_limiter_([&swchain_, &dxgi_pp, this]() {
 
-        draw_thread_.if_available([&](auto& frame_state_) { // (auto& state_){  // consumes itself if not consumed..
+        draw_thread_.if_available([&](auto& frame_state_) {    // (auto& state_){  // consumes itself if not consumed..
             swchain_->Present1(0, 0, std::addressof(dxgi_pp)); // potentially blocking
             consume_and_notify(frame_state_);
         },
-            [] {});
+                                  [] {});
 
     });
 }

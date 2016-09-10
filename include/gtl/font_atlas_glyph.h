@@ -1,13 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef IJWOAFF_GTL_D3D_FONT_ATLAS_GLYPH_H_
 #define IJWOAFF_GTL_D3D_FONT_ATLAS_GLYPH_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)
-
-    namespace ::gtl::d3d::
-
-    class font_atlas_glyph;
------------------------------------------------------------------------------*/
 
 #include <array>
 #include <string>
@@ -37,23 +36,23 @@ namespace d3d {
 
         //private:
         std::array<float, 4> padding{}; // padding around each character
-        std::string face_name{}; // name of the font
-        std::string texture_file{}; // name of the file that contains the font texture
-        float size{}; // font size
-        float page_count{}; // number of pages in the definition
+        std::string face_name{};        // name of the font
+        std::string texture_file{};     // name of the file that contains the font texture
+        float size{};                   // font size
+        float page_count{};             // number of pages in the definition
         float spacing{};
         float outline{};
         float line_height{};
         float base_width{};
         std::unordered_map<uint8_t, Glyph> glyph_map;
-        std::unordered_multimap<uint8_t, std::pair<uint8_t, float> > kerning_map;
+        std::unordered_multimap<uint8_t, std::pair<uint8_t, float>> kerning_map;
     };
 
     struct Glyph {
-        float u, v; // uv coordinate in texture
-        float width, height; // w/h of glyph
+        float u, v;               // uv coordinate in texture
+        float width, height;      // w/h of glyph
         float x_offset, y_offset; // offset for positioning
-        float x_advance; // xadvance for next character (altered by kerning)
+        float x_advance;          // xadvance for next character (altered by kerning)
         friend std::ostream& operator<<(std::ostream& s, Glyph& g);
     };
 }

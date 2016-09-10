@@ -1,12 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef RYUWOFWOABF_GTL_STAGE_H_
 #define RYUWOFWOABF_GTL_STAGE_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-    
-    namespace gtl
-    class stage;
------------------------------------------------------------------------------*/
 
 #include <gtl/d3d_types.h>
 #include <gtl/synchronization_object.h>
@@ -50,9 +50,7 @@ class stage {
         gtl::d3d::graphics_command_list clist_before_;
         gtl::d3d::graphics_command_list clist_after_;
         resource_object(gtl::d3d::device&& dev)
-            : calloc_{ dev }
-            , clist_before_{ dev, calloc_ }
-            , clist_after_{ dev, calloc_ }
+            : calloc_{dev}, clist_before_{dev, calloc_}, clist_after_{dev, calloc_}
         {
         }
         resource_object(resource_object&&) = default;
@@ -79,21 +77,24 @@ public:
     void present(gtl::d3d::swap_chain&, DXGI_PRESENT_PARAMETERS);
     void discard_frame_and_synchronize(gtl::d3d::swap_chain&);
 
-    void dispatch_event(gtl::event const& e) { event_handler_.dispatch_event(e); }
+    void dispatch_event(gtl::event const& e)
+    {
+        event_handler_.dispatch_event(e);
+    }
 };
 
 template <typename SceneType>
 stage::stage(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, unsigned num_buffers, SceneType& scene_, gtl::win::audio_adapter& audio)
-    : frame_rate_limiter_{ std::chrono::milliseconds(9) }
-    , buffered_resource_{ [&]() {
-        std::vector<resource_object> tmp;
-        for (unsigned i = 0; i < num_buffers; ++i) {
-            tmp.emplace_back(get_device(swchain_));
-        }
-        return tmp;
-    }() }
-    , synchronizer_{ cqueue_, num_buffers - 1, static_cast<unsigned>((std::max)(0, static_cast<int>(num_buffers) - 2)) }
-    , draw_thread_{ [&, this](auto& frame_state_) {
+    : frame_rate_limiter_{std::chrono::milliseconds(9)}, buffered_resource_{[&]() {
+          std::vector<resource_object> tmp;
+          for (unsigned i = 0; i < num_buffers; ++i)
+          {
+              tmp.emplace_back(get_device(swchain_));
+          }
+          return tmp;
+      }()},
+      synchronizer_{cqueue_, num_buffers - 1, static_cast<unsigned>((std::max)(0, static_cast<int>(num_buffers) - 2))},
+      draw_thread_{[&, this](auto& frame_state_) {
 
                        synchronizer_([&](auto& frame_index) {
 
@@ -137,44 +138,44 @@ stage::stage(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, u
                            //
                            cqueue_->ExecuteCommandLists(static_cast<unsigned>(draw_queue_.size()), draw_queue_.data());
 
-                           async_advance(frame_index); // we advance the frame index..
+                           async_advance(frame_index);   // we advance the frame index..
                            make_available(frame_state_); // then we make the frame available
 
                        },
-                           []() {});
+                                     []() {});
 
                    },
-        []() {} }
-    , event_handler_{ [&](auto& yield) {
-        auto callback_handler_ = vn::make_composite_function(
-            [&](gtl::commands::get_swap_chain, auto&& f) {
-                f(swchain_);
-            },
-            [&](gtl::commands::resize r, auto&&) {
-                draw_thread_.when_available([&](auto& frame_state_) {
+                   []() {}},
+      event_handler_{[&](auto& yield) {
+          auto callback_handler_ = vn::make_composite_function(
+              [&](gtl::commands::get_swap_chain, auto&& f) {
+                  f(swchain_);
+              },
+              [&](gtl::commands::resize r, auto&&) {
+                  draw_thread_.when_available([&](auto& frame_state_) {
 
-                    discard_frame_and_synchronize(swchain_);
+                      discard_frame_and_synchronize(swchain_);
 
-                    auto dims = swchain_.resize(r.w, r.h);
-                    scene_.resize(dims.first, dims.second, cqueue_);
+                      auto dims = swchain_.resize(r.w, r.h);
+                      scene_.resize(dims.first, dims.second, cqueue_);
 
-                    //event_generator_.send_event(gtl::commands::resize);
+                      //event_generator_.send_event(gtl::commands::resize);
 
-                    consume_and_notify(frame_state_); // screws up the present()
-                });
+                      consume_and_notify(frame_state_); // screws up the present()
+                  });
 
-            },
-            [&](gtl::commands::get_some_resource, auto&& f) {
-                //std::unique_lock<std::mutex> lock_{draw_thread_mutex_};
-                f([]() { std::cout << "look at me, all fancy..\n"; });
-            },
-            [&](gtl::commands::get_audio_adapter, auto&& f) {
-                //std::unique_lock<std::mutex> lock_{draw_thread_mutex_};
-                f(audio);
-            });
+              },
+              [&](gtl::commands::get_some_resource, auto&& f) {
+                  //std::unique_lock<std::mutex> lock_{draw_thread_mutex_};
+                  f([]() { std::cout << "look at me, all fancy..\n"; });
+              },
+              [&](gtl::commands::get_audio_adapter, auto&& f) {
+                  //std::unique_lock<std::mutex> lock_{draw_thread_mutex_};
+                  f(audio);
+              });
 
-        scene_.handle_events(callback_handler_, yield);
-    } }
+          scene_.handle_events(callback_handler_, yield);
+      }}
 {
     assert(num_buffers > 1);
     event_handler_.dispatch_event(gtl::events::none{});

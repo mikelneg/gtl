@@ -1,13 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef BNOWOAIBOASLDFF_GTL_D3D_OSTREAM_H_
 #define BNOWOAIBOASLDFF_GTL_D3D_OSTREAM_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)
-
-    namespace gtl::d3d::
-
-    std::ostream formatting for various d3d types
------------------------------------------------------------------------------*/
 
 #include <gtl/d3d_version.h>
 #include <ostream>

@@ -1,3 +1,10 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #include "gtl/system_caps.h"
 #include "gtl/pix.h"
 
@@ -10,7 +17,7 @@ namespace caps {
     screen_resolution get_resolution()
     {
         HDC screen = GetDC(NULL);
-        caps::screen_resolution sr{ GetDeviceCaps(screen, HORZRES), GetDeviceCaps(screen, VERTRES) };
+        caps::screen_resolution sr{GetDeviceCaps(screen, HORZRES), GetDeviceCaps(screen, VERTRES)};
         ReleaseDC(NULL, screen);
         return sr;
     }
@@ -18,7 +25,7 @@ namespace caps {
     pix::ppi get_ppi()
     {
         HDC screen = GetDC(NULL);
-        pix::ppi ppi_{ GetDeviceCaps(screen, LOGPIXELSX) };
+        pix::ppi ppi_{GetDeviceCaps(screen, LOGPIXELSX)};
         ReleaseDC(NULL, screen);
         return ppi_;
     }

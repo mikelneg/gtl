@@ -1,13 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef RIWOWOAOASJIFAA_GTL_PHYSICS_SIMULATION_H_
 #define RIWOWOAOASJIFAA_GTL_PHYSICS_SIMULATION_H_
-
-/*----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-
-    namespace gtl::
-    class physics_simulation
-
------------------------------------------------------------------------------*/
 
 #include <atomic>
 #include <thread>
@@ -70,13 +69,26 @@ struct InstanceInfo { // HACK hackish..
         uint16_t arr[4]; // uint16_t <bone_offset, material_id, entity_id, mesh_id>
     };
 
-    explicit InstanceInfo(uintptr_t i, uint16_t p) noexcept : data{ i } { pack<0>(p); }
-    constexpr explicit InstanceInfo(uintptr_t v) noexcept : data{ v } {}
-    constexpr explicit InstanceInfo(uint16_t a, uint16_t b, uint16_t c, uint16_t d) noexcept : arr{ a, b, c, d } {}
+    explicit InstanceInfo(uintptr_t i, uint16_t p) noexcept
+        : data{i}
+    {
+        pack<0>(p);
+    }
+    constexpr explicit InstanceInfo(uintptr_t v) noexcept
+        : data{v}
+    {
+    }
+    constexpr explicit InstanceInfo(uint16_t a, uint16_t b, uint16_t c, uint16_t d) noexcept
+        : arr{a, b, c, d}
+    {
+    }
 
     InstanceInfo() = default;
 
-    constexpr InstanceInfo(InstanceInfo const& i) noexcept : data{ i.data } {}
+    constexpr InstanceInfo(InstanceInfo const& i) noexcept
+        : data{i.data}
+    {
+    }
 
     template <unsigned N>
     InstanceInfo& pack(uint16_t i) noexcept
@@ -93,17 +105,44 @@ struct InstanceInfo { // HACK hackish..
         return arr[N];
     }
 
-    uint16_t bone_offset() const noexcept { return unpack<0>(); }
-    uint16_t material_id() const noexcept { return unpack<1>(); }
-    uint16_t entity_id() const noexcept { return unpack<2>(); }
-    uint16_t mesh_id() const noexcept { return unpack<3>(); }
+    uint16_t bone_offset() const noexcept
+    {
+        return unpack<0>();
+    }
+    uint16_t material_id() const noexcept
+    {
+        return unpack<1>();
+    }
+    uint16_t entity_id() const noexcept
+    {
+        return unpack<2>();
+    }
+    uint16_t mesh_id() const noexcept
+    {
+        return unpack<3>();
+    }
 
-    InstanceInfo& pack_bone_offset(uint16_t x) noexcept { return pack<0>(x); }
-    InstanceInfo& pack_material_id(uint16_t x) noexcept { return pack<1>(x); }
-    InstanceInfo& pack_entity_id(uint16_t x) noexcept { return pack<2>(x); }
-    InstanceInfo& pack_mesh_id(uint16_t x) noexcept { return pack<3>(x); }
+    InstanceInfo& pack_bone_offset(uint16_t x) noexcept
+    {
+        return pack<0>(x);
+    }
+    InstanceInfo& pack_material_id(uint16_t x) noexcept
+    {
+        return pack<1>(x);
+    }
+    InstanceInfo& pack_entity_id(uint16_t x) noexcept
+    {
+        return pack<2>(x);
+    }
+    InstanceInfo& pack_mesh_id(uint16_t x) noexcept
+    {
+        return pack<3>(x);
+    }
 
-    uintptr_t value() const noexcept { return data; }
+    uintptr_t value() const noexcept
+    {
+        return data;
+    }
 
     //friend bool operator<(InstanceInfo const& lhs, InstanceInfo const& rhs) noexcept {
     //    return
@@ -169,13 +208,13 @@ namespace physics {
     }
 
     using generator = boost::variant<generators::static_box,
-        generators::dynamic_box,
-        generators::dynamic_jointed_boxes,
-        generators::static_circle,
-        generators::destroy_object_implode,
-        generators::boost_object,
-        generators::boost_object_vec,
-        generators::drive_object_vec>;
+                                     generators::dynamic_box,
+                                     generators::dynamic_jointed_boxes,
+                                     generators::static_circle,
+                                     generators::destroy_object_implode,
+                                     generators::boost_object,
+                                     generators::boost_object_vec,
+                                     generators::drive_object_vec>;
 }
 
 struct render_data {
@@ -201,7 +240,10 @@ class physics_simulation {
 public:
     physics_simulation(gtl::swap_vector<gtl::physics::generator>&);
 
-    bool extract_render_data(render_data& c) { return render_data_.swap_out(c); }
+    bool extract_render_data(render_data& c)
+    {
+        return render_data_.swap_out(c);
+    }
 
     ~physics_simulation()
     {

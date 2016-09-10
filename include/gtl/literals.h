@@ -1,11 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef TYWZXCWSW_GTL_LITERALS_H_
 #define TYWZXCWSW_GTL_LITERALS_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-    
-    Some user defined literals
------------------------------------------------------------------------------*/
 
 namespace gtl {
 

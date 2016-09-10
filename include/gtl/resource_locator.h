@@ -1,12 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef RYWIOOABZZSAWWWFE_GTL_RESOURCE_LOCATOR_H_
 #define RYWIOOABZZSAWWWFE_GTL_RESOURCE_LOCATOR_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                                  
-    
-    class gtl::resource_locator
-
------------------------------------------------------------------------------*/
 
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
@@ -27,8 +27,7 @@ class resource_locator {
 
 public:
     resource_locator(std::string filename, gtl::tags::xml_format)
-        : ptree_{}
-        , filename_{ std::move(filename) }
+        : ptree_{}, filename_{std::move(filename)}
     {
         boost::property_tree::read_xml(filename_, ptree_);
     }

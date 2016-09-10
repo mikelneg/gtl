@@ -1,13 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef TUWOOAFFEEF_GTL_D3D_FONT_ATLAS_H_
 #define TUWOOAFFEEF_GTL_D3D_FONT_ATLAS_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)
-
-    namespace gtl::d3d::
-    class font_atlas;
-
------------------------------------------------------------------------------*/
 
 #include <gtl/d3d_types.h>
 #include <gtl/font_atlas_glyph.h>
@@ -31,7 +30,7 @@ namespace d3d {
         };
 
         template <typename T>
-        using aligned_vector = std::vector<T, Eigen::aligned_allocator<T> >;
+        using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;
 
         static constexpr unsigned MAX_STRING_WIDTH = 256 * 6;
 
@@ -64,9 +63,8 @@ namespace d3d {
         auto vertex_layout()
         {
             return std::vector<D3D12_INPUT_ELEMENT_DESC>{
-                { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-                { "UV", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-            };
+                {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                {"UV", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
 
             //return std::vector<D3D12_INPUT_ELEMENT_DESC>{
             //    {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
@@ -78,8 +76,8 @@ namespace d3d {
         {
             D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_{};
             desc_.pRootSignature = rsig.get();
-            desc_.VS = { reinterpret_cast<UINT8*>(vs->GetBufferPointer()), vs->GetBufferSize() };
-            desc_.PS = { reinterpret_cast<UINT8*>(ps->GetBufferPointer()), ps->GetBufferSize() };
+            desc_.VS = {reinterpret_cast<UINT8*>(vs->GetBufferPointer()), vs->GetBufferSize()};
+            desc_.PS = {reinterpret_cast<UINT8*>(ps->GetBufferPointer()), ps->GetBufferSize()};
             desc_.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
             //typedef struct D3D12_INPUT_ELEMENT_DESC
@@ -155,25 +153,18 @@ namespace d3d {
         font_atlas& operator=(font_atlas&&) = default;
 
         font_atlas(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue,
-            gtl::d3d::root_signature& rsig,
-            std::wstring definition_filename,
-            gtl::d3d::tags::xml_format tag)
-            : layout_(vertex_layout())
-            , font_definition{ definition_filename, tag }
-            , vbuffer_descriptors_{ dev, 3, gtl::d3d::tags::shader_visible{} }
-            , vbuffers_{ { { dev, vbuffer_descriptors_.get_handle(0), MAX_STRING_WIDTH * sizeof(Vertex) },
-                  { dev, vbuffer_descriptors_.get_handle(1), MAX_STRING_WIDTH * sizeof(Vertex) },
-                  { dev, vbuffer_descriptors_.get_handle(2), MAX_STRING_WIDTH * sizeof(Vertex) } } }
-            , texture_descriptor_heap_{ dev, 1, gtl::d3d::tags::shader_visible{} }
-            , texture_{ dev, { texture_descriptor_heap_.get_handle(0) }, cqueue,
-                //L"D:\\images\\fonts\\liberation\\bold-sdf\\font.dds"
-                L"D:\\images\\fonts\\depth-field-font72\\font.dds" }
-            , vshader_{ L"D:\\Code\\D3D12_migration\\D3D12_migration\\Debug\\x64\\font_atlas_vs.cso" }
-            , pshader_{ L"D:\\Code\\D3D12_migration\\D3D12_migration\\Debug\\x64\\font_atlas_ps.cso" }
-            , root_sig_{ rsig }
-            , pso_{ dev, pso_desc(dev, root_sig_, vshader_, pshader_) }
-            , sampler_heap_{ dev, 1 }
-            , sampler_{ dev, sampler_desc(), sampler_heap_->GetCPUDescriptorHandleForHeapStart() }
+                   gtl::d3d::root_signature& rsig,
+                   std::wstring definition_filename,
+                   gtl::d3d::tags::xml_format tag)
+            : layout_(vertex_layout()), font_definition{definition_filename, tag}, vbuffer_descriptors_{dev, 3, gtl::d3d::tags::shader_visible{}}, vbuffers_{{{dev, vbuffer_descriptors_.get_handle(0), MAX_STRING_WIDTH * sizeof(Vertex)}, {dev, vbuffer_descriptors_.get_handle(1), MAX_STRING_WIDTH * sizeof(Vertex)}, {dev, vbuffer_descriptors_.get_handle(2), MAX_STRING_WIDTH * sizeof(Vertex)}}}, texture_descriptor_heap_{dev, 1, gtl::d3d::tags::shader_visible{}}, texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue,
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       //L"D:\\images\\fonts\\liberation\\bold-sdf\\font.dds"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       L"D:\\images\\fonts\\depth-field-font72\\font.dds"},
+              vshader_{L"D:\\Code\\D3D12_migration\\D3D12_migration\\Debug\\x64\\font_atlas_vs.cso"},
+              pshader_{L"D:\\Code\\D3D12_migration\\D3D12_migration\\Debug\\x64\\font_atlas_ps.cso"},
+              root_sig_{rsig},
+              pso_{dev, pso_desc(dev, root_sig_, vshader_, pshader_)},
+              sampler_heap_{dev, 1},
+              sampler_{dev, sampler_desc(), sampler_heap_->GetCPUDescriptorHandleForHeapStart()}
         {
             //set_message("AVAIL^^ -- starting up text..");
             construct_vertices("VAVA hi this is a message how does it");
@@ -185,16 +176,16 @@ namespace d3d {
         }
 
         void operator()(unsigned idx, float, gtl::d3d::graphics_command_list& cl,
-            gtl::d3d::raw::Viewport const& viewport,
-            gtl::d3d::raw::ScissorRect const& scissor,
-            float font_scale,
-            raw::CpuDescriptorHandle const& rtv_handle) const
+                        gtl::d3d::raw::Viewport const& viewport,
+                        gtl::d3d::raw::ScissorRect const& scissor,
+                        float font_scale,
+                        raw::CpuDescriptorHandle const& rtv_handle) const
         {
 
             update_vertex_buffer(idx);
 
             cl->SetPipelineState(pso_.get());
-            auto heaps = { sampler_heap_.get(), texture_descriptor_heap_.get() };
+            auto heaps = {sampler_heap_.get(), texture_descriptor_heap_.get()};
             cl->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());
             //cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -204,10 +195,10 @@ namespace d3d {
             cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);
             cl->SetGraphicsRoot32BitConstants(3, 1, std::addressof(font_scale), 4);
 
-            D3D12_VERTEX_BUFFER_VIEW cbv_{ vbuffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_.size() * sizeof(Vertex)), sizeof(Vertex) };
+            D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_.size() * sizeof(Vertex)), sizeof(Vertex)};
             cl->IASetVertexBuffers(0, 1, &cbv_);
 
-            auto viewports = { std::addressof(viewport) };
+            auto viewports = {std::addressof(viewport)};
             cl->RSSetViewports(static_cast<unsigned>(viewports.size()), *viewports.begin());
 
             //float blendvalues[]{f,f,f,f};
@@ -215,7 +206,8 @@ namespace d3d {
 
             cl->RSSetScissorRects(1, &scissor);
             cl->OMSetRenderTargets(1, &rtv_handle, TRUE, nullptr);
-            if (mesh_.size() > 1) {
+            if (mesh_.size() > 1)
+            {
                 cl->DrawInstanced(static_cast<unsigned>(mesh_.size() - 1), 1, 1, 0);
             }
             // start vertex set to 1 to ignore first degenerate strip..

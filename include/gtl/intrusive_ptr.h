@@ -1,17 +1,23 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef KROWFOWAF_GTL_INTRUSIVE_PTR_H_
 #define KROWFOWAF_GTL_INTRUSIVE_PTR_H_
 
-/*-----------------------------------------------------------------------------
-     Mikel Negugogor
-             
-     class gtl::intrusive_ptr<T,Cleanup> 
+/*-------------------------------------------------------------
+class gtl::intrusive_ptr<T,Cleanup> 
 
-     A non-owning pointer type that calls Cleanup(ptr) (optionally Startup(ptr) as well..) 
+A non-owning pointer type that calls Cleanup(ptr) (optionally 
+Startup(ptr) as well..) 
 
-     * Cleanup(ptr) is called only if ptr is non-null
-     * Startup(ptr) is called only if Startup is passed in constructor
+    + Cleanup(ptr) is called only if ptr is non-null
+    + Startup(ptr) is called only if Startup is passed in constructor
 
------------------------------------------------------------------------------*/
+--------------------------------------------------------------*/
 
 #include <memory>
 #include <utility>
@@ -21,7 +27,7 @@ namespace gtl {
 template <typename T, typename Cleanup>
 class intrusive_ptr : private Cleanup {
 
-    T* ptr_{ nullptr };
+    T* ptr_{nullptr};
 
 public:
     using type = T;
@@ -30,26 +36,25 @@ public:
 
     template <typename Startup>
     explicit intrusive_ptr(T* ptr, Startup&& startup, Cleanup&& c)
-        : Cleanup(std::move(c))
-        , ptr_{ ptr }
+        : Cleanup(std::move(c)), ptr_{ptr}
     {
         startup(ptr_);
     }
 
     explicit intrusive_ptr(T* ptr, Cleanup&& c) noexcept
         : Cleanup(std::move(c)),
-          ptr_{ ptr }
+          ptr_{ptr}
     {
     }
 
     explicit intrusive_ptr(T* ptr) noexcept
-        : ptr_{ ptr }
+        : ptr_{ptr}
     {
     }
 
     intrusive_ptr(intrusive_ptr&& other) noexcept
         : Cleanup(std::move(static_cast<Cleanup&>(other))),
-          ptr_{ other.release() }
+          ptr_{other.release()}
     {
     }
 
@@ -65,11 +70,15 @@ public:
         this->reset();
     }
 
-    T* release() noexcept { return std::exchange(ptr_, nullptr); } // no Cleanup
+    T* release() noexcept
+    {
+        return std::exchange(ptr_, nullptr);
+    } // no Cleanup
 
     void reset(T* t = nullptr) noexcept
     { // Cleanup if ptr_ is non-null
-        if (ptr_) {
+        if (ptr_)
+        {
             Cleanup::operator()(ptr_);
             ptr_ = t;
         }
@@ -81,12 +90,27 @@ public:
         return ptr_;
     } // Cleanup; resets internal pointer and returns it by reference
 
-    T* get() const noexcept { return ptr_; } // same const semantics as std::unique_ptr
-    T& operator*() const noexcept { return *ptr_; } // ...
-    T* operator->() const noexcept { return ptr_; } // ...
+    T* get() const noexcept
+    {
+        return ptr_;
+    } // same const semantics as std::unique_ptr
+    T& operator*() const noexcept
+    {
+        return *ptr_;
+    } // ...
+    T* operator->() const noexcept
+    {
+        return ptr_;
+    } // ...
 
-    operator T*() const noexcept { return ptr_; } // T* conversion operator
-    explicit operator bool() const noexcept { return ptr_ != nullptr; } // explicit bool conversion
+    operator T*() const noexcept
+    {
+        return ptr_;
+    } // T* conversion operator
+    explicit operator bool() const noexcept
+    {
+        return ptr_ != nullptr;
+    } // explicit bool conversion
 
     //
 

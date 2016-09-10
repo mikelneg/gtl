@@ -1,13 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef NSNLLSLSFW_GTL_D3D_VERSION_H_
 #define NSNLLSLSFW_GTL_D3D_VERSION_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)
-
-    "Version" namespaces with implementation information/specification
-        + currently hackish 
-
------------------------------------------------------------------------------*/
 
 #include <d3d12.h>
 #include <d3dx12.h> // not supplied by the sdk (as of 8/2016)

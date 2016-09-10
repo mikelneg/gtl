@@ -12,14 +12,13 @@
 namespace gtl {
 namespace qt {
 
-//d3d_widget::d3d_widget()
-//    :   dev_{gtl::tags::debug{}},
-//        cqueue_{dev_},
-//        swchain_{this->winId(), cqueue_, 3},
-//        stage_{swchain_, cqueue_, 3}
-//{          
-//    // empty
-//}
-
-}} // namespaces 
-
+    //d3d_widget::d3d_widget()
+    //    :   dev_{gtl::tags::debug{}},
+    //        cqueue_{dev_},
+    //        swchain_{this->winId(), cqueue_, 3},
+    //        stage_{swchain_, cqueue_, 3}
+    //{
+    //    // empty
+    //}
+}
+} // namespaces

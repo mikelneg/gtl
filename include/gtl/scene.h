@@ -1,14 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef YWGOWAZXCommandVariantBCommandVariantGH_GTL_SCENE_H_
 #define YWGOWAZXCommandVariantBCommandVariantGH_GTL_SCENE_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-    
-    namespace gtl::
-        
-    template <CommandVariantariantParameterType> 
-    class scene
------------------------------------------------------------------------------*/
 
 #include <memory>
 #include <type_traits>
@@ -23,7 +21,9 @@ class scene {
 
     struct scene_interface {
         virtual void dispatch(CommandVariant) const = 0;
-        virtual ~scene_interface() {}
+        virtual ~scene_interface()
+        {
+        }
     };
 
     template <typename T>
@@ -49,13 +49,13 @@ class scene {
 public:
     template <typename C, typename... Ps>
     scene(gtl::tags::construct<C>, Ps&&... ps)
-        : ptr{ std::make_unique<scene_priv_impl<C> >(std::forward<Ps>(ps)...) }
+        : ptr{std::make_unique<scene_priv_impl<C>>(std::forward<Ps>(ps)...)}
     {
     }
 
     template <typename T>
     scene(T&& t)
-        : ptr{ std::make_unique<scene_priv_impl<std::remove_reference_t<T> > >(std::forward<T>(t)) }
+        : ptr{std::make_unique<scene_priv_impl<std::remove_reference_t<T>>>(std::forward<T>(t))}
     {
     }
 
@@ -63,7 +63,10 @@ public:
     scene& operator=(scene&&) = default;
 
     template <typename T>
-    inline void send_command(T&& t) const { ptr->dispatch(t); }
+    inline void send_command(T&& t) const
+    {
+        ptr->dispatch(t);
+    }
 
     //friend void swap(scene& lhs, scene& rhs) { using std::swap; swap(lhs.ptr,rhs.ptr); }
 };

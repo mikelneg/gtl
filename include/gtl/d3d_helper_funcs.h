@@ -1,12 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef IRWFGHOSFF_GTL_d3d_helper_funcs_H_
 #define IRWFGHOSFF_GTL_d3d_helper_funcs_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)
-
-    namespace gtl::d3d::_12_0
-    d3d support functions
------------------------------------------------------------------------------*/
 
 #include <gtl/d3d_types.h>
 #include <gtl/d3d_version.h>
@@ -21,7 +21,10 @@ namespace gtl {
 namespace d3d {
     namespace version_12_0 {
 
-        inline int frame_count() noexcept { return 3; } // HACK decentralize this..
+        inline int frame_count() noexcept
+        {
+            return 3;
+        } // HACK decentralize this..
 
         std::vector<raw::AdapterDesc> enumerate_adaptors();
 
@@ -33,7 +36,7 @@ namespace d3d {
         template <typename T>
         device get_device_from(T& t)
         {
-            device dev{ gtl::tags::uninitialized{} };
+            device dev{gtl::tags::uninitialized{}};
             win::throw_on_fail(t->GetDevice(__uuidof(device::type), expose_as_void_pp(dev)), __func__);
             return dev;
         }
@@ -41,7 +44,7 @@ namespace d3d {
         template <typename T>
         device get_device_from(T* t)
         {
-            device dev{ gtl::tags::uninitialized{} };
+            device dev{gtl::tags::uninitialized{}};
             win::throw_on_fail(t->GetDevice(__uuidof(device::type), expose_as_void_pp(dev)), __func__);
             return dev;
         }
@@ -49,7 +52,7 @@ namespace d3d {
         template <typename T>
         device get_device(T& t)
         {
-            device dev{ gtl::tags::uninitialized{} };
+            device dev{gtl::tags::uninitialized{}};
             win::throw_on_fail(t->GetDevice(__uuidof(device::type), expose_as_void_pp(dev)), __func__);
             return dev;
         }

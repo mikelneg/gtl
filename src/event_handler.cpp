@@ -1,16 +1,19 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #include "gtl/event_handler.h"
 
 #include <vn/boost_coroutine_utilities.h>
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)    
------------------------------------------------------------------------------*/
 
 namespace gtl {
 namespace coroutine {
 
     event_handler::event_handler()
-        : coroutine_{ vn::coroutines::make_empty_coroutine() }
+        : coroutine_{vn::coroutines::make_empty_coroutine()}
     {
     }
 

@@ -1,11 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef BBWUWOAIFABBSDFSW_GTL_IMGUI_ADAPTER_H_
 #define BBWUWOAIFABBSDFSW_GTL_IMGUI_ADAPTER_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)
-
-    class gtl::imgui_adapter
------------------------------------------------------------------------------*/
 
 #include <cassert>
 #include <utility>
@@ -33,8 +34,14 @@ public:
         std::size_t vertex_count_;
         std::size_t index_count_;
 
-        auto vertex_count() const noexcept { return (std::min)(vertex_count_, vertices_.size()); }
-        auto index_count() const noexcept { return (std::min)(index_count_, indices_.size()); }
+        auto vertex_count() const noexcept
+        {
+            return (std::min)(vertex_count_, vertices_.size());
+        }
+        auto index_count() const noexcept
+        {
+            return (std::min)(index_count_, indices_.size());
+        }
         void swap(imgui_data& other)
         {
             using std::swap;
@@ -55,7 +62,7 @@ private:
 public:
     imgui_adapter()
     {
-        std::string s{ "hi there.." };
+        std::string s{"hi there.."};
         text_box_a_.insert(end(text_box_a_), begin(s), end(s));
         text_box_b_.insert(end(text_box_b_), begin(s), end(s));
         text_box_a_.resize(256);
@@ -84,7 +91,8 @@ public:
         local_data_.vertex_count_ = 0;
         local_data_.index_count_ = 0;
 
-        for (int n = 0, voffs = 0, ioffs = 0; n < draw_data.CmdListsCount; n++) {
+        for (int n = 0, voffs = 0, ioffs = 0; n < draw_data.CmdListsCount; n++)
+        {
             auto* cmd_list = draw_data.CmdLists[n];
 
             assert(voffs < verts.size());
@@ -118,16 +126,20 @@ public:
         ImGui::Begin("Window Title Here");
 
         //ImGui::PushID(55);
-        if (ImGui::Button("resize")) {
+        if (ImGui::Button("resize"))
+        {
             std::cout << "resize button pressed..\n";
         }
         //ImGui::PopID();
         ImGui::PushID(44);
         ImGui::InputText("input:", text_box_a_.data(), text_box_a_.size());
         ImGui::PopID();
-        if (ImGui::IsItemActive()) {
+        if (ImGui::IsItemActive())
+        {
             //callbacks_["steal_focus"]();
-        } else {
+        }
+        else
+        {
             //callbacks_["return_focus"]();
         }
         ImGui::InputText("other:", text_box_b_.data(), text_box_b_.size());
@@ -140,9 +152,9 @@ public:
     }
 
     static std::tuple<std::vector<uint32_t>,
-        unsigned, // width
-        unsigned // height
-        >
+                      unsigned, // width
+                      unsigned  // height
+                      >
     get_font_bitmap(std::pair<int, int> display_dimensions)
     {
         auto& io = ImGui::GetIO();
@@ -161,8 +173,10 @@ public:
 
         //std::copy_n(pixels, width * height, font_data.data());
 
-        for (int m = 0; m < (height); ++m) {
-            for (int n = 0; n < (width); ++n) {
+        for (int m = 0; m < (height); ++m)
+        {
+            for (int n = 0; n < (width); ++n)
+            {
                 font_data.emplace_back(pixels[m * width + n]);
             }
         }

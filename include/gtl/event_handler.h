@@ -1,13 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef OWOBOAXZZZSDFWWER_GTL_EVENT_HANDLER_H_
 #define OWOBOAXZZZSDFWWER_GTL_EVENT_HANDLER_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-    
-    namespace gtl::coroutine::
-    
-    class event_handler;
------------------------------------------------------------------------------*/
 
 #include <boost/coroutine/asymmetric_coroutine.hpp>
 #include <gtl/events.h>
@@ -35,7 +34,7 @@ namespace coroutine {
 
         template <typename F>
         event_handler(F func)
-            : coroutine_{ vn::coroutines::make_trycatch_coroutine(std::move(func)) }
+            : coroutine_{vn::coroutines::make_trycatch_coroutine(std::move(func))}
         {
         }
 
@@ -43,7 +42,7 @@ namespace coroutine {
         auto exchange_handler(F func)
         {
             auto ret = std::move(coroutine_);
-            coroutine_ = coro::push_type{ vn::coroutines::make_trycatch_coroutine(std::move(func)) };
+            coroutine_ = coro::push_type{vn::coroutines::make_trycatch_coroutine(std::move(func))};
             return ret;
         }
 

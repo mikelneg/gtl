@@ -1,13 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef URUWOZOBBASFFW_GTL_PHYSICS_UNITS_H_
 #define URUWOZOBBASFFW_GTL_PHYSICS_UNITS_H_
-
-/*----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-
-    namespace gtl::
-    units for physics 
-
------------------------------------------------------------------------------*/
 
 #include <Eigen/Core>
 
@@ -28,10 +27,10 @@ namespace physics {
     using length = boost::units::quantity<boost::units::si::length, T>;
 
     template <typename T>
-    using dimensions = std::pair<length<T>, length<T> >;
+    using dimensions = std::pair<length<T>, length<T>>;
 
     template <typename T>
-    using position = std::pair<length<T>, length<T> >;
+    using position = std::pair<length<T>, length<T>>;
 
     template <typename T>
     using angle = boost::units::quantity<boost::units::angle::radian_base_unit::unit_type, T>;

@@ -1,15 +1,17 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef HVLSOWFS_GAME_UTILS_KEYBOARDENUM_H_
 #define HVLSOWFS_GAME_UTILS_KEYBOARDENUM_H_
 
 /*----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-
-    namespace gtl::
-    enum class keyboard_enum;
-
-    Keyboard key-values found online:
-        Put together by Josh Jackson:
-        http://www.codeproject.com/script/Membership/View.aspx?mid=4951186    
+  Keyboard key-values found online:
+  Put together by Josh Jackson:
+  http://www.codeproject.com/script/Membership/View.aspx?mid=4951186    
 
 -----------------------------------------------------------------------------*/
 

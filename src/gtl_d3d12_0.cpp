@@ -15,113 +15,117 @@
     Mikel Negugogor (http://github.com/mikelneg)    
 -----------------------------------------------------------------------------*/
 
-namespace gtl { 
-namespace d3d { 
-namespace _12_0 {
+namespace gtl {
+namespace d3d {
+    namespace _12_0 {
 
-    static auto get_dxgi_factory() 
-    {  
-        release_ptr<IDXGIFactory4> ptr;
-        HRESULT result = CreateDXGIFactory2(0, // DXGI_CREATE_FACTORY_DEBUG
-                                            __uuidof(decltype(ptr)::type), reinterpret_cast<void**>(&ptr));
-        if (win::failed(result)) {
-            throw std::runtime_error{__func__};
-        }
-        return ptr;
-    }
-
-    static auto get_adapter()
-    {	            
-        release_ptr<IDXGIAdapter1> ptr;        
-        auto factory = get_dxgi_factory();
-
-        // adapted from:
-        // https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/Samples/D3D12HelloWorld/src/HelloWindow/DXSample.cpp
-        // 
-	    for (UINT i = 0; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters1(i, &ptr); ++i)
-	    {
-		    DXGI_ADAPTER_DESC1 desc;
-		    ptr->GetDesc1(&desc);
-
-		    if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE) { 
-		    	ptr.reset();
-                continue;
-		    }
-
-		    if (win::succeeded(D3D12CreateDevice(ptr.get(), D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr))) {
-		    	return ptr;
-		    }
-	    }	    
-
-        throw std::runtime_error{__func__}; // if we make it here, we failed
-    }
-
-    static auto swchain_desc(HWND hwnd, size_t width, size_t height) 
-    { 
-        DXGI_SWAP_CHAIN_DESC desc{};        
-        desc.BufferDesc.Width = static_cast<UINT>(width);
-        desc.BufferDesc.Height = static_cast<UINT>(height);        
-        desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;        
-        desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;        
-        desc.OutputWindow = hwnd;        
-        desc.BufferCount = 2;        
-        desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT; 
-        desc.SampleDesc.Count = 1;        
-        desc.Windowed = true;
-        desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;            
-        return desc;
-    }
-
-    static auto swchain_fullscreen_desc()
-    {         
-        DXGI_SWAP_CHAIN_FULLSCREEN_DESC desc{};
-        desc.Windowed = true;
-        desc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;        
-        desc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
-        return desc;
-    }
-
-    static auto command_queue_desc() 
-    {
-        D3D12_COMMAND_QUEUE_DESC desc{};
-        desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
-        desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
-        return desc;
-    }
-
-    //////////////////    
-    device::device() 
-    {         
-        HRESULT result = D3D12CreateDevice(nullptr, //adapter.get()
-                                           D3D_FEATURE_LEVEL_11_0, 
-                                           __uuidof(ID3D12Device),reinterpret_cast<void**>(&dev_ptr));
-        if (win::failed(result)) { throw std::runtime_error{__func__}; }
-    }    
-    
-    
-
-    swap_chain::swap_chain(win::window& win, device& dev) 
-    {
-        RECT client_area{};
-        GetClientRect(get_hwnd(win), &client_area);
-                                        
-        release_ptr<ID3D12CommandQueue> cq_ptr;    
-        auto cq_desc = command_queue_desc();
-
-        HRESULT result3 = get(dev).CreateCommandQueue(std::addressof(cq_desc),__uuidof(decltype(cq_ptr)::type),reinterpret_cast<void**>(&cq_ptr));        
-        if (win::failed(result3)) {
-            throw std::runtime_error{"swap_chain: CreateCommandQueue result not S_OK"};
+        static auto get_dxgi_factory()
+        {
+            release_ptr<IDXGIFactory4> ptr;
+            HRESULT result = CreateDXGIFactory2(0, // DXGI_CREATE_FACTORY_DEBUG
+                                                __uuidof(decltype(ptr)::type), reinterpret_cast<void**>(&ptr));
+            if (win::failed(result))
+            {
+                throw std::runtime_error{__func__};
+            }
+            return ptr;
         }
 
-        auto sc_desc = swchain_desc(get_hwnd(win),width(win),height(win));                
-        HRESULT result2 = get_dxgi_factory()->CreateSwapChain(cq_ptr.get(), &sc_desc, &swchain_ptr);        
-        if (win::failed(result2)) { 
-            throw std::runtime_error{"swap_chain: CreateSwapChainForHwnd result not S_OK"}; 
-        }                            
+        static auto get_adapter()
+        {
+            release_ptr<IDXGIAdapter1> ptr;
+            auto factory = get_dxgi_factory();
 
+            // adapted from:
+            // https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/Samples/D3D12HelloWorld/src/HelloWindow/DXSample.cpp
+            //
+            for (UINT i = 0; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters1(i, &ptr); ++i)
+            {
+                DXGI_ADAPTER_DESC1 desc;
+                ptr->GetDesc1(&desc);
 
+                if (desc.Flags & DXGI_ADAPTER_FLAG_SOFTWARE)
+                {
+                    ptr.reset();
+                    continue;
+                }
 
-     /*               
+                if (win::succeeded(D3D12CreateDevice(ptr.get(), D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), nullptr)))
+                {
+                    return ptr;
+                }
+            }
+
+            throw std::runtime_error{__func__}; // if we make it here, we failed
+        }
+
+        static auto swchain_desc(HWND hwnd, size_t width, size_t height)
+        {
+            DXGI_SWAP_CHAIN_DESC desc{};
+            desc.BufferDesc.Width = static_cast<UINT>(width);
+            desc.BufferDesc.Height = static_cast<UINT>(height);
+            desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+            desc.OutputWindow = hwnd;
+            desc.BufferCount = 2;
+            desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
+            desc.SampleDesc.Count = 1;
+            desc.Windowed = true;
+            desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_DISCARD;
+            return desc;
+        }
+
+        static auto swchain_fullscreen_desc()
+        {
+            DXGI_SWAP_CHAIN_FULLSCREEN_DESC desc{};
+            desc.Windowed = true;
+            desc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
+            desc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+            return desc;
+        }
+
+        static auto command_queue_desc()
+        {
+            D3D12_COMMAND_QUEUE_DESC desc{};
+            desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
+            desc.Type = D3D12_COMMAND_LIST_TYPE_DIRECT;
+            return desc;
+        }
+
+        //////////////////
+        device::device()
+        {
+            HRESULT result = D3D12CreateDevice(nullptr, //adapter.get()
+                                               D3D_FEATURE_LEVEL_11_0,
+                                               __uuidof(ID3D12Device), reinterpret_cast<void**>(&dev_ptr));
+            if (win::failed(result))
+            {
+                throw std::runtime_error{__func__};
+            }
+        }
+
+        swap_chain::swap_chain(win::window& win, device& dev)
+        {
+            RECT client_area{};
+            GetClientRect(get_hwnd(win), &client_area);
+
+            release_ptr<ID3D12CommandQueue> cq_ptr;
+            auto cq_desc = command_queue_desc();
+
+            HRESULT result3 = get(dev).CreateCommandQueue(std::addressof(cq_desc), __uuidof(decltype(cq_ptr)::type), reinterpret_cast<void**>(&cq_ptr));
+            if (win::failed(result3))
+            {
+                throw std::runtime_error{"swap_chain: CreateCommandQueue result not S_OK"};
+            }
+
+            auto sc_desc = swchain_desc(get_hwnd(win), width(win), height(win));
+            HRESULT result2 = get_dxgi_factory()->CreateSwapChain(cq_ptr.get(), &sc_desc, &swchain_ptr);
+            if (win::failed(result2))
+            {
+                throw std::runtime_error{"swap_chain: CreateSwapChainForHwnd result not S_OK"};
+            }
+
+            /*               
             
 
         
@@ -197,6 +201,7 @@ namespace _12_0 {
 }
 
     */
+        }
     }
-
-}}} // namespaces
+}
+} // namespaces

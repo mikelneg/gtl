@@ -1,12 +1,18 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef UWAAFVBBZZASASDFF_GTL_GUI_RECT_DRAW_H_
 #define UWAAFVBBZZASASDFF_GTL_GUI_RECT_DRAW_H_
 
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)
-    
-    not used for anything intersting -- keeping around to be cleaned up..
+/*-------------------------------------------------------------
 
------------------------------------------------------------------------------*/
+not used -- keeping for reference
+
+---------------------------------------------------------------*/
 
 #include <gtl/d3d_types.h>
 #include <gtl/gui_rect.h>
@@ -30,7 +36,7 @@ namespace d3d {
         static constexpr unsigned MAX_RECTS = 400;
 
         template <typename T>
-        using aligned_vector = std::vector<T, Eigen::aligned_allocator<T> >;
+        using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;
 
         std::vector<D3D12_INPUT_ELEMENT_DESC> layout_;
 
@@ -64,10 +70,9 @@ namespace d3d {
             //    {"UV", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
             //};
             return std::vector<D3D12_INPUT_ELEMENT_DESC>{
-                { "POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-                { "COLOR_ANGLE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-                { "GUID", 0, DXGI_FORMAT_R32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
-            };
+                {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                {"COLOR_ANGLE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                {"GUID", 0, DXGI_FORMAT_R32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
         }
 
         //auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps) {
@@ -111,13 +116,13 @@ namespace d3d {
         //}
         //
         auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig,
-            gtl::d3d::vertex_shader& vs, gtl::d3d::geometry_shader& gs, gtl::d3d::pixel_shader& ps)
+                      gtl::d3d::vertex_shader& vs, gtl::d3d::geometry_shader& gs, gtl::d3d::pixel_shader& ps)
         {
             D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_{};
             desc_.pRootSignature = rsig.get();
-            desc_.VS = { reinterpret_cast<UINT8*>(vs->GetBufferPointer()), vs->GetBufferSize() };
-            desc_.GS = { reinterpret_cast<UINT8*>(gs->GetBufferPointer()), gs->GetBufferSize() };
-            desc_.PS = { reinterpret_cast<UINT8*>(ps->GetBufferPointer()), ps->GetBufferSize() };
+            desc_.VS = {reinterpret_cast<UINT8*>(vs->GetBufferPointer()), vs->GetBufferSize()};
+            desc_.GS = {reinterpret_cast<UINT8*>(gs->GetBufferPointer()), gs->GetBufferSize()};
+            desc_.PS = {reinterpret_cast<UINT8*>(ps->GetBufferPointer()), ps->GetBufferSize()};
             desc_.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
             desc_.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
@@ -173,30 +178,19 @@ namespace d3d {
         rect_draw& operator=(rect_draw&&) = default;
 
         rect_draw(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue,
-            gtl::d3d::root_signature& rsig, gtl::physics_simulation& physics_)
-            : layout_(vertex_layout())
-            , vbuffer_descriptors_{ dev, 3, gtl::d3d::tags::shader_visible{} }
-            , vbuffers_{ { { dev, vbuffer_descriptors_.get_handle(0), MAX_RECTS * sizeof(EntityInfo) },
-                  { dev, vbuffer_descriptors_.get_handle(1), MAX_RECTS * sizeof(EntityInfo) },
-                  { dev, vbuffer_descriptors_.get_handle(2), MAX_RECTS * sizeof(EntityInfo) } } }
-            , cbheap_{ { { dev, 1, gtl::d3d::tags::shader_visible{} }, { dev, 1, gtl::d3d::tags::shader_visible{} }, { dev, 1, gtl::d3d::tags::shader_visible{} } } }
-            , cbuffer_{ { { dev, cbheap_[0], sizeof(gtl::camera) }, { dev, cbheap_[1], sizeof(gtl::camera) }, { dev, cbheap_[2], sizeof(gtl::camera) } } }
-            , texture_descriptor_heap_{ dev, 1, gtl::d3d::tags::shader_visible{} }
-            , texture_{ dev, { texture_descriptor_heap_.get_handle(0) }, cqueue,
-                L"D:\\images\\palettes\\greenish_palette.dds" }
-            ,
-            //vshader_{L"rect_draw_gui_vs.cso"},
-            //pshader_{L"rect_draw_gui_ps.cso"},
-            vshader_{ L"gs_shader_demo_vs.cso" }
-            , gshader_{ L"gs_shader_demo_gs.cso" }
-            , pshader_{ L"gs_shader_demo_ps.cso" }
-            ,
-            //pso_{dev,pso_desc(dev,rsig,vshader_,pshader_)},
-            pso_{ dev, pso_desc(dev, rsig, vshader_, gshader_, pshader_) }
-            , sampler_heap_{ dev, 1 }
-            , sampler_{ dev, sampler_desc(), sampler_heap_->GetCPUDescriptorHandleForHeapStart() }
-            , physics_{ physics_ }
-            , render_data_{} //physics_.copy_out()}
+                  gtl::d3d::root_signature& rsig, gtl::physics_simulation& physics_)
+            : layout_(vertex_layout()), vbuffer_descriptors_{dev, 3, gtl::d3d::tags::shader_visible{}}, vbuffers_{{{dev, vbuffer_descriptors_.get_handle(0), MAX_RECTS * sizeof(EntityInfo)}, {dev, vbuffer_descriptors_.get_handle(1), MAX_RECTS * sizeof(EntityInfo)}, {dev, vbuffer_descriptors_.get_handle(2), MAX_RECTS * sizeof(EntityInfo)}}}, cbheap_{{{dev, 1, gtl::d3d::tags::shader_visible{}}, {dev, 1, gtl::d3d::tags::shader_visible{}}, {dev, 1, gtl::d3d::tags::shader_visible{}}}}, cbuffer_{{{dev, cbheap_[0], sizeof(gtl::camera)}, {dev, cbheap_[1], sizeof(gtl::camera)}, {dev, cbheap_[2], sizeof(gtl::camera)}}}, texture_descriptor_heap_{dev, 1, gtl::d3d::tags::shader_visible{}}, texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, L"D:\\images\\palettes\\greenish_palette.dds"},
+              //vshader_{L"rect_draw_gui_vs.cso"},
+              //pshader_{L"rect_draw_gui_ps.cso"},
+              vshader_{L"gs_shader_demo_vs.cso"},
+              gshader_{L"gs_shader_demo_gs.cso"},
+              pshader_{L"gs_shader_demo_ps.cso"},
+              //pso_{dev,pso_desc(dev,rsig,vshader_,pshader_)},
+              pso_{dev, pso_desc(dev, rsig, vshader_, gshader_, pshader_)},
+              sampler_heap_{dev, 1},
+              sampler_{dev, sampler_desc(), sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
+              physics_{physics_},
+              render_data_{} //physics_.copy_out()}
         {
 
             //positions_.clear();
@@ -226,14 +220,18 @@ namespace d3d {
         {
             auto& positions_ = render_data_.entities_;
 
-            if (physics_.extract_render_data(render_data_)) {
+            if (physics_.extract_render_data(render_data_))
+            {
                 for (auto&& e : position_flags_)
                     e = true; // set dirty
                 position_flags_[idx] = false;
                 //construct_vertices(positions_);
                 vbuffers_[idx].update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(EntityInfo));
-            } else {
-                if (position_flags_[idx]) {
+            }
+            else
+            {
+                if (position_flags_[idx])
+                {
                     position_flags_[idx] = false;
                     //construct_vertices(positions_);
                     vbuffers_[idx].update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(EntityInfo));
@@ -242,16 +240,16 @@ namespace d3d {
         }
 
         void operator()(unsigned idx, float, gtl::d3d::graphics_command_list& cl,
-            gtl::d3d::raw::Viewport const& viewport,
-            gtl::d3d::raw::ScissorRect const& scissor,
-            Eigen::Matrix4f const& camera,
-            D3D12_CPU_DESCRIPTOR_HANDLE* rtv_handle) const
+                        gtl::d3d::raw::Viewport const& viewport,
+                        gtl::d3d::raw::ScissorRect const& scissor,
+                        Eigen::Matrix4f const& camera,
+                        D3D12_CPU_DESCRIPTOR_HANDLE* rtv_handle) const
         {
             //update_camera_buffers(camera);
             cbuffer_[idx].update(reinterpret_cast<const char*>(&camera), sizeof(gtl::camera));
             update_vertex_buffer(idx);
             cl->SetPipelineState(pso_.get());
-            auto heaps = { sampler_heap_.get(), texture_descriptor_heap_.get() };
+            auto heaps = {sampler_heap_.get(), texture_descriptor_heap_.get()};
             cl->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());
             //cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             //cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
@@ -264,10 +262,10 @@ namespace d3d {
 
             auto& positions_ = render_data_.entities_;
 
-            D3D12_VERTEX_BUFFER_VIEW cbv_{ vbuffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(EntityInfo)), sizeof(EntityInfo) };
+            D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(EntityInfo)), sizeof(EntityInfo)};
             cl->IASetVertexBuffers(0, 1, &cbv_);
 
-            auto viewports = { std::addressof(viewport) };
+            auto viewports = {std::addressof(viewport)};
             cl->RSSetViewports(static_cast<unsigned>(viewports.size()), *viewports.begin());
 
             //float blendvalues[]{f,f,f,f};

@@ -1,12 +1,18 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef YWBVVZXZZC_GTL_ALLOCATORS_H_
 #define YWBVVZXZZC_GTL_ALLOCATORS_H_
 
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-    
+/*-------------------------------------------------------------
+
     namespace gtl::allocators::
 
-    useful allocator types:
+    some (useful?) allocator types:
 
         template <typename T>
         class no_trivial_value_initialization     (alias no_trivial_init<T>)
@@ -15,7 +21,7 @@
             - Useful in cases like "std::vector<char, no_trivial_init<char>> v(100);"
               to initialize the vector _without_ initializing each char             
                     
------------------------------------------------------------------------------*/
+---------------------------------------------------------------*/
 
 #include <memory>
 #include <type_traits>
@@ -26,19 +32,21 @@
 namespace gtl {
 namespace allocators {
 
-    template <typename T, typename A = std::allocator<T> >
+    template <typename T, typename A = std::allocator<T>>
     struct no_trivial_value_initialization : A {
 
         template <typename R>
         struct rebind {
-            using other = no_trivial_value_initialization<R, typename std::allocator_traits<A>::template rebind_alloc<R> >;
+            using other = no_trivial_value_initialization<R, typename std::allocator_traits<A>::template rebind_alloc<R>>;
         };
 
         using A::A;
 
         template <typename R>
         inline std::enable_if_t<std::is_trivially_default_constructible<R>::value>
-        construct(R*) noexcept {} // do nothing
+        construct(R*) noexcept
+        {
+        } // do nothing
     };
 
     template <typename T>

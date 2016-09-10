@@ -1,12 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef NBIWIWOWOWFF_GTL_RATE_LIMITER_H_
 #define NBIWIWOWOWFF_GTL_RATE_LIMITER_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-    
-    namespace gtl
-    class rate_limiter;
------------------------------------------------------------------------------*/
 
 #include <chrono>
 
@@ -23,8 +23,7 @@ class rate_limiter {
 
 public:
     rate_limiter(std::chrono::milliseconds m)
-        : event_duration_{ std::chrono::duration_cast<duration>(m) }
-        , begin_time_of_next_{ clock::now() + event_duration_ }
+        : event_duration_{std::chrono::duration_cast<duration>(m)}, begin_time_of_next_{clock::now() + event_duration_}
     {
     }
 
@@ -32,7 +31,8 @@ public:
     void operator()(F&& func) const
     {
         auto current_time = clock::now();
-        if (current_time < begin_time_of_next_) {
+        if (current_time < begin_time_of_next_)
+        {
             return;
         }
         begin_time_of_next_ = current_time + event_duration_;

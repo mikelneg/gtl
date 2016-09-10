@@ -1,11 +1,18 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef UWUHFWZZSFF_GTL_GUI_H_
 #define UWUHFWZZSFF_GTL_GUI_H_
 
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)
+/*-------------------------------------------------------------
 
-    not used at all -- keeping it around for historical reasons..
------------------------------------------------------------------------------*/
+not used -- keeping for reference
+
+---------------------------------------------------------------*/
 
 #include <exception>
 

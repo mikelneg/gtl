@@ -1,3 +1,10 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #include "gtl/synchronization_object.h"
 
 #include <atomic>
@@ -6,18 +13,11 @@
 #include <gtl/d3d_helper_funcs.h>
 #include <gtl/d3d_types.h>
 
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)    
------------------------------------------------------------------------------*/
-
 namespace gtl {
 namespace d3d {
 
     frame_synchronizer::frame_synchronizer(command_queue& cqueue_, unsigned max_value_in_cycle, unsigned tolerance)
-        : cqueue_{ cqueue_ }
-        , fence_{ gtl::d3d::get_device_from(cqueue_) }
-        , tolerance_{ tolerance }
-        , cycle_length_{ max_value_in_cycle + 1 }
+        : cqueue_{cqueue_}, fence_{gtl::d3d::get_device_from(cqueue_)}, tolerance_{tolerance}, cycle_length_{max_value_in_cycle + 1}
     {
         //
         // cycle_length:  1 2 3 4 5 ...
@@ -35,8 +35,9 @@ namespace d3d {
         // last-submitted-frame-index is 6 or greater..
 
         assert(tolerance < cycle_length_);
-        if (tolerance >= cycle_length_) {
-            throw std::logic_error{ "frame_synchronizer tolerance must be less than the cycle length." };
+        if (tolerance >= cycle_length_)
+        {
+            throw std::logic_error{"frame_synchronizer tolerance must be less than the cycle length."};
         }
         wait_for_values_to_sync_at(0);
     }
@@ -71,7 +72,8 @@ namespace d3d {
     bool frame_synchronizer::synchronized() const
     {
         uint64_t diff = last_set_value_ - last_observed_value_;
-        if (diff > tolerance_) {
+        if (diff > tolerance_)
+        {
             last_observed_value_ = fence_->GetCompletedValue();
             diff = last_set_value_ - last_observed_value_;
         }
@@ -89,10 +91,7 @@ namespace d3d {
     //
 
     synchronization_object::synchronization_object(command_queue& cqueue_, unsigned max_value_in_cycle, unsigned allowed_desync_)
-        : cqueue_{ cqueue_ }
-        , fence_{ gtl::d3d::get_device_from(cqueue_) }
-        , allowed_latency_{ allowed_desync_ }
-        , cycle_length_{ max_value_in_cycle + 1 }
+        : cqueue_{cqueue_}, fence_{gtl::d3d::get_device_from(cqueue_)}, allowed_latency_{allowed_desync_}, cycle_length_{max_value_in_cycle + 1}
     {
         assert(allowed_latency_ <= cycle_length_ - 2);
         wait_for_values_to_sync_at(0);

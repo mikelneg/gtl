@@ -1,14 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef BOWOAFAZBBNASFAF_GTL_D3D_TAGS_H_
 #define BOWOAFAZBBNASFAF_GTL_D3D_TAGS_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)
-
-    namespace gtl::d3d::tags
-    various tag types used in gtl::d3d implementation
-
-    TODO improve tag names..
------------------------------------------------------------------------------*/
 
 namespace gtl {
 namespace d3d {

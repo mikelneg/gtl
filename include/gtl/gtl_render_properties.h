@@ -1,12 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef BIWOAISAVVZXFAWW_GTL_GTL_RENDER_PROPERTIES_H_
 #define BIWOAISAVVZXFAWW_GTL_GTL_RENDER_PROPERTIES_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-        
-    namespace gtl::gui::
-    
------------------------------------------------------------------------------*/
 
 #include <string>
 

@@ -1,12 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef BJJOWAASF_GTL_GUI_RECT_H_
 #define BJJOWAASF_GTL_GUI_RECT_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-    
-    namespace gtl::gui
-    class rect;
------------------------------------------------------------------------------*/
 
 namespace gtl {
 namespace gui {

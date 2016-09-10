@@ -1,9 +1,14 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef WQWOWQPPZSF_GTL_WIN_KEYBOARD_ENUM_H_
 #define WQWOWQPPZSF_GTL_WIN_KEYBOARD_ENUM_H_
 
-/*----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-
+/*----------------------------------------------------------------------------    
     Some key value definitions, put together by Josh Jackson:
     http://www.codeproject.com/script/Membership/View.aspx?mid=4951186
 -----------------------------------------------------------------------------*/
@@ -176,7 +181,7 @@ inline namespace win_keyboard {
 
     constexpr std::underlying_type_t<keyboard> value(keyboard val) noexcept
     {
-        return static_cast<std::underlying_type_t<keyboard> >(val);
+        return static_cast<std::underlying_type_t<keyboard>>(val);
     }
 
     template <typename T>

@@ -1,11 +1,18 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef NBZZZOPWPWRWR_GTL_SCENES_TRANSITION_SCENE_H_
 #define NBZZZOPWPWRWR_GTL_SCENES_TRANSITION_SCENE_H_
 
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                                  
-    namespace gtl::scenes::detail    
-    class transition_scene;    
------------------------------------------------------------------------------*/
+/*-------------------------------------------------------------
+
+not used -- keeping for reference
+
+---------------------------------------------------------------*/
 
 namespace gtl {
 namespace scenes {

@@ -1,11 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef YWIWVNWMASDF_GTL_WINDOW_H_
 #define YWIWVNWMASDF_GTL_WINDOW_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                                  
-    
-    class gtl::window;           
------------------------------------------------------------------------------*/
 
 #include <gtl/events.h>
 #include <vector>
@@ -30,12 +31,15 @@ namespace win {
         template <typename F>
         void enter_message_loop(F func)
         {
-            while (true) {
-                while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) { // we use NULL instead of hwnd so that we see WM_QUIT
+            while (true)
+            {
+                while (PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
+                { // we use NULL instead of hwnd so that we see WM_QUIT
                     TranslateMessage(&msg);
                     DispatchMessage(&msg);
                 }
-                if (msg.message == WM_QUIT) {
+                if (msg.message == WM_QUIT)
+                {
                     return;
                 }
                 func(event_queue_);
@@ -43,9 +47,18 @@ namespace win {
             }
         }
 
-        friend auto width(window& w) noexcept { return w.width_px; }
-        friend auto height(window& w) noexcept { return w.height_px; }
-        friend auto get_hwnd(window& w) noexcept { return w.hwnd; }
+        friend auto width(window& w) noexcept
+        {
+            return w.width_px;
+        }
+        friend auto height(window& w) noexcept
+        {
+            return w.height_px;
+        }
+        friend auto get_hwnd(window& w) noexcept
+        {
+            return w.hwnd;
+        }
     };
 }
 } // namespaces

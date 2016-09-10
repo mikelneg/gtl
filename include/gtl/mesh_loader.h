@@ -1,12 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef UTUIOWAQABVV_GTL_MESH_LOADER_H_
 #define UTUIOWAQABVV_GTL_MESH_LOADER_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-    
-    namespace gtl::
-    mesh type
------------------------------------------------------------------------------*/
 
 #include <memory>
 #include <string>
@@ -41,7 +41,7 @@ struct vertex_type_bone {
 
 class mesh_loader { // HACK hackish..
     template <typename T>
-    using aligned_vector = std::vector<T, Eigen::aligned_allocator<T> >;
+    using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;
 
     struct priv_impl;
     std::unique_ptr<priv_impl> impl_;

@@ -1,3 +1,10 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #include "gtl/d3d_helper_funcs.h"
 #include <gtl/d3d_types.h>
 
@@ -14,10 +21,6 @@
 #include <winerror.h>
 //#include <ostream>
 //#include <gtl/d3d_ostream.h>
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)    
------------------------------------------------------------------------------*/
 
 namespace gtl {
 namespace d3d {
@@ -47,7 +50,8 @@ namespace d3d {
             auto factory = get_dxgi_factory();
             release_ptr<raw::Adapter> ptr;
             std::vector<raw::AdapterDesc> adapters;
-            for (unsigned i = 0; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters1(i, std::addressof(ptr.expose_ptr())); ++i) {
+            for (unsigned i = 0; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters1(i, std::addressof(ptr.expose_ptr())); ++i)
+            {
                 raw::AdapterDesc desc{};
                 ptr->GetDesc1(std::addressof(desc));
                 adapters.emplace_back(desc);
@@ -86,7 +90,7 @@ namespace d3d {
 
         void wait_for_gpu(device& dev, command_queue& cqueue_)
         {
-            gtl::d3d::fence fence_{ dev };
+            gtl::d3d::fence fence_{dev};
             fence_.synchronized_increment(cqueue_);
             //gtl::win::waitable_handle event_;
             //auto current_value = fence_->GetCompletedValue();

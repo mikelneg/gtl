@@ -1,12 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef WYBOWAFBBASF_GTL_AUDIO_ADAPTER_H_
 #define WYBOWAFBBASF_GTL_AUDIO_ADAPTER_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)
-
-    class gtl::win::audio_adapter
-
------------------------------------------------------------------------------*/
 
 #include <memory>
 #include <string>

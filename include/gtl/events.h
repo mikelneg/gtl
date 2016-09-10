@@ -1,14 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef SOWIFJWBBGG_GTL_EVENTS_H_
 #define SOWIFJWBBGG_GTL_EVENTS_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-    
-    namespace gtl::event
-        
------------------------------------------------------------------------------*/
-
-// TODO replace all std::string id's with actual id's..
 
 #include <string>
 
@@ -83,22 +81,22 @@ namespace events {
     }
 
     using event_variant_base_ = boost::variant<done, dump_contents, focus_entity, exit_all,
-        none,
-        keep,
-        revert,
-        dpad_pressed,
-        keydown,
-        mouse_lbutton_down,
-        mouse_rbutton_down,
-        mouse_lbutton_up,
-        mouse_rbutton_up,
-        mouse_wheel_scroll,
-        mouse_click,
-        mouse_moved,
-        mousedown,
-        exit_immediately,
-        exit_state,
-        resize_swapchain>;
+                                               none,
+                                               keep,
+                                               revert,
+                                               dpad_pressed,
+                                               keydown,
+                                               mouse_lbutton_down,
+                                               mouse_rbutton_down,
+                                               mouse_lbutton_up,
+                                               mouse_rbutton_up,
+                                               mouse_wheel_scroll,
+                                               mouse_click,
+                                               mouse_moved,
+                                               mousedown,
+                                               exit_immediately,
+                                               exit_state,
+                                               resize_swapchain>;
 
     //class event_variant : public event_variant_base_ {
     //
@@ -129,28 +127,25 @@ namespace events {
     //    }
     //};
 
-    class event_variant {
-        //using variant = vn::variant_over<done,
-        //                                 none,
-        //                                 keydown,
-        //                                 mouse_click,
-        //                                 mousedown,
-        //                                 exit_immediately,
-        //                                 exit_state>;
+    class event_variant {   // HACK replace this clunky .value() interface..
+ 
         using variant = event_variant_base_;
         variant value_;
 
     public:
         template <typename T>
         event_variant(T const& e)
-            : value_{ e }
+            : value_{e}
         {
         }
 
         event_variant(event_variant const&) = default;
         event_variant(event_variant&&) = default;
 
-        variant value() const { return value_; }
+        variant value() const
+        {
+            return value_;
+        }
 
         friend bool same_type(event_variant const& lhs, event_variant const& rhs)
         {

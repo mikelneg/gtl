@@ -1,16 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef YWAVBVZSFWFW_GTL_EVENT_LISTENER_H_
 #define YWAVBVZSFWFW_GTL_EVENT_LISTENER_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-
-    namespace gtl
-    
-    template <typename T, typename M>
-    class event_listener; 
-        + CRTP base class used for receiving events from a gtl::event_generator<M>               
-
------------------------------------------------------------------------------*/
 
 #include <gtl/event_generator.h>
 
@@ -23,13 +19,13 @@ class event_listener {
     using event_generator_ref = std::reference_wrapper<event_generator>;
 
     std::vector<event_generator_ref> event_generators_;
-    bool any_attached_{ false };
+    bool any_attached_{false};
 
 public:
     event_listener() = default;
 
     event_listener(event_listener&& o)
-        : event_generators_{ o.detach_event_listeners() }
+        : event_generators_{o.detach_event_listeners()}
     {
         attach_listeners();
     }
@@ -45,7 +41,10 @@ public:
             detach_listeners();
     }
 
-    bool attached() const noexcept { return any_attached_; }
+    bool attached() const noexcept
+    {
+        return any_attached_;
+    }
 
     std::vector<event_generator_ref> detach_listeners();
     void attach_listeners(std::vector<event_generator_ref>);
@@ -57,7 +56,8 @@ public:
 template <typename T, typename M>
 auto event_listener<T, M>::detach_listeners() -> std::vector<event_generator_ref>
 {
-    for (auto&& e : event_generators_) {
+    for (auto&& e : event_generators_)
+    {
         e.get().remove_listener(static_cast<T*>(this));
     }
 
@@ -72,7 +72,8 @@ template <typename T, typename M>
 void event_listener<T, M>::attach_listeners()
 {
     any_attached_ = true;
-    for (auto&& e : event_generators_) {
+    for (auto&& e : event_generators_)
+    {
         e.get().add_listener(static_cast<T*>(this), [](void* o, M x) { static_cast<T*>(o)->listen(x); });
     }
 }
@@ -88,7 +89,8 @@ void event_listener<T, M>::attach_listener(event_generator& m)
 template <typename T, typename M>
 void event_listener<T, M>::attach_listeners(std::vector<event_generator_ref> v)
 {
-    for (auto&& e : v) {
+    for (auto&& e : v)
+    {
         this->attach_listener(e);
     }
 }

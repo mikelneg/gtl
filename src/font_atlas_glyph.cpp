@@ -1,3 +1,10 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #include "gtl/font_atlas_glyph.h"
 
 #define RAPIDXML_STATIC_POOL_SIZE (256)
@@ -24,7 +31,7 @@ namespace d3d {
             T t;
             stream_ >> t;
             if (!stream_)
-                throw std::runtime_error{ "Error parsing stream" };
+                throw std::runtime_error{"Error parsing stream"};
             return t;
         }
 
@@ -32,10 +39,10 @@ namespace d3d {
         T extract_from_string(std::string string_)
         {
             T t;
-            std::stringstream stream_{ string_ };
+            std::stringstream stream_{string_};
             stream_ >> t;
             if (!stream_)
-                throw std::runtime_error{ "Error parsing stream" };
+                throw std::runtime_error{"Error parsing stream"};
             return t;
         }
 
@@ -43,14 +50,15 @@ namespace d3d {
         std::array<T, N> extract_from_string(std::string string_, char)
         {
             std::array<T, N> array_;
-            std::stringstream stream_{ string_ };
+            std::stringstream stream_{string_};
 
-            for (int i = 0; i < N; ++i) {
+            for (int i = 0; i < N; ++i)
+            {
                 std::getline(stream_, string_, ',');
                 array_[i] = extract_from_string<T>(string_);
 
                 if (!stream_)
-                    throw std::runtime_error{ "Error parsing stream" };
+                    throw std::runtime_error{"Error parsing stream"};
             }
 
             return array_;
@@ -81,8 +89,9 @@ namespace d3d {
 
         page_count = extract_from_string<float>(node->first_attribute("pages")->value());
 
-        if (page_count > 1) {
-            throw std::runtime_error{ "page_count > 1 not currently supported.." };
+        if (page_count > 1)
+        {
+            throw std::runtime_error{"page_count > 1 not currently supported.."};
         }
 
         node = node->next_sibling("pages");
@@ -92,27 +101,30 @@ namespace d3d {
         node = node->next_sibling("chars");
         rapidxml::xml_node<>* glyph_node = node->first_node("char");
 
-        do {
+        do
+        {
             glyph_map.emplace(extract_from_string<unsigned>(glyph_node->first_attribute("id")->value()),
-                Glyph{
-                    extract_from_string<float>(glyph_node->first_attribute("x")->value()), // u
-                    extract_from_string<float>(glyph_node->first_attribute("y")->value()), // v
-                    extract_from_string<float>(glyph_node->first_attribute("width")->value()),
-                    extract_from_string<float>(glyph_node->first_attribute("height")->value()),
-                    extract_from_string<float>(glyph_node->first_attribute("xoffset")->value()),
-                    extract_from_string<float>(glyph_node->first_attribute("yoffset")->value()),
-                    extract_from_string<float>(glyph_node->first_attribute("xadvance")->value()) });
+                              Glyph{
+                                  extract_from_string<float>(glyph_node->first_attribute("x")->value()), // u
+                                  extract_from_string<float>(glyph_node->first_attribute("y")->value()), // v
+                                  extract_from_string<float>(glyph_node->first_attribute("width")->value()),
+                                  extract_from_string<float>(glyph_node->first_attribute("height")->value()),
+                                  extract_from_string<float>(glyph_node->first_attribute("xoffset")->value()),
+                                  extract_from_string<float>(glyph_node->first_attribute("yoffset")->value()),
+                                  extract_from_string<float>(glyph_node->first_attribute("xadvance")->value())});
         } while (glyph_node = glyph_node->next_sibling());
 
         node = node->next_sibling("kernings");
         // kernings are only available in non-monospace fonts
-        if (node) {
+        if (node)
+        {
             rapidxml::xml_node<>* kerning_node = node->first_node("kerning");
-            do {
+            do
+            {
                 kerning_map.emplace(extract_from_string<unsigned>(kerning_node->first_attribute("first")->value()),
-                    std::pair<uint8_t, float>{
-                        extract_from_string<unsigned>(kerning_node->first_attribute("second")->value()),
-                        extract_from_string<float>(kerning_node->first_attribute("amount")->value()) });
+                                    std::pair<uint8_t, float>{
+                                        extract_from_string<unsigned>(kerning_node->first_attribute("second")->value()),
+                                        extract_from_string<float>(kerning_node->first_attribute("amount")->value())});
             } while (kerning_node = kerning_node->next_sibling());
         }
     }
@@ -135,11 +147,13 @@ namespace d3d {
         std::cout << "spacing = " << f.spacing << "\n";
         std::cout << "outline = " << f.outline << "\n";
 
-        for (auto&& e : f.glyph_map) {
+        for (auto&& e : f.glyph_map)
+        {
             std::cout << static_cast<unsigned>(e.first) << " :: " << e.second;
         }
 
-        for (auto&& e : f.kerning_map) {
+        for (auto&& e : f.kerning_map)
+        {
             std::cout << static_cast<unsigned>(e.first) << "," << static_cast<unsigned>(e.second.first) << " = " << e.second.second << "\n";
         }
 

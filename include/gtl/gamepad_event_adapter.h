@@ -1,11 +1,12 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #ifndef YWIIABZXVVSWF_GTL_GAMEPAD_EVENT_adapter_H_
 #define YWIIABZXVVSWF_GTL_GAMEPAD_EVENT_adapter_H_
-
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)
-
-    class gtl::win::gamepad_event_adapter
------------------------------------------------------------------------------*/
 
 #include <gtl/events.h>
 #include <memory>

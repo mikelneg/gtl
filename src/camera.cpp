@@ -1,3 +1,10 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #include "gtl/camera.h"
 
 #include <Eigen/Geometry>
@@ -68,12 +75,12 @@ namespace {
 } // namespace
 
 camera::camera(gtl::physics::position<float> center_,
-    gtl::physics::dimensions<float> lens_dimensions_,
-    gtl::physics::angle<float> fov_,
-    gtl::physics::length<float> distance_to_lens_,
-    gtl::physics::length<float> distance_to_plane_)
-    : transform_{ make_ortho_proj_matrix(distance_to_lens_ / boost::units::si::meters,
-          distance_to_plane_ / boost::units::si::meters) }
+               gtl::physics::dimensions<float> lens_dimensions_,
+               gtl::physics::angle<float> fov_,
+               gtl::physics::length<float> distance_to_lens_,
+               gtl::physics::length<float> distance_to_plane_)
+    : transform_{make_ortho_proj_matrix(distance_to_lens_ / boost::units::si::meters,
+                                        distance_to_plane_ / boost::units::si::meters)}
 //transform_{make_projection_matrix(fov_ / boost::units::si::radians,
 //                                  lens_dimensions_.first / lens_dimensions_.second,
 //                                  distance_to_lens_ / boost::units::si::meters,

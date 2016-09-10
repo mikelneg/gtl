@@ -1,3 +1,10 @@
+/*-------------------------------------------------------------
+
+Copyright (c) 2016 Mikel Negugogor (http://github.com/mikelneg)
+MIT license. See LICENSE.txt in project root for details.
+
+---------------------------------------------------------------*/
+
 #include "gtl/gamepad_event_adapter.h"
 
 #include <gtl/events.h>
@@ -8,15 +15,11 @@
 
 #include <Eigen/Core>
 
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)    
------------------------------------------------------------------------------*/
-
 namespace gtl {
 namespace win {
 
     gamepad_event_adapter::gamepad_event_adapter()
-        : gamepad{ std::make_unique<DirectX::GamePad>() }
+        : gamepad{std::make_unique<DirectX::GamePad>()}
     {
         button_state.Reset();
     }
@@ -29,7 +32,7 @@ namespace win {
 
         auto const append = [&](gtl::event e) { event_queue.emplace_back(e); };
 
-        Eigen::Vector2f dpad_vec{ state.thumbSticks.leftX, state.thumbSticks.leftY };
+        Eigen::Vector2f dpad_vec{state.thumbSticks.leftX, state.thumbSticks.leftY};
         bool dpad_pressed = dpad_vec.squaredNorm() > 0.0f;
 
         //dpad_vec =
@@ -45,7 +48,7 @@ namespace win {
         //if (state.IsLeftThumbStickRight()) { dpad_pressed = true; dpad_vec += Eigen::Vector2f{1.0f,0.0f}; }
 
         if (dpad_pressed)
-            append(gtl::events::dpad_pressed{ dpad_vec.x() * 0.01f, dpad_vec.y() * 0.01f });
+            append(gtl::events::dpad_pressed{dpad_vec.x() * 0.01f, dpad_vec.y() * 0.01f});
     }
 }
 } // namespaces
