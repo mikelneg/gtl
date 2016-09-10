@@ -39,10 +39,10 @@ namespace scenes {
             std::array<gtl::d3d::graphics_command_list, frame_count> mutable clist_;
             std::array<gtl::d3d::graphics_command_list, frame_count> mutable font_clist_;
 
-            gtl::d3d::raw::Viewport mutable viewport_;              
-            gtl::d3d::raw::ScissorRect mutable scissor_; 
+            gtl::d3d::raw::Viewport mutable viewport_;
+            gtl::d3d::raw::ScissorRect mutable scissor_;
 
-            gtl::d3d::raw::Viewport mutable text_viewport_; 
+            gtl::d3d::raw::Viewport mutable text_viewport_;
 
             gtl::d3d::resource_descriptor_heap resource_heap_;
             gtl::d3d::srv texture_;

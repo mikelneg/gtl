@@ -19,6 +19,7 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/physics_simulation.h>
 #include <gtl/swap_vector.h>
 #include <vn/swap_object.h>
+#include <vn/boost_variant_utilities.h>
 
 //#include <gtl/event_listener.h>
 
@@ -42,8 +43,8 @@ MIT license. See LICENSE.txt in project root for details.
 namespace gtl {
 namespace scenes {
 
-    class main_scene { 
-        
+    class main_scene {
+
         gtl::swap_vector<gtl::physics::generator> mutable physics_task_queue_;
 
         gtl::physics_simulation physics_;
@@ -142,8 +143,7 @@ namespace scenes {
                 Eigen::Matrix4f cam_transform_
                     = Eigen::Affine3f{Eigen::Scaling(1.0f / (camera_height_ / boost::units::si::meter)) //}.matrix();
                                       * Eigen::AngleAxisf{0.2f, Eigen::Vector3f{0.0f, 0.0f, -1.0f}}
-                                      * Eigen::AngleAxisf{0.2f, Eigen::Vector3f{-1.0f, 0.0f, 0.0f}}}
-                          .matrix();
+                                      * Eigen::AngleAxisf{0.2f, Eigen::Vector3f{-1.0f, 0.0f, 0.0f}}}.matrix();
 
                 draw_task_queue_.consume([](auto&& f) { f(); }); // execute our waiting tasks..
                 swirl_effect_.draw(ps..., current_id_, cam_transform_ * physics_camera_.matrix());
@@ -166,9 +166,9 @@ namespace scenes {
             namespace ev = gtl::events;
             namespace k = gtl::keyboard;
 
-            while (!same_type(yield().get(), ev::exit_immediately{}))
+            while (!same_type(yield().get().value(), ev::exit_immediately{}))
             {
-                if (same_type(yield.get(), ev::keydown{}))
+                if (same_type(yield.get().value(), ev::keydown{}))
                 {
                     switch (boost::get<ev::keydown>(yield.get().value()).key)
                     {
@@ -203,156 +203,160 @@ namespace scenes {
             std::vector<gtl::physics::generator> task_local_;
 
             uint16_t selected_id{};
+            bool shift_down_{};
 
-            std::cout << "swirl_effect event handler entered..\n";
+            bool quit_{};
+            //gtl::events::event_variant quit_event_{ev::none{}}
 
-            while (!same_type(yield().get(), ev::exit_immediately{}))
-            {
-                if (same_type(yield.get(), ev::keydown{}))
-                {
-                    // auto f_id = focus_id_.load(std::memory_order_acquire);
+            auto mouse_handler
+                = vn::make_lambda_visitor(
+                    [&](ev::mouse_wheel_scroll const& e) {
+                        std::cout << "mouse scroll : new delta = " << e.wheel_delta
+                                  << ", keystate == " << e.key_state << "\n";
+                        camera_height_ += (e.wheel_delta > 0 ? -0.1f : 0.1f) * boost::units::si::meter;
+                        std::cout << "camera's new height == " << camera_height_ / boost::units::si::meter << "\n";
+                    },
+                    [&](ev::mouse_lbutton_down const& e) {
+                        selected_id = current_id_.load(std::memory_order_relaxed);
+                        std::cout << "selected object " << selected_id << "\n";
 
-                    // if (f_id == 0) {
-                    std::cout << "main focus keypress..\n";
-                    switch (boost::get<ev::keydown>(yield.get().value()).key)
-                    {
-                        case k::Escape:
+                        int mx = GET_X_LPARAM(e.coord); // TODO replace this coordinate stuff..
+                        int my = GET_Y_LPARAM(e.coord);
+
+                        draw_task_queue_.insert([=, this]() { this->imgui_adapter_.mouse_down(mx, my); });
+                        // resource_callback_(gtl::commands::get_audio_adapter{}, [](auto&& aud) { aud.play_effect("click"); }); // TODO causes an ICE..
+                    },
+                    [&](ev::mouse_rbutton_down const& e) {
+
+                        selected_id = current_id_.load(std::memory_order_relaxed);
+
+                        if (shift_down_)
                         {
-                            std::cout << "swirl_effect(): escape pressed, exiting all..\n";
-                            return gtl::events::exit_all{};
+                            task_local_.emplace_back(destroy_object_implode{selected_id});
+                            physics_task_queue_.swap_in(task_local_); // TODO fix how tasks are submitted..
                         }
-                        break;
-                        case k::Q:
+                        else
                         {
-                            std::cout << "swirl_effect(): q pressed, exiting A from route 0 (none == " << count << ")\n";
-                            return gtl::events::exit_state{0};
-                        }
-                        break;
-                        case k::A:
-                        {
-                            std::cout << "swirl_effect(): A pressed, generating new object.. \n";
-                            task_local_.emplace_back(dynamic_box{{0.0f * si::meter, 0.0f * si::meter},
-                                                                 {0.5f * si::meter, 0.5f * si::meter},
-                                                                 0.0f * si::radians,
-                                                                 InstanceInfo{}.pack_entity_id(888)});
+                            task_local_.emplace_back(boost_object{selected_id});
                             physics_task_queue_.swap_in(task_local_);
                         }
-                        break;
-                        case k::K:
-                        {
-                            std::cout << "swirl_effect(): k pressed, throwing (none == " << count << ")\n";
-                            throw std::runtime_error{__func__};
-                        }
-                        break;
-                        case k::R:
-                        {
-                            std::cout << "swirl_effect() : r pressed, issuing resize..\n";
+                    },
+                    [&](ev::mouse_lbutton_up const& e) {                        
+                        int mx = GET_X_LPARAM(e.coord);
+                        int my = GET_Y_LPARAM(e.coord);
+                        draw_task_queue_.insert([=, this]() { this->imgui_adapter_.mouse_up(mx, my); });
+                    },
+                    [&](ev::mouse_moved const& e) {
+                        swirl_effect_.set_mouse_coords(e.coord);
+                        
+                        int mx = GET_X_LPARAM(e.coord);
+                        int my = GET_Y_LPARAM(e.coord);
+                        draw_task_queue_.insert([=, this]() { this->imgui_adapter_.mouse_move(mx, my); });
+                    },
+                    [](auto const&) { // empty catch-all
+                    });
 
-                            std::pair<int, int> dims{};
-                            resource_callback_(gtl::commands::get_swap_chain{}, [&](auto& s) { dims = s.dimensions(); });
-                            resource_callback_(gtl::commands::resize{1280, 720}, []() {});
+            auto quit_handler = [&](gtl::events::event_variant) { quit_ = true; };
 
-                            std::cout << "entering resize context..\n";
-                            if (same_type(resizing_event_context(yield), ev::keep{}))
+            auto top_level_handler
+                = vn::make_lambda_visitor(
+                    [&](ev::mouse_event const& m) {
+                        mouse_handler(m);
+                    },
+                    [&](ev::exit_immediately const&) {
+                        quit_ = true;
+                        quit_handler(ev::exit_all{});
+                    },
+                    [&](ev::keydown const& k) {
+                        switch (k.key)
+                        {
+                            case k::Shift:
+                                shift_down_ = true;
+                                break;
+                            case k::Escape:
                             {
-                                std::cout << "keeping new size..\n";
+                                std::cout << "swirl_effect(): escape pressed, exiting all..\n";
+                                quit_handler(ev::exit_all{});
                             }
-                            else
+                            break;
+                            case k::Q:
                             {
-                                std::cout << "reverting to old size..\n";
-                                resource_callback_(gtl::commands::resize{dims.first, dims.second}, []() {});
+                                std::cout << "swirl_effect(): q pressed, exiting A from route 0 (none == " << count << ")\n";
+                                quit_handler(ev::exit_state{0});
                             }
+                            break;
+                            case k::A:
+                            {
+                                std::cout << "swirl_effect(): A pressed, generating new object.. \n";
+                                task_local_.emplace_back(dynamic_box{{0.0f * si::meter, 0.0f * si::meter},
+                                                                     {0.5f * si::meter, 0.5f * si::meter},
+                                                                     0.0f * si::radians,
+                                                                     InstanceInfo{}.pack_entity_id(888)});
+                                physics_task_queue_.swap_in(task_local_);
+                            }
+                            break;
+                            case k::K:
+                            {
+                                std::cout << "swirl_effect(): k pressed, throwing (none == " << count << ")\n";
+                                throw std::runtime_error{__func__};
+                            }
+                            break;
+                            case k::R:
+                            {
+                                std::cout << "swirl_effect() : r pressed, issuing resize..\n";
+                                std::pair<int, int> dims{};
+
+                                // TODO resource_callback_() calls are producing ICEs...
+
+                                //resource_callback_(gtl::commands::get_swap_chain{}, [&](auto& s) { dims = s.dimensions(); });
+                                //resource_callback_(gtl::commands::resize{1280, 720}, [](){});
+
+                                //std::cout << "entering resize context..\n";
+                                //if (same_type(resizing_event_context(yield), ev::keep{}))
+                                //{
+                                //    std::cout << "keeping new size..\n";
+                                //}
+                                //else
+                                //{
+                                //    std::cout << "reverting to old size..\n";
+                                //    resource_callback_(gtl::commands::resize{dims.first, dims.second}, []() {});
+                                //}
+                            }
+                            break;
+                            default:
+                            {
+                                std::cout << "swirl_effect() : unknown key pressed\n";
+                            }
+                            break;
                         }
-                        break;
-                        default:
+                    },
+                    [&](ev::keyup const& k) {
+                        switch (k.key)
                         {
-                            std::cout << "swirl_effect() : unknown key pressed\n";
+                            case k::Shift:
+                            {
+                                shift_down_ = false;
+                            }
+                            break;
+                            default:
+                                break;
                         }
-                        break;
-                    }
-                    //} else if (f_id == 1) {
-                    //    std::cout << "imgui focus keypress..\n";
-                    //    draw_task_queue_.insert([c =
-                    //    boost::get<ev::keydown>(yield.get().value()).key, this](){
-                    //    this->imgui_adapter_.add_input_charcter(c); });
-                    //}
-                }
-                else if (same_type(yield.get(), ev::mouse_wheel_scroll{}))
-                {
-                    // uint32_t id = current_id_.load(std::memory_order_relaxed);
-                    gtl::events::mouse_wheel_scroll const& event_
-                        = boost::get<ev::mouse_wheel_scroll>(yield.get().value());
-                    std::cout << "mouse scroll : new delta = " << event_.wheel_delta
-                              << ", keystate == " << event_.key_state << "\n";
-                    camera_height_ += (event_.wheel_delta > 0 ? -0.1f : 0.1f) * boost::units::si::meter;
-                    std::cout << "camera's new height == " << camera_height_ / boost::units::si::meter << "\n";
-                    // task_local_.emplace_back(destroy_object_implode{id});
-                    // physics_task_queue_.swap_in(task_local_);
-                }
-                else if (same_type(yield.get(), ev::mouse_lbutton_down{}))
-                {
-                    selected_id = current_id_.load(std::memory_order_relaxed);
-                    // std::cout << "nuking object " << id << "\n";
-                    std::cout << "selected object " << selected_id << "\n";
+                    },
+                    [&](ev::dpad_pressed const& e) {
+                        task_local_.emplace_back(boost_object_vec{selected_id, e.x / 400.0f, e.y / 400.0f}); // HACK
+                        physics_task_queue_.swap_in(task_local_);
+                    },
+                    [&](ev::resize_swapchain const&) {
+                    },
+                    [](auto const&) {
+                    });
 
-                    auto& coord_ = boost::get<ev::mouse_lbutton_down>(yield.get().value()).coord; // HACK fix this
-                    int mx = GET_X_LPARAM(coord_);
-                    int my = GET_Y_LPARAM(coord_);
-
-                    draw_task_queue_.insert([=, this]() { this->imgui_adapter_.mouse_down(mx, my); });
-                    resource_callback_(gtl::commands::get_audio_adapter{}, [](auto& aud) { aud.play_effect("click"); });
-                    // task_local_.emplace_back(destroy_object_implode{id});
-                    // physics_task_queue_.swap_in(task_local_);
-                }
-                else if (same_type(yield.get(), ev::mouse_lbutton_up{}))
-                {
-                    auto& coord_ = boost::get<ev::mouse_lbutton_up>(yield.get().value()).coord; // HACK fix this
-                    int mx = GET_X_LPARAM(coord_);
-                    int my = GET_Y_LPARAM(coord_);
-                    draw_task_queue_.insert([=, this]() { this->imgui_adapter_.mouse_up(mx, my); });
-                }
-                else if (same_type(yield.get(), ev::mouse_rbutton_down{}))
-                {
-                    uint16_t id = current_id_.load(std::memory_order_relaxed);
-                    std::cout << "boosting object " << id << "\n";
-                    task_local_.emplace_back(boost_object{id});
-                    physics_task_queue_.swap_in(task_local_);
-                }
-                else if (same_type(yield.get(), ev::dpad_pressed{}))
-                {
-                    auto& dpad_press = boost::get<ev::dpad_pressed>(yield.get().value());
-                    // std::cout << "dpad pressed.." << dpad_press.x << "," << dpad_press.y
-                    // << "\n";
-                    // uint16_t id = current_id_.load(std::memory_order_relaxed);
-                    task_local_.emplace_back(
-                        boost_object_vec{selected_id, dpad_press.x / 400.0f, dpad_press.y / 400.0f});
-                    physics_task_queue_.swap_in(task_local_);
-                }
-                else if (same_type(yield.get(), ev::none{}))
-                {
-                    count++;
-                }
-                else if (same_type(yield.get(), ev::mouse_moved{}))
-                {
-                    swirl_effect_.set_mouse_coords(boost::get<ev::mouse_moved>(yield.get().value()).coord);
-
-                    auto& coord_ = boost::get<ev::mouse_moved>(yield.get().value()).coord; // HACK fix this
-                    int mx = GET_X_LPARAM(coord_);
-                    int my = GET_Y_LPARAM(coord_);
-                    draw_task_queue_.insert([=, this]() { this->imgui_adapter_.mouse_move(mx, my); });
-                }
-                else if (same_type(yield.get(), ev::resize_swapchain{}))
-                {
-                    // int nw = yield.get().value().new_width;
-                    // int nh = yield.get().value().new_height;
-                    //
-                    // resource_callback_(gtl::commands::get_swap_chain{},
-                    //                   [=](auto& swchain){ swchain.resize(nw,nh); });
-                    //
-                    //
-                }
+            while (!quit_)
+            {
+                top_level_handler(yield().get().value());
             }
-            return gtl::events::exit_state{0};
+
+            return ev::exit_state{0};
         }
     };
 }

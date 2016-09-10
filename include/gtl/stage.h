@@ -74,7 +74,7 @@ public:
     stage(stage&&) = delete;
     stage& operator=(stage&&) = delete;
 
-    void present(gtl::d3d::swap_chain&, DXGI_PRESENT_PARAMETERS);
+    void present(gtl::d3d::swap_chain&, DXGI_PRESENT_PARAMETERS = {});
     void discard_frame_and_synchronize(gtl::d3d::swap_chain&);
 
     void dispatch_event(gtl::event const& e)
@@ -172,7 +172,8 @@ stage::stage(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, u
               [&](gtl::commands::get_audio_adapter, auto&& f) {
                   //std::unique_lock<std::mutex> lock_{draw_thread_mutex_};
                   f(audio);
-              });
+              },
+              [](auto&&, auto&&) {});
 
           scene_.handle_events(callback_handler_, yield);
       }}

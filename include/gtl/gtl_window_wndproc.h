@@ -68,32 +68,40 @@ namespace win {
 
                 //-------------------------------------------//
 
-                case WM_KEYUP:
-                {
-                }
-                break;
-
                 case WM_CHAR:
                 {
-                    if ((HIWORD(lparam) & KF_REPEAT) < 1)
-                    { // block auto-repeat
-                        switch (wparam)
-                        {
-                            case keyboard::Backspace:
-                            case keyboard::Enter:
-                                handler_ref(hwnd).emplace_back(keydown{static_cast<unsigned>(wparam)});
-                                break;
-                            default:
-                                handler_ref(hwnd).emplace_back(keydown{static_cast<unsigned>(wparam)});
-                                break;
-                        }
-                    }
-                    return 0;
+                    //if ((HIWORD(lparam) & KF_REPEAT) < 1)
+                    //{ // block auto-repeat
+                    //    switch (wparam)
+                    //    {
+                    //        case keyboard::Shift:
+                    //        case keyboard::Backspace:
+                    //        case keyboard::Enter:
+                    //            handler_ref(hwnd).emplace_back(keydown{static_cast<unsigned>(wparam)});
+                    //            break;
+                    //        default:
+                    //            handler_ref(hwnd).emplace_back(keydown{static_cast<unsigned>(wparam)});
+                    //            break;
+                    //    }
+                    //}
+                    //return 0;
                 }
                 break;
 
                 case WM_KEYDOWN:
                 {
+                    if ((HIWORD(lparam) & KF_REPEAT) < 1)
+                    { // block auto-repeat
+                        handler_ref(hwnd).emplace_back(keydown{static_cast<unsigned>(wparam)});
+                    }
+                    return 0;
+                }
+                break;
+
+                case WM_KEYUP:
+                {
+                    handler_ref(hwnd).emplace_back(keyup{static_cast<unsigned>(wparam)});
+                    return 0;
                 }
                 break;
 

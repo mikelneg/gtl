@@ -53,11 +53,9 @@ public:
 private:
     vn::swap_object<imgui_data> output_buffer_; // TODO implement copy-free buffer updating (instead of swap_object<vector> or whatever)
     imgui_data local_data_;
-
-    //
+    
     std::vector<char> text_box_a_;
     std::vector<char> text_box_b_;
-    //
 
 public:
     imgui_adapter()
@@ -83,9 +81,9 @@ public:
         auto& verts = local_data_.vertices_;
         auto& indices = local_data_.indices_;
 
-        if (verts.size() < draw_data.TotalVtxCount)
+        if (static_cast<int>(verts.size()) < draw_data.TotalVtxCount)
             verts.resize(draw_data.TotalVtxCount);
-        if (indices.size() < draw_data.TotalIdxCount)
+        if (static_cast<int>(indices.size()) < draw_data.TotalIdxCount)
             indices.resize(draw_data.TotalIdxCount);
 
         local_data_.vertex_count_ = 0;
@@ -95,8 +93,8 @@ public:
         {
             auto* cmd_list = draw_data.CmdLists[n];
 
-            assert(voffs < verts.size());
-            assert(ioffs < indices.size());
+            assert(voffs < static_cast<int>(verts.size()));
+            assert(ioffs < static_cast<int>(indices.size()));
 
             std::copy_n(cmd_list->VtxBuffer.begin(), cmd_list->VtxBuffer.size(), verts.data() + voffs);
             std::copy_n(cmd_list->IdxBuffer.begin(), cmd_list->IdxBuffer.size(), indices.data() + ioffs);
@@ -117,16 +115,13 @@ public:
     }
 
     void render()
-    {
-        //auto& io = ImGui::GetIO();
-        //io.MouseDrawCursor = true;
-
+    {        
         ImGui::NewFrame();
 
-        ImGui::Begin("Window Title Here");
+        ImGui::Begin("Window Title");
 
         //ImGui::PushID(55);
-        if (ImGui::Button("resize"))
+        if (ImGui::Button("Button"))
         {
             std::cout << "resize button pressed..\n";
         }
@@ -169,17 +164,18 @@ public:
         //io.Fonts->GetTexDataAsRGBA32(&pixels,&width,&height,&bytes_per_pixel);
         io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height, &bytes_per_pixel);
 
-        std::vector<uint32_t> font_data; //(width * height);
+        std::vector<uint32_t> font_data;
 
-        //std::copy_n(pixels, width * height, font_data.data());
+        // std::copy_n(pixels, width * height * bytes_per_pixel, font_data.data()); // incorrect
 
-        for (int m = 0; m < (height); ++m)
+        for (int m = 0; m < height; ++m)
         {
-            for (int n = 0; n < (width); ++n)
+            for (int n = 0; n < width; ++n)
             {
                 font_data.emplace_back(pixels[m * width + n]);
             }
         }
+
         return std::make_tuple(std::move(font_data), static_cast<unsigned>(width), static_cast<unsigned>(height));
     }
 
@@ -225,8 +221,9 @@ public:
     }
 };
 
-/*
-t_buffers_{{{dev,vert_descriptor_heap_.get_handle(0),MAX_VERTS * sizeof(ImDrawVert), gtl::d3d::tags::shader_view{}},
+/* Old reference code...
+
+    t_buffers_{{{dev,vert_descriptor_heap_.get_handle(0),MAX_VERTS * sizeof(ImDrawVert), gtl::d3d::tags::shader_view{}},
                            {dev,vert_descriptor_heap_.get_handle(1),MAX_VERTS * sizeof(ImDrawVert), gtl::d3d::tags::shader_view{}},
                            {dev,vert_descriptor_heap_.get_handle(2),MAX_VERTS * sizeof(ImDrawVert), gtl::d3d::tags::shader_view{}}}},
             idx_descriptor_heap_{dev,3,gtl::d3d::tags::shader_visible{}},

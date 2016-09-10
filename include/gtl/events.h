@@ -42,6 +42,9 @@ namespace events {
         struct keydown {
             unsigned key;
         };
+        struct keyup {
+            unsigned key;
+        };
         struct mouse_lbutton_down {
             int64_t coord;
         };
@@ -78,7 +81,18 @@ namespace events {
         struct resize_swapchain {
             int new_width, new_height;
         };
+
+        using mouse_event = boost::variant<mouse_lbutton_down,
+                                           mouse_rbutton_down,
+                                           mouse_lbutton_up,
+                                           mouse_rbutton_up,
+                                           mouse_wheel_scroll,
+                                           mouse_click,
+                                           mouse_moved,
+                                           mousedown>;
     }
+
+    // TODO this variant needs to be broken into several different variantes (there is a limit of 16 types by default)
 
     using event_variant_base_ = boost::variant<done, dump_contents, focus_entity, exit_all,
                                                none,
@@ -86,14 +100,8 @@ namespace events {
                                                revert,
                                                dpad_pressed,
                                                keydown,
-                                               mouse_lbutton_down,
-                                               mouse_rbutton_down,
-                                               mouse_lbutton_up,
-                                               mouse_rbutton_up,
-                                               mouse_wheel_scroll,
-                                               mouse_click,
-                                               mouse_moved,
-                                               mousedown,
+                                               keyup,
+                                               mouse_event,
                                                exit_immediately,
                                                exit_state,
                                                resize_swapchain>;
@@ -127,8 +135,8 @@ namespace events {
     //    }
     //};
 
-    class event_variant {   // HACK replace this clunky .value() interface..
- 
+    class event_variant { // HACK replace this clunky .value() interface..
+
         using variant = event_variant_base_;
         variant value_;
 
