@@ -1,0 +1,714 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="14.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|Win32">
+      <Configuration>Debug</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|Win32">
+      <Configuration>Release</Configuration>
+      <Platform>Win32</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="..\..\..\Libraries\imgui-master\imgui.cpp" />
+    <ClCompile Include="..\..\..\Libraries\imgui-master\imgui_demo.cpp" />
+    <ClCompile Include="..\..\..\Libraries\imgui-master\imgui_draw.cpp" />
+    <ClCompile Include="..\..\gtl\src\audio_adapter.cpp" />
+    <ClCompile Include="..\..\gtl\src\camera.cpp" />
+    <ClCompile Include="..\..\gtl\src\d3d_helper_funcs.cpp" />
+    <ClCompile Include="..\..\gtl\src\d3d_imgui_adapter.cpp" />
+    <ClCompile Include="..\..\gtl\src\d3d_types.cpp" />
+    <ClCompile Include="..\..\gtl\src\events.cpp" />
+    <ClCompile Include="..\..\gtl\src\event_handler.cpp" />
+    <ClCompile Include="..\..\gtl\src\file_utilities.cpp" />
+    <ClCompile Include="..\..\gtl\src\font_atlas.cpp" />
+    <ClCompile Include="..\..\gtl\src\font_atlas_glyph.cpp" />
+    <ClCompile Include="..\..\gtl\src\gamepad_event_adapter.cpp" />
+    <ClCompile Include="..\..\gtl\src\gtl_window.cpp" />
+    <ClCompile Include="..\..\gtl\src\mesh_loader.cpp" />
+    <ClCompile Include="..\..\gtl\src\physics_simulation.cpp" />
+    <ClCompile Include="..\..\gtl\src\pix.cpp" />
+    <ClCompile Include="..\..\gtl\src\resource_locator.cpp" />
+    <ClCompile Include="..\..\gtl\src\stage.cpp" />
+    <ClCompile Include="..\..\gtl\src\synchronization_object.cpp" />
+    <ClCompile Include="..\..\gtl\src\system_caps.cpp" />
+    <ClCompile Include="..\..\gtl\src\win_tools.cpp" />
+    <ClCompile Include="..\..\vn\src\math_utilities.cpp" />
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="..\..\..\Libraries\imgui-master\imconfig.h" />
+    <ClInclude Include="..\..\..\Libraries\imgui-master\imgui.h" />
+    <ClInclude Include="..\..\..\Libraries\imgui-master\imgui_internal.h" />
+    <ClInclude Include="..\..\..\Libraries\imgui-master\stb_rect_pack.h" />
+    <ClInclude Include="..\..\..\Libraries\imgui-master\stb_textedit.h" />
+    <ClInclude Include="..\..\..\Libraries\imgui-master\stb_truetype.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\allocators.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\audio_adapter.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\camera.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\command_variant.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\copyable_atomic.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\d3d_caps.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\d3d_imgui_adapter.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\d3d_version.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\d3d_helper_funcs.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\d3d_ostream.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\d3d_pass.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\d3d_types.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\demo_transition_scene.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\events.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\event_generator.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\event_handler.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\event_listener.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\file_utilities.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\font_atlas.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\font_atlas_glyph.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\gamepad_event_adapter.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\gtl_gui.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\imgui_adapter.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\gtl_render_properties.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\gtl_window.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\gtl_window_wndproc.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\gui_rect.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\gui_rect_draw.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\d3d_tags.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\keyboard_enum.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\literals.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\lockswap_vector.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\main_scene.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\mesh_loader.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\mesh_group.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\object_rendering_scene.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\physics_simulation.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\physics_units.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\pix.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\rate_limiter.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\intrusive_ptr.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\resource_locator.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\scene.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\scenes.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\stage.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\swap_vector.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\swirl_effect_transition_scene.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\synchronization_object.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\system_caps.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\tags.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\transition_scene.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\win_keyboard_enum.h" />
+    <ClInclude Include="..\..\gtl\include\gtl\win_tools.h" />
+    <ClInclude Include="..\..\vn\include\vn\boost_coroutine_utilities.h" />
+    <ClInclude Include="..\..\vn\include\vn\boost_variant_utilities.h" />
+    <ClInclude Include="..\..\vn\include\vn\boost_visitors.h" />
+    <ClInclude Include="..\..\vn\include\vn\composite_function.h" />
+    <ClInclude Include="..\..\vn\include\vn\function_call.h" />
+    <ClInclude Include="..\..\vn\include\vn\hasher.h" />
+    <ClInclude Include="..\..\vn\include\vn\has_equality_operator.h" />
+    <ClInclude Include="..\..\vn\include\vn\is_valid.h" />
+    <ClInclude Include="..\..\vn\include\vn\math_utilities.h" />
+    <ClInclude Include="..\..\vn\include\vn\scope_guard.h" />
+    <ClInclude Include="..\..\vn\include\vn\swap_object.h" />
+    <ClInclude Include="..\..\vn\include\vn\single_consumer_queue.h" />
+    <ClInclude Include="..\..\vn\include\vn\tuple_utilities.h" />
+    <ClInclude Include="..\..\vn\include\vn\type_list.h" />
+    <ClInclude Include="..\..\vn\include\vn\utilities.h" />
+    <ClInclude Include="..\..\vn\include\vn\work_thread.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <FxCompile Include="..\..\shaders\demo_cs_vs.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\demo_cs_cs.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">cs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">cs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">cs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">cs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Compute</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\demo_cs_ps.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\font_atlas_ps.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\font_atlas_vs.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\gs_shader_demo_gs.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">gs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Geometry</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">gs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Geometry</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">gs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Geometry</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">gs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Geometry</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\gs_shader_demo_ps.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\gs_shader_demo_vs.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\imgui_ps.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\imgui_vs.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\object_rendering_scene_ps.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_main</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_main</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\object_rendering_scene_vs.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <EnableUnboundedDescriptorTables Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</EnableUnboundedDescriptorTables>
+      <EnableUnboundedDescriptorTables Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</EnableUnboundedDescriptorTables>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_main</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_main</EntryPointName>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\rect_draw_gui_ps.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_main</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_main</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_main</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_main</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\rect_draw_gui_vs.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_main</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_main</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_main</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_main</EntryPointName>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\DummySignature.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">RootSignature</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">RootSignature</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">RootSignature</ShaderType>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">RootSignature</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">rootsig_1.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">rootsig_1.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">rootsig_1.0</ShaderModel>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">rootsig_1.0</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+      </SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+      </SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+      </SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">DummySignature</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">DummySignature</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">DummySignature</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">DummySignature</EntryPointName>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">%(Filename).cso</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">%(Filename).cso</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">%(Filename).cso</ObjectFileOutput>
+      <ObjectFileOutput Condition="'$(Configuration)|$(Platform)'=='Release|x64'">%(Filename).cso</ObjectFileOutput>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\skybox_ps.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_main</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_main</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_main</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <EnableUnboundedDescriptorTables Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</EnableUnboundedDescriptorTables>
+      <EnableUnboundedDescriptorTables Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</EnableUnboundedDescriptorTables>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\skybox_vs.hlsl">
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_main</EntryPointName>
+      <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DisableOptimizations>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_main</EntryPointName>
+      <DisableOptimizations Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DisableOptimizations>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_main</EntryPointName>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <EnableUnboundedDescriptorTables Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</EnableUnboundedDescriptorTables>
+      <EnableUnboundedDescriptorTables Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</EnableUnboundedDescriptorTables>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\textured_quad_ps.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Pixel</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">ps_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">ps_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ps_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ps_main</EntryPointName>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+    <FxCompile Include="..\..\shaders\textured_quad_vs.hlsl">
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">5.1</ShaderModel>
+      <ShaderType Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Vertex</ShaderType>
+      <ShaderModel Condition="'$(Configuration)|$(Platform)'=='Release|x64'">5.1</ShaderModel>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <SetRootSignature Condition="'$(Configuration)|$(Platform)'=='Release|x64'">$(DefaultRootSignature)</SetRootSignature>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">vs_main</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">vs_main</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">vs_main</EntryPointName>
+      <EntryPointName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">vs_main</EntryPointName>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+      <AdditionalOptions Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">/Gfp %(AdditionalOptions)</AdditionalOptions>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Xml Include="data\app_settings.xml">
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</DeploymentContent>
+      <DeploymentContent Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</DeploymentContent>
+      <SubType>Designer</SubType>
+    </Xml>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="blender_notes.txt">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+    </Text>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="gtl.licenseheader" />
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{09684B24-E099-47E0-9244-9E4B8115C483}</ProjectGuid>
+    <RootNamespace>D3D12_migration</RootNamespace>
+    <WindowsTargetPlatformVersion>10.0.10586.0</WindowsTargetPlatformVersion>
+    <ProjectName>Gtl</ProjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>true</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <UseDebugLibraries>false</UseDebugLibraries>
+    <PlatformToolset>v140</PlatformToolset>
+    <WholeProgramOptimization>true</WholeProgramOptimization>
+    <CharacterSet>MultiByte</CharacterSet>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="Shared">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="PropertySheet.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="PropertySheet.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="PropertySheet.props" />
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets" Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+    <Import Project="PropertySheet.props" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <IncludePath>$(WindowsSDK_IncludePath);D:\Libraries\imgui-master;D:\Libraries\DirectXTK12\DirectXTK12-master\Inc;d:\Libraries\Autodesk\FBX\FBX SDK\2016.1.1\include\;C:\Qt\5.6\msvc2015_64\include\;D:\Libraries\RapidXML;D:\DirectXSDK(2010)\Include\;D:\Code\gtl\include\;$(IncludePath)</IncludePath>
+    <OutDir>$(ProjectDir)$(Configuration)\$(PlatformShortName)\</OutDir>
+    <LibraryPath>$(WindowsSDK_LibraryPath)\$(PlatformTarget)\;D:\Libraries\DirectXTK12\DirectXTK12-master\Bin\Desktop_2015_Win10\$(PlatformTarget)\$(Configuration)\;d:\Libraries\Autodesk\FBX\FBX SDK\2016.1.1\lib\vs2015\$(PlatformTarget)\$(Configuration)\;d:\libraries\boost\stage\lib\;d:\DirectXSDK(2010)\Lib\$(PlatformTarget)\;$(LibraryPath)</LibraryPath>
+    <Linkages-directxtk12_uwp>static</Linkages-directxtk12_uwp>
+    <Linkages-directxtk12_desktop_2015>static</Linkages-directxtk12_desktop_2015>
+    <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <IncludePath>$(WindowsSDK_IncludePath);D:\Libraries\imgui-master;D:\Libraries\DirectXTK12\DirectXTK12-master\Inc;d:\Libraries\Autodesk\FBX\FBX SDK\2016.1.1\include\;C:\Qt\5.6\msvc2015_64\include\;D:\Libraries\RapidXML;D:\DirectXSDK(2010)\Include\;D:\Code\gtl\include\;$(IncludePath)</IncludePath>
+    <OutDir>$(ProjectDir)$(Configuration)\$(PlatformShortName)\</OutDir>
+    <LibraryPath>$(WindowsSDK_LibraryPath)\$(PlatformTarget)\;D:\Libraries\DirectXTK12\DirectXTK12-master\Bin\Desktop_2015_Win10\$(PlatformTarget)\$(Configuration)\;d:\Libraries\Autodesk\FBX\FBX SDK\2016.1.1\lib\vs2015\$(PlatformTarget)\$(Configuration)\;d:\libraries\boost\stage\lib\;d:\DirectXSDK(2010)\Lib\$(PlatformTarget)\;$(LibraryPath)</LibraryPath>
+    <Linkages-directxtk12_uwp>static</Linkages-directxtk12_uwp>
+    <Linkages-directxtk12_desktop_2015>static</Linkages-directxtk12_desktop_2015>
+    <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(WindowsSDK_IncludePath);D:\Libraries\imgui-master;D:\Libraries\DirectXTK12\DirectXTK12-master\Inc;d:\Libraries\Autodesk\FBX\FBX SDK\2016.1.1\include\;C:\Qt\5.6\msvc2015_64\include\;D:\Libraries\RapidXML;D:\DirectXSDK(2010)\Include\;D:\Code\gtl\include\;$(IncludePath)</IncludePath>
+    <OutDir>$(ProjectDir)$(Configuration)\$(PlatformShortName)\</OutDir>
+    <LibraryPath>$(WindowsSDK_LibraryPath)\$(PlatformTarget)\;D:\Libraries\DirectXTK12\DirectXTK12-master\Bin\Desktop_2015_Win10\$(PlatformTarget)\$(Configuration)\;d:\Libraries\Autodesk\FBX\FBX SDK\2016.1.1\lib\vs2015\$(PlatformTarget)\$(Configuration)\;d:\libraries\boost\stage\lib\;d:\DirectXSDK(2010)\Lib\$(PlatformTarget)\;$(LibraryPath)</LibraryPath>
+    <Linkages-directxtk12_uwp>static</Linkages-directxtk12_uwp>
+    <Linkages-directxtk12_desktop_2015>static</Linkages-directxtk12_desktop_2015>
+    <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <IncludePath>$(WindowsSDK_IncludePath);D:\Libraries\imgui-master;D:\Libraries\DirectXTK12\DirectXTK12-master\Inc;d:\Libraries\Autodesk\FBX\FBX SDK\2016.1.1\include\;C:\Qt\5.6\msvc2015_64\include\;D:\Libraries\RapidXML;D:\DirectXSDK(2010)\Include\;D:\Code\gtl\include\;$(IncludePath)</IncludePath>
+    <OutDir>$(ProjectDir)$(Configuration)\$(PlatformShortName)\</OutDir>
+    <LibraryPath>$(WindowsSDK_LibraryPath)\$(PlatformTarget)\;D:\Libraries\DirectXTK12\DirectXTK12-master\Bin\Desktop_2015_Win10\$(PlatformTarget)\$(Configuration)\;d:\Libraries\Autodesk\FBX\FBX SDK\2016.1.1\lib\vs2015\$(PlatformTarget)\$(Configuration)\;d:\libraries\boost\stage\lib\;d:\DirectXSDK(2010)\Lib\$(PlatformTarget)\;$(LibraryPath)</LibraryPath>
+    <Linkages-directxtk12_uwp>static</Linkages-directxtk12_uwp>
+    <Linkages-directxtk12_desktop_2015>static</Linkages-directxtk12_desktop_2015>
+    <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <XMLDocumentationFileName />
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <DisableSpecificWarnings>4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>libfbxsdk-mt.lib;DirectXTK12.lib;RuntimeObject.lib;libboost_context-vc140-mt-sgd-1_58.lib;libboost_coroutine-vc140-mt-sgd-1_58.lib;libboost_system-vc140-mt-sgd-1_58.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Xdcmake>
+      <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
+    </Xdcmake>
+    <PostBuildEvent>
+      <Command>xcopy $(ProjectDir)data\* $(TargetDir)data\ /Y /D /S</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Disabled</Optimization>
+      <SDLCheck>true</SDLCheck>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <XMLDocumentationFileName />
+      <RuntimeLibrary>MultiThreadedDebug</RuntimeLibrary>
+      <DisableSpecificWarnings>4503;%(DisableSpecificWarnings)</DisableSpecificWarnings>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalDependencies>libfbxsdk-mt.lib;DirectXTK12.lib;RuntimeObject.lib;libboost_context-vc140-mt-sgd-1_60.lib;libboost_coroutine-vc140-mt-sgd-1_60.lib;libboost_system-vc140-mt-sgd-1_60.lib;box2d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <Xdcmake>
+      <DocumentLibraryDependencies>false</DocumentLibraryDependencies>
+    </Xdcmake>
+    <PostBuildEvent>
+      <Command>xcopy $(ProjectDir)data\* $(TargetDir)data\ /Y /D /S</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>libfbxsdk-mt.lib;DirectXTK12.lib;RuntimeObject.lib;libboost_context-vc140-mt-s-1_60.lib;libboost_coroutine-vc140-mt-s-1_60.lib;libboost_system-vc140-mt-s-1_60.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>xcopy $(ProjectDir)data\* $(TargetDir)data\ /Y /D /S</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <WarningLevel>Level3</WarningLevel>
+      <Optimization>Full</Optimization>
+      <FunctionLevelLinking>true</FunctionLevelLinking>
+      <IntrinsicFunctions>true</IntrinsicFunctions>
+      <SDLCheck>true</SDLCheck>
+      <TreatWarningAsError>true</TreatWarningAsError>
+      <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
+    </ClCompile>
+    <Link>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <EnableCOMDATFolding>true</EnableCOMDATFolding>
+      <OptimizeReferences>true</OptimizeReferences>
+      <AdditionalDependencies>libfbxsdk-mt.lib;DirectXTK12.lib;RuntimeObject.lib;libboost_context-vc140-mt-s-1_60.lib;libboost_coroutine-vc140-mt-s-1_60.lib;libboost_system-vc140-mt-s-1_60.lib;box2d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+    </Link>
+    <PostBuildEvent>
+      <Command>xcopy $(ProjectDir)data\* $(TargetDir)data\ /Y /D /S</Command>
+    </PostBuildEvent>
+  </ItemDefinitionGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets" />
+</Project>
