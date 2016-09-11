@@ -8,14 +8,6 @@ MIT license. See LICENSE.txt in project root for details.
 #ifndef NBJKWWAFFEEGF_GTL_COMMAND_VARIANT_H_
 #define NBJKWWAFFEEGF_GTL_COMMAND_VARIANT_H_
 
-/*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-    
-    namespace gtl::
-    
-    command variant definition
------------------------------------------------------------------------------*/
-
 #include <boost/variant.hpp>
 
 namespace gtl {

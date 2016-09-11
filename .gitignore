@@ -17,3 +17,6 @@
 !*.hpp
 !*.hlsl
 !*.clang-format
+!*.vcxproj
+!*.sln
+!*.cso
