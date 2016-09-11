@@ -6,10 +6,12 @@
 Early phase demo; major interfaces are still WIP.
 
 Currently includes:
-* Direct3D12 graphics pipeline with RAII wrapper types
+* Multi-threaded engine
+* Direct3D12 graphics pipeline with RAII wrapper types (central WIP)
 * Vertex skinning with Box2D objects as control points
-* dear imgui overlay (early)
-* audio effects and controller/input support (early)
-* event handling with boost::coroutines
-* FBX_SDK mesh loading
-* Qt adapter (works with D3D12; but early and not part of the working demo)
+* Object selection/interaction handled via an "id layer" in the graphics pipeline
+* Dear imgui overlay (early)
+* Audio effects and controller/input support via DirectXTK (early)
+* Event handling with boost::coroutines
+* Mesh loading with FBXSDK
+* Qt adapter (works with Direct3D12, but early and not part of the working demo)
