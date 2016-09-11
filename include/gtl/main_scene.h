@@ -309,7 +309,7 @@ namespace scenes {
                                 // TODO resource_callback_() calls are producing ICEs...
 
                                 //resource_callback_(gtl::commands::get_swap_chain{}, [&](auto& s) { dims = s.dimensions(); });
-                                //resource_callback_(gtl::commands::resize{1280, 720}, [](){});
+                                resource_callback_(gtl::commands::resize{1280, 720}, [](){});
 
                                 //std::cout << "entering resize context..\n";
                                 //if (same_type(resizing_event_context(yield), ev::keep{}))

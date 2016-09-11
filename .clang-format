@@ -1,6 +1,5 @@
 ﻿---
 BasedOnStyle: WebKit
-Language: Cpp
 AlignAfterOpenBracket: Align
 AlignTrailingComments: 'true'
 AllowShortBlocksOnASingleLine: 'true'
@@ -15,6 +14,7 @@ IndentCaseLabels: 'true'
 IndentWrappedFunctionNames: 'false'
 ConstructorInitializerIndentWidth: '4'
 Cpp11BracedListStyle: 'true'
+Language: Cpp
 MaxEmptyLinesToKeep: '1'
 ReflowComments: 'true'
 SortIncludes: 'false'
