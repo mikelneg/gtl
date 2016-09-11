@@ -17,9 +17,6 @@
 !*.hpp
 !*.hlsl
 !*.clang-format
-!*.vcxproj
-!*.sln
-!*.cso
 !*.dds
 !*.gif
 !*.jpg
