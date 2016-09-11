@@ -17,7 +17,10 @@ namespace gtl {
 namespace d3d {
 
     frame_synchronizer::frame_synchronizer(command_queue& cqueue_, unsigned max_value_in_cycle, unsigned tolerance)
-        : cqueue_{cqueue_}, fence_{gtl::d3d::get_device_from(cqueue_)}, tolerance_{tolerance}, cycle_length_{max_value_in_cycle + 1}
+        : cqueue_{cqueue_},
+          fence_{gtl::d3d::get_device_from(cqueue_)},
+          tolerance_{tolerance},
+          cycle_length_{max_value_in_cycle + 1}
     {
         //
         // cycle_length:  1 2 3 4 5 ...
@@ -90,8 +93,12 @@ namespace d3d {
 
     //
 
-    synchronization_object::synchronization_object(command_queue& cqueue_, unsigned max_value_in_cycle, unsigned allowed_desync_)
-        : cqueue_{cqueue_}, fence_{gtl::d3d::get_device_from(cqueue_)}, allowed_latency_{allowed_desync_}, cycle_length_{max_value_in_cycle + 1}
+    synchronization_object::synchronization_object(command_queue& cqueue_, unsigned max_value_in_cycle,
+                                                   unsigned allowed_desync_)
+        : cqueue_{cqueue_},
+          fence_{gtl::d3d::get_device_from(cqueue_)},
+          allowed_latency_{allowed_desync_},
+          cycle_length_{max_value_in_cycle + 1}
     {
         assert(allowed_latency_ <= cycle_length_ - 2);
         wait_for_values_to_sync_at(0);
@@ -102,8 +109,7 @@ namespace d3d {
         wait_for_values_to_sync_at(0);
     }
 
-    unsigned synchronization_object::periodic_value()
-        const
+    unsigned synchronization_object::periodic_value() const
     {
         return static_cast<unsigned>(last_set_value_ % cycle_length_);
     }
@@ -120,8 +126,7 @@ namespace d3d {
         ++last_set_value_;
     }
 
-    bool synchronization_object::values_are_synchronized()
-        const
+    bool synchronization_object::values_are_synchronized() const
     {
         // TODO it's possible this could be improved by remembering the fence's value and only polling when necessary..
         uint64_t const diff = last_set_value_ - fence_->GetCompletedValue();

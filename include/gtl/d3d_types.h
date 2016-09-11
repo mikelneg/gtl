@@ -52,7 +52,7 @@ namespace d3d {
     using release_ptr = gtl::intrusive_ptr<T, detail::releaser>;
 
     namespace default =
-        version_12_0; //using namespace default; appears below
+        version_12_0; // using namespace default; appears below
 
         namespace version_12_0 {
 
@@ -110,7 +110,7 @@ namespace d3d {
 
             public:
                 rtv_descriptor_heap(device&, unsigned num_descriptors);
-                //rtv_descriptor_heap(device&, std::vector<resource>&);
+                // rtv_descriptor_heap(device&, std::vector<resource>&);
                 auto increment_value() const noexcept
                 {
                     return increment_;
@@ -130,7 +130,8 @@ namespace d3d {
 
             class resource_descriptor_heap : public release_ptr<raw::DescriptorHeap> {
                 unsigned increment_;
-                unsigned const size_; // TODO currently works with CBV_SRV_UAV types, not DSV (break into distinct types?)
+                unsigned const
+                    size_; // TODO currently works with CBV_SRV_UAV types, not DSV (break into distinct types?)
             public:
                 resource_descriptor_heap(device&, unsigned num_descriptors, d3d::tags::shader_visible);
                 resource_descriptor_heap(device&, unsigned num_descriptors, d3d::tags::depth_stencil_view);
@@ -246,8 +247,7 @@ namespace d3d {
             public:
                 viewport() = default;
                 viewport(viewport const&) = default;
-                viewport(raw::Viewport const& v) noexcept
-                    : raw::Viewport(v)
+                viewport(raw::Viewport const& v) noexcept : raw::Viewport(v)
                 {
                 }
 
@@ -256,17 +256,13 @@ namespace d3d {
                 {
                     auto& x = point.first;
                     auto& y = point.second;
-                    return (x >= TopLeftX && y >= TopLeftY
-                            && x < (TopLeftX + Width)
-                            && y < (TopLeftY + Height));
+                    return (x >= TopLeftX && y >= TopLeftY && x < (TopLeftX + Width) && y < (TopLeftY + Height));
                 }
 
                 template <typename T>
                 bool contains(T x, T y) const noexcept
                 {
-                    return (x >= TopLeftX && y >= TopLeftY
-                            && x < (TopLeftX + Width)
-                            && y < (TopLeftY + Height));
+                    return (x >= TopLeftX && y >= TopLeftY && x < (TopLeftX + Width) && y < (TopLeftY + Height));
                 }
             };
 
@@ -324,7 +320,8 @@ namespace d3d {
                     return *this;
                 }
                 srv(device&, std::vector<raw::CpuDescriptorHandle>, command_queue&, std::wstring);
-                srv(device&, std::vector<raw::CpuDescriptorHandle>, command_queue&, std::tuple<std::vector<uint32_t>, unsigned, unsigned>);
+                srv(device&, std::vector<raw::CpuDescriptorHandle>, command_queue&,
+                    std::tuple<std::vector<uint32_t>, unsigned, unsigned>);
             };
 
             class sampler : public release_ptr<raw::Resource> {

@@ -11,7 +11,7 @@ MIT license. See LICENSE.txt in project root for details.
 /*----------------------------------------------------------------------------
   Keyboard key-values found online:
   Put together by Josh Jackson:
-  http://www.codeproject.com/script/Membership/View.aspx?mid=4951186    
+  http://www.codeproject.com/script/Membership/View.aspx?mid=4951186
 
 -----------------------------------------------------------------------------*/
 

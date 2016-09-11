@@ -40,7 +40,7 @@ namespace d3d {
         static constexpr unsigned MAX_VERTS = 700;
         static constexpr unsigned MAX_INDICES = 700;
 
-        //struct vertex { float x,y; float u,v; uint32_t color; };
+        // struct vertex { float x,y; float u,v; uint32_t color; };
         using vertex_type = ImDrawVert;
         using index_type = ImDrawIdx;
 
@@ -77,39 +77,55 @@ namespace d3d {
         gtl::imgui_adapter::imgui_data mutable local_imgui_data_;
 
         std::array<bool, frame_count> mutable imgui_dirty_flags_;
-        //unsigned mutable idx_count{},vtx_count{};
+        // unsigned mutable idx_count{},vtx_count{};
 
-        //std::unordered_map<std::string,std::function<void()>> mutable callbacks_;
+        // std::unordered_map<std::string,std::function<void()>> mutable callbacks_;
 
-        //std::string mutable text_box_;
+        // std::string mutable text_box_;
 
         auto vertex_layout()
         {
             return std::vector<D3D12_INPUT_ELEMENT_DESC>{
                 //{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-                //{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,  D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
-                //{ "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
+                //{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+                //D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 },
+                //{ "COLOR",    0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+                //D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0 }
 
-                {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, (size_t)(&((ImDrawVert*)0)->pos), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, (size_t)(&((ImDrawVert*)0)->uv), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                {"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, (size_t)(&((ImDrawVert*)0)->col), D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
-                //       {"VERTEX_POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                //       {"VERTEX_NORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                //       {"VERTEX_BONE_IDS", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                //       {"VERTEX_BONE_WEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                {"POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, (size_t)(&((ImDrawVert*)0)->pos),
+                 D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, (size_t)(&((ImDrawVert*)0)->uv),
+                 D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                {"COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, (size_t)(&((ImDrawVert*)0)->col),
+                 D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+                //       {"VERTEX_POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0,
+                //       D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                //       {"VERTEX_NORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+                //       D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                //       {"VERTEX_BONE_IDS", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+                //       D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                //       {"VERTEX_BONE_WEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+                //       D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                 //
-                //       {"INSTANCE_INFO", 0, DXGI_FORMAT_R16G16B16A16_UINT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-                //       {"BONE_ARRAY_OFFSET", 0, DXGI_FORMAT_R32_UINT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-                //       {"BONE_COUNT", 0, DXGI_FORMAT_R32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-                //       {"OBJECT_ID", 0, DXGI_FORMAT_R32G32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1}
-                //  //   {"OBJECT_POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-                //  //   {"MESH_ID", 0, DXGI_FORMAT_R32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-                //  //   {"COLOR_ANGLE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+                //       {"INSTANCE_INFO", 0, DXGI_FORMAT_R16G16B16A16_UINT, 1, 0,
+                //       D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+                //       {"BONE_ARRAY_OFFSET", 0, DXGI_FORMAT_R32_UINT, 1, 0,
+                //       D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+                //       {"BONE_COUNT", 0, DXGI_FORMAT_R32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT,
+                //       D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+                //       {"OBJECT_ID", 0, DXGI_FORMAT_R32G32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT,
+                //       D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1}
+                //  //   {"OBJECT_POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0,
+                //  D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+                //  //   {"MESH_ID", 0, DXGI_FORMAT_R32_UINT, 1, D3D12_APPEND_ALIGNED_ELEMENT,
+                //  D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+                //  //   {"COLOR_ANGLE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, D3D12_APPEND_ALIGNED_ELEMENT,
+                //  D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
             };
         }
 
-        auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig,
-                      gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps)
+        auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs,
+                      gtl::d3d::pixel_shader& ps)
         {
             D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_{};
             desc_.pRootSignature = rsig.get();
@@ -167,12 +183,13 @@ namespace d3d {
             return sampler_;
         }
 
-        //template <typename P>
-        //auto get_font_bitmap(P const& point) {
+        // template <typename P>
+        // auto get_font_bitmap(P const& point) {
         //    using std::get;
         //
         //    ImGuiIO& io = ImGui::GetIO();
-        //    io.DisplaySize = ImVec2(static_cast<float>(get<0>(point)),static_cast<float>(get<1>(point))); // HACK get value from elsewhere..
+        //    io.DisplaySize = ImVec2(static_cast<float>(get<0>(point)),static_cast<float>(get<1>(point))); // HACK get
+        //    value from elsewhere..
         //    io.RenderDrawListsFn = NULL;
         //    io.Fonts->TexID = 0;
         //
@@ -196,19 +213,33 @@ namespace d3d {
         //}
 
     public:
-        imgui_adapter(gtl::d3d::device& dev, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue, gtl::imgui_adapter& imgui_)
-            : cbheap_{dev, 3, gtl::d3d::tags::shader_visible{}}, cbuffer_{{{dev, cbheap_.get_handle(0), sizeof(gtl::camera)}, {dev, cbheap_.get_handle(1), sizeof(gtl::camera)}, {dev, cbheap_.get_handle(2), sizeof(gtl::camera)}}},
+        imgui_adapter(gtl::d3d::device& dev, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue,
+                      gtl::imgui_adapter& imgui_)
+            : cbheap_{dev, 3, gtl::d3d::tags::shader_visible{}},
+              cbuffer_{{{dev, cbheap_.get_handle(0), sizeof(gtl::camera)},
+                        {dev, cbheap_.get_handle(1), sizeof(gtl::camera)},
+                        {dev, cbheap_.get_handle(2), sizeof(gtl::camera)}}},
 
               layout_{vertex_layout()},
               vert_descriptor_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},
-              vert_buffers_{{{dev, vert_descriptor_heap_.get_handle(0), MAX_VERTS * sizeof(ImDrawVert), gtl::d3d::tags::shader_view{}}, {dev, vert_descriptor_heap_.get_handle(1), MAX_VERTS * sizeof(ImDrawVert), gtl::d3d::tags::shader_view{}}, {dev, vert_descriptor_heap_.get_handle(2), MAX_VERTS * sizeof(ImDrawVert), gtl::d3d::tags::shader_view{}}}},
+              vert_buffers_{{{dev, vert_descriptor_heap_.get_handle(0), MAX_VERTS * sizeof(ImDrawVert),
+                              gtl::d3d::tags::shader_view{}},
+                             {dev, vert_descriptor_heap_.get_handle(1), MAX_VERTS * sizeof(ImDrawVert),
+                              gtl::d3d::tags::shader_view{}},
+                             {dev, vert_descriptor_heap_.get_handle(2), MAX_VERTS * sizeof(ImDrawVert),
+                              gtl::d3d::tags::shader_view{}}}},
               idx_descriptor_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},
-              idx_buffers_{{{dev, idx_descriptor_heap_.get_handle(0), MAX_INDICES * sizeof(ImDrawIdx), gtl::d3d::tags::shader_view{}}, {dev, idx_descriptor_heap_.get_handle(1), MAX_INDICES * sizeof(ImDrawIdx), gtl::d3d::tags::shader_view{}}, {dev, idx_descriptor_heap_.get_handle(2), MAX_INDICES * sizeof(ImDrawIdx), gtl::d3d::tags::shader_view{}}}},
-              texture_descriptor_heap_{dev, 1, gtl::d3d::tags::shader_visible{}},
-              //font_texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue,
-              //    L"D:\\images\\brutal.dds"
-              //    },
-              font_texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, gtl::imgui_adapter::get_font_bitmap(swchain_.dimensions())},
+              idx_buffers_{{{dev, idx_descriptor_heap_.get_handle(0), MAX_INDICES * sizeof(ImDrawIdx),
+                             gtl::d3d::tags::shader_view{}},
+                            {dev, idx_descriptor_heap_.get_handle(1), MAX_INDICES * sizeof(ImDrawIdx),
+                             gtl::d3d::tags::shader_view{}},
+                            {dev, idx_descriptor_heap_.get_handle(2), MAX_INDICES * sizeof(ImDrawIdx),
+                             gtl::d3d::tags::shader_view{}}}},
+              texture_descriptor_heap_{dev, 1, gtl::d3d::tags::shader_visible{}},       
+              font_texture_{dev,
+                            {texture_descriptor_heap_.get_handle(0)},
+                            cqueue,
+                            gtl::imgui_adapter::get_font_bitmap(swchain_.dimensions())},
               vshader_{L"imgui_vs.cso"},
               pshader_{L"imgui_ps.cso"},
               root_sig_{dev, vshader_},
@@ -227,7 +258,7 @@ namespace d3d {
             update(2);
         }
 
-        //void insert_callback(std::string key, std::function<void()> func) {
+        // void insert_callback(std::string key, std::function<void()> func) {
         //    if (callbacks_.count(key) == 0) {
         //        callbacks_.insert(std::make_pair(std::move(key),std::move(func)));
         //    } else {
@@ -237,7 +268,10 @@ namespace d3d {
 
         void resize(int w, int h, gtl::d3d::command_queue& cqueue_)
         { // needs dev cqueue etc
-            font_texture_ = gtl::d3d::srv{get_device_from(cqueue_), {texture_descriptor_heap_.get_handle(0)}, cqueue_, gtl::imgui_adapter::get_font_bitmap(std::make_pair(w, h))};
+            font_texture_ = gtl::d3d::srv{get_device_from(cqueue_),
+                                          {texture_descriptor_heap_.get_handle(0)},
+                                          cqueue_,
+                                          gtl::imgui_adapter::get_font_bitmap(std::make_pair(w, h))};
             viewport_.Width = static_cast<float>(w);
             viewport_.Height = static_cast<float>(h);
             scissor_ = gtl::d3d::raw::ScissorRect{0, 0, w, h};
@@ -265,9 +299,11 @@ namespace d3d {
             //            for (int n = 0, voffs = 0, ioffs = 0; n < draw_data->CmdListsCount; n++) {
             //                auto* cmd_list = draw_data->CmdLists[n];
             //                vert_buffers_[idx].update(reinterpret_cast<char*>(&cmd_list->VtxBuffer[0]),
-            //                                          cmd_list->VtxBuffer.size() * sizeof(ImDrawVert), voffs * sizeof(ImDrawVert));
+            //                                          cmd_list->VtxBuffer.size() * sizeof(ImDrawVert), voffs *
+            //                                          sizeof(ImDrawVert));
             //                idx_buffers_[idx].update(reinterpret_cast<char*>(&cmd_list->IdxBuffer[0]),
-            //                                         cmd_list->IdxBuffer.size() * sizeof(ImDrawIdx), ioffs * sizeof(ImDrawIdx));
+            //                                         cmd_list->IdxBuffer.size() * sizeof(ImDrawIdx), ioffs *
+            //                                         sizeof(ImDrawIdx));
             //                voffs += cmd_list->VtxBuffer.size();
             //                ioffs += cmd_list->IdxBuffer.size();
             //            }
@@ -276,8 +312,7 @@ namespace d3d {
             //            vtx_count = draw_data->TotalVtxCount;
         }
 
-        void draw(std::vector<ID3D12CommandList*>& v, unsigned idx, float,
-                  D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle) const
+        void draw(std::vector<ID3D12CommandList*>& v, unsigned idx, float, D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle) const
         {
             update(idx);
 
@@ -285,28 +320,29 @@ namespace d3d {
             clist_[idx]->Reset(calloc_[idx].get(), nullptr);
             clist_[idx]->SetGraphicsRootSignature(root_sig_.get());
 
-            //imgui_(idx, f, imgui_clist_[idx],viewport_,scissor_,camera,handles,std::addressof(dbview_));
+            // imgui_(idx, f, imgui_clist_[idx],viewport_,scissor_,camera,handles,std::addressof(dbview_));
 
             clist_[idx]->SetPipelineState(pso_.get());
             auto heaps = {sampler_heap_.get(), texture_descriptor_heap_.get()};
             clist_[idx]->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());
-            //clist_[idx]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-            //clist_[idx]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
+            // clist_[idx]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            // clist_[idx]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
             clist_[idx]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             clist_[idx]->SetGraphicsRootConstantBufferView(0, (cbuffer_[idx].resource())->GetGPUVirtualAddress());
             clist_[idx]->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
-            clist_[idx]->SetGraphicsRootDescriptorTable(2, texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());
+            clist_[idx]->SetGraphicsRootDescriptorTable(2,
+                                                        texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());
             clist_[idx]->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport_), 0);
             //
-            //clist_[idx]->SetGraphicsRootShaderResourceView(4,cbuffer_[idx].resource()->GetGPUVirtualAddress());
-            //clist_[idx]->SetGraphicsRootShaderResourceView(4,(vert_buffers_[idx].resource())->GetGPUVirtualAddress());
-            //clist_[idx]->SetGraphicsRootShaderResourceView(6,(idx_buffers_[idx].resource())->GetGPUVirtualAddress());
+            // clist_[idx]->SetGraphicsRootShaderResourceView(4,cbuffer_[idx].resource()->GetGPUVirtualAddress());
+            // clist_[idx]->SetGraphicsRootShaderResourceView(4,(vert_buffers_[idx].resource())->GetGPUVirtualAddress());
+            // clist_[idx]->SetGraphicsRootShaderResourceView(6,(idx_buffers_[idx].resource())->GetGPUVirtualAddress());
 
             auto viewports = {std::addressof(viewport_)};
             clist_[idx]->RSSetViewports(static_cast<unsigned>(viewports.size()), *viewports.begin());
 
-            //float blendvalues[]{f,f,f,f};
-            //clist_[idx]->OMSetBlendFactor(blendvalues);
+            // float blendvalues[]{f,f,f,f};
+            // clist_[idx]->OMSetBlendFactor(blendvalues);
 
             clist_[idx]->RSSetScissorRects(1, &scissor_);
             clist_[idx]->OMSetRenderTargets(1, std::addressof(rtv_handle), false, nullptr);
@@ -315,17 +351,15 @@ namespace d3d {
             auto idx_count = static_cast<unsigned>(local_imgui_data_.index_count());
 
             D3D12_VERTEX_BUFFER_VIEW vview{vert_buffers_[idx].resource()->GetGPUVirtualAddress(),
-                                           vtx_count * sizeof(vertex_type),
-                                           sizeof(vertex_type)};
+                                           vtx_count * sizeof(vertex_type), sizeof(vertex_type)};
 
             D3D12_INDEX_BUFFER_VIEW ibv{idx_buffers_[idx].resource()->GetGPUVirtualAddress(),
-                                        idx_count * sizeof(index_type),
-                                        DXGI_FORMAT_R16_UINT}; //DXGI_FORMAT_R32_UINT};
+                                        idx_count * sizeof(index_type), DXGI_FORMAT_R16_UINT}; // DXGI_FORMAT_R32_UINT};
 
             clist_[idx]->IASetVertexBuffers(0, 1, &vview);
             clist_[idx]->IASetIndexBuffer(&ibv);
 
-            //clist_[idx]->DrawInstanced(6,1,0,0);
+            // clist_[idx]->DrawInstanced(6,1,0,0);
             clist_[idx]->DrawIndexedInstanced(idx_count, 1, 0, 0, 0);
 
             clist_[idx]->Close();

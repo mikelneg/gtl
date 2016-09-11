@@ -32,7 +32,7 @@ int main(HINSTANCE hinst, HINSTANCE, LPSTR, int)
         gtl::d3d::swap_chain swchain{get_hwnd(win), cqueue, 3};
 
         gtl::win::audio_adapter audio_adapter; // HACK testing audio
-        audio_adapter.add_effect("click", L"D:\\sounds\\click_x.wav");
+        audio_adapter.add_effect("click", L"data\\sound_effects\\click_x.wav");
 
         gtl::scenes::main_scene scene_{dev, swchain, cqueue};
         gtl::stage stage{swchain, cqueue, 3, scene_, audio_adapter};

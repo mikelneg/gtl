@@ -29,8 +29,7 @@ namespace pix {
 
         public:
             using type = T;
-            constexpr explicit value_base(T const& v) noexcept
-                : value{v}
+            constexpr explicit value_base(T const& v) noexcept : value{v}
             {
             }
             constexpr explicit operator T() const noexcept

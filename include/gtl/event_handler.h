@@ -33,8 +33,7 @@ namespace coroutine {
         event_handler();
 
         template <typename F>
-        event_handler(F func)
-            : coroutine_{vn::coroutines::make_trycatch_coroutine(std::move(func))}
+        event_handler(F func) : coroutine_{vn::coroutines::make_trycatch_coroutine(std::move(func))}
         {
         }
 

@@ -55,24 +55,27 @@ namespace d3d {
         gtl::d3d::sampler_descriptor_heap sampler_heap_;
         gtl::d3d::sampler sampler_;
 
-        //release_ptr<ID3D11BlendState> blendstate_{};
-        //release_ptr<ID3D11RasterizerState> rsstate_{};
-        //release_ptr<ID3D11SamplerState> sstate_{};
-        //release_ptr<ID3D11DepthStencilState> dsstate_{};
+        // release_ptr<ID3D11BlendState> blendstate_{};
+        // release_ptr<ID3D11RasterizerState> rsstate_{};
+        // release_ptr<ID3D11SamplerState> sstate_{};
+        // release_ptr<ID3D11DepthStencilState> dsstate_{};
 
         auto vertex_layout()
         {
             return std::vector<D3D12_INPUT_ELEMENT_DESC>{
                 {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                {"UV", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
+                {"UV", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+                 D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
 
-            //return std::vector<D3D12_INPUT_ELEMENT_DESC>{
+            // return std::vector<D3D12_INPUT_ELEMENT_DESC>{
             //    {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-            //    {"UV", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
+            //    {"UV", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
+            //    D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}
             //};
         }
 
-        auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps)
+        auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs,
+                      gtl::d3d::pixel_shader& ps)
         {
             D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_{};
             desc_.pRootSignature = rsig.get();
@@ -80,27 +83,27 @@ namespace d3d {
             desc_.PS = {reinterpret_cast<UINT8*>(ps->GetBufferPointer()), ps->GetBufferSize()};
             desc_.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
-            //typedef struct D3D12_INPUT_ELEMENT_DESC
+            // typedef struct D3D12_INPUT_ELEMENT_DESC
             //{
-            //LPCSTR SemanticName;
-            //UINT SemanticIndex;
-            //DXGI_FORMAT Format;
-            //UINT InputSlot;
-            //UINT AlignedByteOffset;
-            //D3D12_INPUT_CLASSIFICATION InputSlotClass;
-            //UINT InstanceDataStepRate;
+            // LPCSTR SemanticName;
+            // UINT SemanticIndex;
+            // DXGI_FORMAT Format;
+            // UINT InputSlot;
+            // UINT AlignedByteOffset;
+            // D3D12_INPUT_CLASSIFICATION InputSlotClass;
+            // UINT InstanceDataStepRate;
 
-            //D3D11_RASTERIZER_DESC desc_{};
-            //desc_.CullMode = D3D11_CULL_NONE; // BACK
-            //desc_.FillMode = D3D11_FILL_SOLID;
-            //desc_.FrontCounterClockwise = true;
-            //desc_.DepthBias = 0;
-            //desc_.DepthBiasClamp = 0;
-            //desc_.SlopeScaledDepthBias = 0;
-            //desc_.DepthClipEnable = false;
-            //desc_.ScissorEnable = false;
-            //desc_.MultisampleEnable = true;
-            //desc_.AntialiasedLineEnable = true;
+            // D3D11_RASTERIZER_DESC desc_{};
+            // desc_.CullMode = D3D11_CULL_NONE; // BACK
+            // desc_.FillMode = D3D11_FILL_SOLID;
+            // desc_.FrontCounterClockwise = true;
+            // desc_.DepthBias = 0;
+            // desc_.DepthBiasClamp = 0;
+            // desc_.SlopeScaledDepthBias = 0;
+            // desc_.DepthClipEnable = false;
+            // desc_.ScissorEnable = false;
+            // desc_.MultisampleEnable = true;
+            // desc_.AntialiasedLineEnable = true;
             desc_.RasterizerState.CullMode = D3D12_CULL_MODE_NONE;
             desc_.RasterizerState.DepthClipEnable = false;
             desc_.RasterizerState.AntialiasedLineEnable = false;
@@ -152,21 +155,27 @@ namespace d3d {
         font_atlas(font_atlas&&) = default;
         font_atlas& operator=(font_atlas&&) = default;
 
-        font_atlas(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue,
-                   gtl::d3d::root_signature& rsig,
-                   std::wstring definition_filename,
-                   gtl::d3d::tags::xml_format tag)
-            : layout_(vertex_layout()), font_definition{definition_filename, tag}, vbuffer_descriptors_{dev, 3, gtl::d3d::tags::shader_visible{}}, vbuffers_{{{dev, vbuffer_descriptors_.get_handle(0), MAX_STRING_WIDTH * sizeof(Vertex)}, {dev, vbuffer_descriptors_.get_handle(1), MAX_STRING_WIDTH * sizeof(Vertex)}, {dev, vbuffer_descriptors_.get_handle(2), MAX_STRING_WIDTH * sizeof(Vertex)}}}, texture_descriptor_heap_{dev, 1, gtl::d3d::tags::shader_visible{}}, texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue,
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       //L"D:\\images\\fonts\\liberation\\bold-sdf\\font.dds"
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       L"D:\\images\\fonts\\depth-field-font72\\font.dds"},
-              vshader_{L"D:\\Code\\D3D12_migration\\D3D12_migration\\Debug\\x64\\font_atlas_vs.cso"},
-              pshader_{L"D:\\Code\\D3D12_migration\\D3D12_migration\\Debug\\x64\\font_atlas_ps.cso"},
+        font_atlas(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, gtl::d3d::root_signature& rsig,
+                   std::wstring definition_filename, gtl::d3d::tags::xml_format tag)
+            : layout_(vertex_layout()),
+              font_definition{definition_filename, tag},
+              vbuffer_descriptors_{dev, 3, gtl::d3d::tags::shader_visible{}},
+              vbuffers_{{{dev, vbuffer_descriptors_.get_handle(0), MAX_STRING_WIDTH * sizeof(Vertex)},
+                         {dev, vbuffer_descriptors_.get_handle(1), MAX_STRING_WIDTH * sizeof(Vertex)},
+                         {dev, vbuffer_descriptors_.get_handle(2), MAX_STRING_WIDTH * sizeof(Vertex)}}},
+              texture_descriptor_heap_{dev, 1, gtl::d3d::tags::shader_visible{}},
+              texture_{dev,
+                       {texture_descriptor_heap_.get_handle(0)},
+                       cqueue,
+                       L"data\\images\\fonts\\depth-field-font72\\font.dds"},
+              vshader_{L"font_atlas_vs.cso"},
+              pshader_{L"font_atlas_ps.cso"},
               root_sig_{rsig},
               pso_{dev, pso_desc(dev, root_sig_, vshader_, pshader_)},
               sampler_heap_{dev, 1},
               sampler_{dev, sampler_desc(), sampler_heap_->GetCPUDescriptorHandleForHeapStart()}
         {
-            //set_message("AVAIL^^ -- starting up text..");
+            // set_message("AVAIL^^ -- starting up text..");
             construct_vertices("VAVA hi this is a message how does it");
         }
 
@@ -176,10 +185,8 @@ namespace d3d {
         }
 
         void operator()(unsigned idx, float, gtl::d3d::graphics_command_list& cl,
-                        gtl::d3d::raw::Viewport const& viewport,
-                        gtl::d3d::raw::ScissorRect const& scissor,
-                        float font_scale,
-                        raw::CpuDescriptorHandle const& rtv_handle) const
+                        gtl::d3d::raw::Viewport const& viewport, gtl::d3d::raw::ScissorRect const& scissor,
+                        float font_scale, raw::CpuDescriptorHandle const& rtv_handle) const
         {
 
             update_vertex_buffer(idx);
@@ -187,7 +194,7 @@ namespace d3d {
             cl->SetPipelineState(pso_.get());
             auto heaps = {sampler_heap_.get(), texture_descriptor_heap_.get()};
             cl->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());
-            //cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+            // cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
             cl->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
             cl->SetGraphicsRootDescriptorTable(2, texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());
@@ -195,14 +202,15 @@ namespace d3d {
             cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);
             cl->SetGraphicsRoot32BitConstants(3, 1, std::addressof(font_scale), 4);
 
-            D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_.size() * sizeof(Vertex)), sizeof(Vertex)};
+            D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(),
+                                          static_cast<unsigned>(mesh_.size() * sizeof(Vertex)), sizeof(Vertex)};
             cl->IASetVertexBuffers(0, 1, &cbv_);
 
             auto viewports = {std::addressof(viewport)};
             cl->RSSetViewports(static_cast<unsigned>(viewports.size()), *viewports.begin());
 
-            //float blendvalues[]{f,f,f,f};
-            //cl->OMSetBlendFactor(blendvalues);
+            // float blendvalues[]{f,f,f,f};
+            // cl->OMSetBlendFactor(blendvalues);
 
             cl->RSSetScissorRects(1, &scissor);
             cl->OMSetRenderTargets(1, &rtv_handle, TRUE, nullptr);

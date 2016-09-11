@@ -10,7 +10,7 @@ MIT license. See LICENSE.txt in project root for details.
 
 namespace gtl {
 
-//namespace detail {
+// namespace detail {
 //    template <typename T>
 //    struct value_type {
 //        const T value_;
@@ -29,11 +29,16 @@ namespace units {
 //
 namespace literals {
 
-    //    inline units::em operator "" _em(unsigned long long int value_type) { return units::em{static_cast<int>(value_type)}; }
-    //    inline units::px operator "" _px(unsigned long long int value_type) { return units::px{static_cast<int>(value_type)}; }
-    //    inline units::dpi operator "" _dpi(unsigned long long int value_type) { return units::dpi{static_cast<int>(value_type)}; }
-    //    inline units::lpx operator "" _lpx(unsigned long long int value_type) { return units::lpx{static_cast<int>(value_type)}; }
-    //    inline units::inch operator "" _inch(long double value_type) { return units::inch{static_cast<double>(value_type)}; }
+    //    inline units::em operator "" _em(unsigned long long int value_type) { return
+    //    units::em{static_cast<int>(value_type)}; }
+    //    inline units::px operator "" _px(unsigned long long int value_type) { return
+    //    units::px{static_cast<int>(value_type)}; }
+    //    inline units::dpi operator "" _dpi(unsigned long long int value_type) { return
+    //    units::dpi{static_cast<int>(value_type)}; }
+    //    inline units::lpx operator "" _lpx(unsigned long long int value_type) { return
+    //    units::lpx{static_cast<int>(value_type)}; }
+    //    inline units::inch operator "" _inch(long double value_type) { return
+    //    units::inch{static_cast<double>(value_type)}; }
     //    inline double operator "" _to_1(long double value_type) { return static_cast<double>(value_type / 1); }
 }
 

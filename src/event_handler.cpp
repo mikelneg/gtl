@@ -12,8 +12,7 @@ MIT license. See LICENSE.txt in project root for details.
 namespace gtl {
 namespace coroutine {
 
-    event_handler::event_handler()
-        : coroutine_{vn::coroutines::make_empty_coroutine()}
+    event_handler::event_handler() : coroutine_{vn::coroutines::make_empty_coroutine()}
     {
     }
 
@@ -22,17 +21,17 @@ namespace coroutine {
         vn::coroutines::try_invoke(coroutine_, e);
     }
 
-    //void event_handler::enqueue_event(gtl::event e)
+    // void event_handler::enqueue_event(gtl::event e)
     //{
     //    event_queue_.emplace_back(std::move(e));
     //}
     //
-    //void event_handler::publish_event_immediately(gtl::event e)
+    // void event_handler::publish_event_immediately(gtl::event e)
     //{
     //    vn::coroutines::try_invoke(coroutine_,std::move(e));
     //}
     //
-    //void event_handler::publish_events()
+    // void event_handler::publish_events()
     //{
     //    vn::coroutines::try_invoke(coroutine_,gtl::events::none{});
     //    for (auto&& e : event_queue_) {

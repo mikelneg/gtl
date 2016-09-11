@@ -46,11 +46,13 @@ namespace d3d {
 
         std::vector<raw::AdapterDesc> enumerate_adaptors()
         {
-            // adapted from https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/Samples/D3D12HelloWorld/src/HelloWindow/DXSample.cpp
+            // adapted from
+            // https://github.com/Microsoft/DirectX-Graphics-Samples/blob/master/Samples/D3D12HelloWorld/src/HelloWindow/DXSample.cpp
             auto factory = get_dxgi_factory();
             release_ptr<raw::Adapter> ptr;
             std::vector<raw::AdapterDesc> adapters;
-            for (unsigned i = 0; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters1(i, std::addressof(ptr.expose_ptr())); ++i)
+            for (unsigned i = 0; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters1(i, std::addressof(ptr.expose_ptr()));
+                 ++i)
             {
                 raw::AdapterDesc desc{};
                 ptr->GetDesc1(std::addressof(desc));
@@ -60,7 +62,8 @@ namespace d3d {
             return adapters;
         }
 
-        //raw::SwapChainDesc create_swapchain_desc(tags::flipmodel_windowed, HWND hwnd, unsigned num_buffers, unsigned width, unsigned height)
+        // raw::SwapChainDesc create_swapchain_desc(tags::flipmodel_windowed, HWND hwnd, unsigned num_buffers, unsigned
+        // width, unsigned height)
         //{
         //    if (num_buffers < 2 || num_buffers > 16) { throw std::logic_error{__func__}; }
         //
@@ -84,7 +87,8 @@ namespace d3d {
         void report_live_objects(device& dev)
         {
             gtl::d3d::release_ptr<raw::DebugDevice> debug_device;
-            win::throw_on_fail(dev->QueryInterface(__uuidof(raw::DebugDevice), expose_as_void_pp(debug_device)), __func__);
+            win::throw_on_fail(dev->QueryInterface(__uuidof(raw::DebugDevice), expose_as_void_pp(debug_device)),
+                               __func__);
             debug_device->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
         }
 
@@ -92,13 +96,13 @@ namespace d3d {
         {
             gtl::d3d::fence fence_{dev};
             fence_.synchronized_increment(cqueue_);
-            //gtl::win::waitable_handle event_;
-            //auto current_value = fence_->GetCompletedValue();
-            //win::throw_on_fail(fence_->SetEventOnCompletion(current_value + 1, event_)
+            // gtl::win::waitable_handle event_;
+            // auto current_value = fence_->GetCompletedValue();
+            // win::throw_on_fail(fence_->SetEventOnCompletion(current_value + 1, event_)
             //                   ,__func__);
-            //win::throw_on_fail(cqueue_->Signal(fence_.get(),current_value + 1)
+            // win::throw_on_fail(cqueue_->Signal(fence_.get(),current_value + 1)
             //                   ,__func__);
-            //wait(event_);
+            // wait(event_);
         }
 
         void wait_for_gpu(command_queue& cqueue_)
@@ -106,7 +110,7 @@ namespace d3d {
             wait_for_gpu(get_device_from(cqueue_), cqueue_);
         }
 
-        //release_ptr<raw::Blob> dummy_rootsig_1()
+        // release_ptr<raw::Blob> dummy_rootsig_1()
         //{
         //    std::vector<CD3DX12_DESCRIPTOR_RANGE> table1_, table2_;
         //	std::vector<CD3DX12_ROOT_PARAMETER> params_;
@@ -142,7 +146,7 @@ namespace d3d {
         //    return signature_;
         //}
         //
-        //release_ptr<raw::Blob> dummy_rootsig_2()
+        // release_ptr<raw::Blob> dummy_rootsig_2()
         //{
         //    std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
         //	std::vector<CD3DX12_ROOT_PARAMETER> params_;
@@ -171,13 +175,14 @@ namespace d3d {
         //    release_ptr<raw::Blob> signature;
         //    release_ptr<raw::Blob> error;
         //
-        //	win::throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &expose(signature), &expose(error))
+        //	win::throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1,
+        //&expose(signature), &expose(error))
         //                  ,__func__);
         //
         //    return signature;
         //}
         //
-        //release_ptr<raw::Blob> dummy_rootsig_3()
+        // release_ptr<raw::Blob> dummy_rootsig_3()
         //{
         //    std::vector<CD3DX12_DESCRIPTOR_RANGE> table1_, table2_;
         //	std::vector<CD3DX12_ROOT_PARAMETER> params_;
@@ -216,16 +221,16 @@ namespace d3d {
         //
         //
 
-        /*               
-            
+        /*
 
-        
+
+
     swapchain_ = CreateSwapChainForHwnd(hwnd, device.get_device_from(), desc, GetDefault<SWAP_CHAIN_FULLSCREEN_DESC>());
-    
+
     if (swapchain_ == nullptr) {
         throw std::runtime_error{"Unable to initialize D3D window."};
-    }   
-    
+    }
+
     disable_alt_enter(hwnd,device.get_device_from());
 
     // create everything else
@@ -246,40 +251,40 @@ namespace d3d {
 
     //screenbuffer_ptr_->Release();
     screenbuffer_.reset(screenbuffer_ptr_);
-    
+
     auto depthstenciltext_desc_ = GetDefault<TEXTURE2D_DESC>();
     auto depthstencil_desc_ = GetDefault<DEPTH_STENCIL_DESC>();
-    
+
     depthstenciltext_desc_.Height = desc.Height;
     depthstenciltext_desc_.Width  = desc.Width;
     depthstenciltext_desc_.Format = DXGI_FORMAT_D32_FLOAT;
     depthstenciltext_desc_.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-    
+
     depthstenciltext_desc_.SampleDesc = desc.SampleDesc;
 
     device.get_device_from().CreateTexture2D(&depthstenciltext_desc_, nullptr, &(dstexture_ptr_.expose_ptr()));
     device.get_device_from().CreateDepthStencilView(dstexture_ptr_, nullptr, &dsview_ptr_);
     device.get_device_from().CreateDepthStencilState(&depthstencil_desc_, &dsstate_ptr_);
-    
+
     // TODO : change this to use expose_ptr() interface..
 
     ////////////////////////////////////////////////////////////////////////////
     // ID Layer stuff, ignore for now..
-    // We will be using two render targets: the ordinary display buffer, and a Texture2D 
+    // We will be using two render targets: the ordinary display buffer, and a Texture2D
     // that stores the "id"s (int16s) of whatever is being rendered. We can then sample this to
-    // get the identity of whatever it is we are clicking on or mousing over. 
-    // ID3D11RenderTargetView* rtargets[] = 
-    //    { 
-    //      window->rtview_, 
-    //	    window->idview_ 
+    // get the identity of whatever it is we are clicking on or mousing over.
+    // ID3D11RenderTargetView* rtargets[] =
+    //    {
+    //      window->rtview_,
+    //	    window->idview_
     //    };
     //
     //  device_->OMSetRenderTargets(2, rtargets, NULL);
     ////////////////////////////////////////////////////////////////////////////
 
-    screenbufferview_.reset(screenbufferview_ptr_);        
-    depthview_.reset(dsview_ptr_);     
-    //depthtexture_.reset(dstexture_ptr_);      
+    screenbufferview_.reset(screenbufferview_ptr_);
+    depthview_.reset(dsview_ptr_);
+    //depthtexture_.reset(dstexture_ptr_);
     depthstate_.reset(dsstate_ptr_);
 
     swapchain_->Present(0,0);
@@ -288,7 +293,7 @@ namespace d3d {
 
     viewport_ = viewport_desc_;
     viewport_.Width = _cast<float>(desc.Width);
-    viewport_.Height = _cast<float>(desc.Height); 
+    viewport_.Height = _cast<float>(desc.Height);
 }
 
     */

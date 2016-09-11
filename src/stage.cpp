@@ -48,8 +48,8 @@ namespace {
 
     struct empty_scene {
 
-        //empty_scene(empty_scene const&) = default;
-        //empty_scene& operator=(empty_scene const&) = default;
+        // empty_scene(empty_scene const&) = default;
+        // empty_scene& operator=(empty_scene const&) = default;
 
         template <typename... Ts>
         constexpr empty_scene(Ts&&...) noexcept
@@ -64,7 +64,7 @@ namespace {
 }
 
 //    template <typename S>
-//static void draw_thread_thread(std::mutex& draw_thread_mutex_,
+// static void draw_thread_thread(std::mutex& draw_thread_mutex_,
 //                        bool& quit_flag_,
 //                        std::condition_variable& cv_,
 //                        std::atomic<stage::sig>& frame_state_,
@@ -73,11 +73,12 @@ namespace {
 //                        gtl::d3d::command_queue& cqueue_, unsigned num_buffers, S& main_scene_);
 //
 
-//stage::stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, unsigned num_buffers)
+// stage::stage(gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue_, unsigned num_buffers)
 //    :  // dev_{get_device(swchain)},
 //       // swchain_{swchain},
 //       // cqueue_{cqueue_},
-//        //synchronizer_{cqueue_, num_buffers-1, (std::max)(0,static_cast<int>(num_buffers)-2)}, // maximum desync value.
+//        //synchronizer_{cqueue_, num_buffers-1, (std::max)(0,static_cast<int>(num_buffers)-2)}, // maximum desync
+//        value.
 //        scene_{empty_scene{}},
 //        event_handler_{},
 //        //scenes_{},
@@ -135,7 +136,7 @@ namespace {
 //        //                           };
 //}
 
-//stage::~stage()
+// stage::~stage()
 //{
 //    //{
 //    //    std::unique_lock<std::mutex> lock{draw_thread_mutex_};
@@ -149,12 +150,13 @@ namespace {
 //    //}
 //}
 
-//namespace { // implementation detail..
+// namespace { // implementation detail..
 //    struct resource_object {
 //        gtl::d3d::direct_command_allocator calloc_;
 //        gtl::d3d::graphics_command_list clist_before_;
 //        gtl::d3d::graphics_command_list clist_after_;
-//        resource_object(gtl::d3d::device& dev) : calloc_{dev}, clist_before_{dev,calloc_}, clist_after_{dev,calloc_} {}
+//        resource_object(gtl::d3d::device& dev) : calloc_{dev}, clist_before_{dev,calloc_}, clist_after_{dev,calloc_}
+//        {}
 //        resource_object(resource_object&&) = default;
 //        resource_object& operator=(resource_object&&) = default;
 //    };
@@ -169,7 +171,7 @@ namespace {
 //    //}
 //}
 
-//void stage::draw_thread_thread(gtl::d3d::device dev_, gtl::d3d::swap_chain& swchain_,
+// void stage::draw_thread_thread(gtl::d3d::device dev_, gtl::d3d::swap_chain& swchain_,
 //                        gtl::d3d::command_queue& cqueue_, unsigned num_buffers)
 //
 //{
@@ -209,7 +211,8 @@ namespace {
 //    //gtl::scenes::main_scene main_scene_{dev_,swchain_,cqueue_};
 //
 //    auto&& scope_guard = vn::make_scope_guard(
-//        [&](){  event_handler_.exchange_handler([&](auto& yield){ main_scene_.handle_events(callback_handler_, yield); }); },
+//        [&](){  event_handler_.exchange_handler([&](auto& yield){ main_scene_.handle_events(callback_handler_, yield);
+//        }); },
 //        [&](){  event_handler_.exchange_handler([&](auto& yield){ }); });
 //
 //    gtl::d3d::synchronization_object synchronizer_{cqueue_, num_buffers-1,
@@ -267,7 +270,8 @@ namespace {
 //            //assign_draw_params(draw_params_, v, static_cast<int>(value(sync_index)), 1.0f, swchain_.rtv_heap());
 //
 //            //scene_.send_command(gtl::commands::draw{});
-//            // causes scene_ to call draw_callback with a functional like [&](auto&&...ps){ scene_internal_.draw(ps...); }
+//            // causes scene_ to call draw_callback with a functional like [&](auto&&...ps){
+//            scene_internal_.draw(ps...); }
 //            // draw_callback then calls that functional with draw_params_ expanded
 //
 //            // could also be something like
@@ -283,7 +287,8 @@ namespace {
 //            //      g([&](auto&&...ps){ draw_a(ps...); }, a_index);
 //            //      g([&](auto&&...ps){ draw_b(ps...); }, b_index); }
 //
-//            main_scene_.draw_callback([&](auto f) { f(v, static_cast<int>(value(sync_index)), 1.0f, swchain_.rtv_heap()); });
+//            main_scene_.draw_callback([&](auto f) { f(v, static_cast<int>(value(sync_index)), 1.0f,
+//            swchain_.rtv_heap()); });
 //
 //            // // modifying to work with attach_scene ..
 //            //auto vec = boost::apply_visitor([&](auto& scene){
@@ -303,8 +308,8 @@ namespace {
 //    }
 //}
 
-//template <typename S>
-//static void draw_thread_thread(std::mutex& draw_thread_mutex_,
+// template <typename S>
+// static void draw_thread_thread(std::mutex& draw_thread_mutex_,
 //                        bool& quit_flag_,
 //                        std::condition_variable& cv_,
 //                        std::atomic<stage::sig>& frame_state_,
@@ -351,7 +356,8 @@ namespace {
 //    //gtl::scenes::main_scene main_scene_{dev_,swchain_,cqueue_};
 //
 //    //auto&& scope_guard = vn::make_scope_guard(
-//    //    [&](){  event_handler_.exchange_handler([&](auto& yield){ main_scene_.handle_events(callback_handler_, yield); }); },
+//    //    [&](){  event_handler_.exchange_handler([&](auto& yield){ main_scene_.handle_events(callback_handler_,
+//    yield); }); },
 //    //    [&](){  event_handler_.exchange_handler([&](auto& yield){ }); });
 //
 //    gtl::d3d::synchronization_object synchronizer_{cqueue_, num_buffers-1,
@@ -410,7 +416,8 @@ namespace {
 //            //assign_draw_params(draw_params_, v, static_cast<int>(value(sync_index)), 1.0f, swchain_.rtv_heap());
 //
 //            //scene_.send_command(gtl::commands::draw{});
-//            // causes scene_ to call draw_callback with a functional like [&](auto&&...ps){ scene_internal_.draw(ps...); }
+//            // causes scene_ to call draw_callback with a functional like [&](auto&&...ps){
+//            scene_internal_.draw(ps...); }
 //            // draw_callback then calls that functional with draw_params_ expanded
 //
 //            // could also be something like
@@ -426,7 +433,8 @@ namespace {
 //            //      g([&](auto&&...ps){ draw_a(ps...); }, a_index);
 //            //      g([&](auto&&...ps){ draw_b(ps...); }, b_index); }
 //
-//            main_scene_.draw_callback([&](auto f) { f(v, static_cast<int>(value(sync_index)), 1.0f, swchain_.rtv_heap()); });
+//            main_scene_.draw_callback([&](auto f) { f(v, static_cast<int>(value(sync_index)), 1.0f,
+//            swchain_.rtv_heap()); });
 //
 //            // // modifying to work with attach_scene ..
 //            //auto vec = boost::apply_visitor([&](auto& scene){
@@ -440,7 +448,8 @@ namespace {
 //
 //            //
 //            cqueue_->ExecuteCommandLists(static_cast<unsigned>(v.size()),v.data());
-//            synchronous_advance(sync_index);    // the command queue's update has to be sequenced before the frame is made ready
+//            synchronous_advance(sync_index);    // the command queue's update has to be sequenced before the frame is
+//            made ready
 //            frame_state_.store(sig::frame_ready,std::memory_order_release);
 //       },[](){});
 //    }
@@ -451,11 +460,12 @@ void stage::present(gtl::d3d::swap_chain& swchain_, DXGI_PRESENT_PARAMETERS dxgi
 {
     frame_rate_limiter_([&swchain_, &dxgi_pp, this]() {
 
-        draw_thread_.if_available([&](auto& frame_state_) {    // (auto& state_){  // consumes itself if not consumed..
-            swchain_->Present1(0, 0, std::addressof(dxgi_pp)); // potentially blocking
-            consume_and_notify(frame_state_);
-        },
-                                  [] {});
+        draw_thread_.if_available(
+            [&](auto& frame_state_) { // (auto& state_){  // consumes itself if not consumed..
+                swchain_->Present1(0, 0, std::addressof(dxgi_pp)); // potentially blocking
+                consume_and_notify(frame_state_);
+            },
+            [] {});
 
     });
 }
@@ -471,7 +481,7 @@ void stage::discard_frame_and_synchronize(gtl::d3d::swap_chain& swchain_)
     //  WaitForSingleObject(waitable,INFINITE);
 }
 
-//void stage::event_handler(coro::pull_type& yield)
+// void stage::event_handler(coro::pull_type& yield)
 //{
 //}
 

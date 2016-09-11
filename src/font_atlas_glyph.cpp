@@ -104,14 +104,13 @@ namespace d3d {
         do
         {
             glyph_map.emplace(extract_from_string<unsigned>(glyph_node->first_attribute("id")->value()),
-                              Glyph{
-                                  extract_from_string<float>(glyph_node->first_attribute("x")->value()), // u
-                                  extract_from_string<float>(glyph_node->first_attribute("y")->value()), // v
-                                  extract_from_string<float>(glyph_node->first_attribute("width")->value()),
-                                  extract_from_string<float>(glyph_node->first_attribute("height")->value()),
-                                  extract_from_string<float>(glyph_node->first_attribute("xoffset")->value()),
-                                  extract_from_string<float>(glyph_node->first_attribute("yoffset")->value()),
-                                  extract_from_string<float>(glyph_node->first_attribute("xadvance")->value())});
+                              Glyph{extract_from_string<float>(glyph_node->first_attribute("x")->value()), // u
+                                    extract_from_string<float>(glyph_node->first_attribute("y")->value()), // v
+                                    extract_from_string<float>(glyph_node->first_attribute("width")->value()),
+                                    extract_from_string<float>(glyph_node->first_attribute("height")->value()),
+                                    extract_from_string<float>(glyph_node->first_attribute("xoffset")->value()),
+                                    extract_from_string<float>(glyph_node->first_attribute("yoffset")->value()),
+                                    extract_from_string<float>(glyph_node->first_attribute("xadvance")->value())});
         } while (glyph_node = glyph_node->next_sibling());
 
         node = node->next_sibling("kernings");
@@ -138,7 +137,8 @@ namespace d3d {
 
     std::ostream& operator<<(std::ostream& s, font_atlas_glyph& f)
     {
-        std::cout << "padding = " << f.padding[0] << "," << f.padding[1] << "," << f.padding[2] << "," << f.padding[3] << "\n";
+        std::cout << "padding = " << f.padding[0] << "," << f.padding[1] << "," << f.padding[2] << "," << f.padding[3]
+                  << "\n";
         std::cout << "face_name = " << f.face_name << "\n";
         std::cout << "texture_file = " << f.texture_file << "\n";
         std::cout << "size = " << f.size << "\n";
@@ -154,7 +154,8 @@ namespace d3d {
 
         for (auto&& e : f.kerning_map)
         {
-            std::cout << static_cast<unsigned>(e.first) << "," << static_cast<unsigned>(e.second.first) << " = " << e.second.second << "\n";
+            std::cout << static_cast<unsigned>(e.first) << "," << static_cast<unsigned>(e.second.first) << " = "
+                      << e.second.second << "\n";
         }
 
         return s;

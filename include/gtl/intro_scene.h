@@ -2,10 +2,10 @@
 #define OWIAOIBHOIAHWEFOIJ_GTL_SCENES_INTRO_SCENE_H_
 
 /*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-    
+    Mikel Negugogor (http://github.com/mikelneg)
+
     namespace gtl::scenes
-    
+
     class intro_scene;
 -----------------------------------------------------------------------------*/
 
@@ -39,12 +39,11 @@ namespace scenes {
         std::unique_ptr<A> ptr;
 
     public:
-        intro_scene()
-            : ptr{std::make_unique<A>()}
+        intro_scene() : ptr{std::make_unique<A>()}
         {
         }
         intro_scene(intro_scene&&) = default;
-        //intro_scene(intro_scene const&) = default;
+        // intro_scene(intro_scene const&) = default;
         intro_scene& operator=(intro_scene&&) = default;
 
         std::vector<ID3D12GraphicsCommandList*> draw(int, float f) const

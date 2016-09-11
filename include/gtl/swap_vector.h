@@ -18,21 +18,17 @@ template <typename T, typename A = std::allocator<T>>
 class swap_vector {
     using vector_type = std::vector<T, A>;
 
-    enum class status { stale,
-                        fresh,
-                        busy };
+    enum class status { stale, fresh, busy };
 
     vector_type vector_;
     std::atomic<status> status_flag_;
 
 public:
-    swap_vector()
-        : status_flag_{status::stale}
+    swap_vector() : status_flag_{status::stale}
     {
     }
 
-    swap_vector(vector_type v_)
-        : vector_(std::move(v_)), status_flag_{status::fresh}
+    swap_vector(vector_type v_) : vector_(std::move(v_)), status_flag_{status::fresh}
     {
     }
 

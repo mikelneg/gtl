@@ -20,8 +20,8 @@ MIT license. See LICENSE.txt in project root for details.
 namespace gtl {
 namespace physics {
 
-    //template <typename T>
-    //using area = boost::units::quantity<boost::units::si::area,T>;
+    // template <typename T>
+    // using area = boost::units::quantity<boost::units::si::area,T>;
 
     template <typename T>
     using length = boost::units::quantity<boost::units::si::length, T>;

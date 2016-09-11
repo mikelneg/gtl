@@ -18,14 +18,12 @@ namespace win {
     struct audio_adapter::priv_impl {
         DirectX::AudioEngine audio_engine;
         std::unordered_map<std::string, DirectX::SoundEffect> sound_effects;
-        priv_impl(DirectX::AUDIO_ENGINE_FLAGS flags)
-            : audio_engine{flags}
+        priv_impl(DirectX::AUDIO_ENGINE_FLAGS flags) : audio_engine{flags}
         {
         }
     };
 
-    audio_adapter::audio_adapter()
-        : audio_engine{std::make_unique<priv_impl>(DirectX::AudioEngine_Default)}
+    audio_adapter::audio_adapter() : audio_engine{std::make_unique<priv_impl>(DirectX::AudioEngine_Default)}
     {
         auto result = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
         uninitialize_in_dtor = (result == S_OK || result == S_FALSE);
@@ -46,8 +44,7 @@ namespace win {
         }
     }
 
-    audio_adapter::audio_adapter(audio_adapter&& other)
-        : uninitialize_in_dtor{other.uninitialize_in_dtor}
+    audio_adapter::audio_adapter(audio_adapter&& other) : uninitialize_in_dtor{other.uninitialize_in_dtor}
     {
 
         other.uninitialize_in_dtor = false;
@@ -57,7 +54,8 @@ namespace win {
     {
         if (audio_engine->sound_effects.count(name) == 0)
         {
-            audio_engine->sound_effects.emplace(name, DirectX::SoundEffect{std::addressof(audio_engine->audio_engine), wav_file.c_str()});
+            audio_engine->sound_effects.emplace(
+                name, DirectX::SoundEffect{std::addressof(audio_engine->audio_engine), wav_file.c_str()});
         }
     }
 

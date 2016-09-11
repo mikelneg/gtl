@@ -9,10 +9,10 @@ MIT license. See LICENSE.txt in project root for details.
 #define KROWFOWAF_GTL_INTRUSIVE_PTR_H_
 
 /*-------------------------------------------------------------
-class gtl::intrusive_ptr<T,Cleanup> 
+class gtl::intrusive_ptr<T,Cleanup>
 
-A non-owning pointer type that calls Cleanup(ptr) (optionally 
-Startup(ptr) as well..) 
+A non-owning pointer type that calls Cleanup(ptr) (optionally
+Startup(ptr) as well..)
 
     + Cleanup(ptr) is called only if ptr is non-null
     + Startup(ptr) is called only if Startup is passed in constructor
@@ -35,26 +35,21 @@ public:
     intrusive_ptr() = default;
 
     template <typename Startup>
-    explicit intrusive_ptr(T* ptr, Startup&& startup, Cleanup&& c)
-        : Cleanup(std::move(c)), ptr_{ptr}
+    explicit intrusive_ptr(T* ptr, Startup&& startup, Cleanup&& c) : Cleanup(std::move(c)), ptr_{ptr}
     {
         startup(ptr_);
     }
 
-    explicit intrusive_ptr(T* ptr, Cleanup&& c) noexcept
-        : Cleanup(std::move(c)),
-          ptr_{ptr}
+    explicit intrusive_ptr(T* ptr, Cleanup&& c) noexcept : Cleanup(std::move(c)), ptr_{ptr}
     {
     }
 
-    explicit intrusive_ptr(T* ptr) noexcept
-        : ptr_{ptr}
+    explicit intrusive_ptr(T* ptr) noexcept : ptr_{ptr}
     {
     }
 
     intrusive_ptr(intrusive_ptr&& other) noexcept
-        : Cleanup(std::move(static_cast<Cleanup&>(other))),
-          ptr_{other.release()}
+        : Cleanup(std::move(static_cast<Cleanup&>(other))), ptr_{other.release()}
     {
     }
 
@@ -66,7 +61,8 @@ public:
 
     ~intrusive_ptr()
     {
-        static_assert(noexcept(this->Cleanup::operator()(ptr_)), "intrusive_ptr<T,Cleanup>: Cleanup::operator()(T*) must be noexcept.");
+        static_assert(noexcept(this->Cleanup::operator()(ptr_)),
+                      "intrusive_ptr<T,Cleanup>: Cleanup::operator()(T*) must be noexcept.");
         this->reset();
     }
 
@@ -131,7 +127,7 @@ public:
     friend void** expose_as_void_pp(intrusive_ptr& t) noexcept
     {
         return std::addressof(reinterpret_cast<void*&>(t.expose_ptr()));
-        //return reinterpret_cast<void**>(std::addressof(t.expose_ptr()));
+        // return reinterpret_cast<void**>(std::addressof(t.expose_ptr()));
     }
 
     friend T*& expose(intrusive_ptr& t) noexcept

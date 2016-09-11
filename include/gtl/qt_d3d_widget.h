@@ -2,12 +2,12 @@
 #define URWQWOFVZXBBSWEF_GTL_QT_D3D_WIDGET_H_
 
 /*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-    
+    Mikel Negugogor (http://github.com/mikelneg)
+
     namespace gtl::qt::
 
     class d3d_widget : QWidget
-    
+
 -----------------------------------------------------------------------------*/
 
 #include <QtWidgets/QWidget>
@@ -34,17 +34,16 @@ namespace qt {
             : QWidget(parent_),
               dev_{gtl::tags::debug{}},
               cqueue_{dev_},
-              swchain_{
-                  reinterpret_cast<HWND>(this->winId()), // TODO Qt winId() => HWND ??
-                  cqueue_, 3},
+              swchain_{reinterpret_cast<HWND>(this->winId()), // TODO Qt winId() => HWND ??
+                       cqueue_, 3},
               stage_{swchain_, cqueue_, 3}
         {
             setAttribute(Qt::WA_PaintOnScreen, true);
             setAttribute(Qt::WA_NativeWindow, true);
 
-            //this->resize(960,540);
-            //this->setVisible(true);
-            //this->show();
+            // this->resize(960,540);
+            // this->setVisible(true);
+            // this->show();
 
             stage_.dispatch_event(gtl::event{gtl::events::none{}});
 

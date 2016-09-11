@@ -46,26 +46,20 @@ namespace win {
             int dy = static_cast<int>((height_px - client_rect_.bottom) / 2);
 
             InflateRect(&window_rect_, dx, dy);
-            SetWindowPos(hwnd, HWND_TOP, 200, 0,
-                         window_rect_.right - window_rect_.left,
-                         window_rect_.bottom - window_rect_.top,
-                         SWP_SHOWWINDOW | SWP_NOZORDER);
+            SetWindowPos(hwnd, HWND_TOP, 200, 0, window_rect_.right - window_rect_.left,
+                         window_rect_.bottom - window_rect_.top, SWP_SHOWWINDOW | SWP_NOZORDER);
         }
 
-        static HWND CreateFullscreenWindow(HWND hwnd, HINSTANCE hinst, const char* class_name, const char* caption, void* sneaky)
+        static HWND CreateFullscreenWindow(HWND hwnd, HINSTANCE hinst, const char* class_name, const char* caption,
+                                           void* sneaky)
         { // adapted from Raymond Chen: http://blogs.msdn.com/b/oldnewthing/archive/2005/05/05/414910.aspx
             HMONITOR hmon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
             MONITORINFO mi = {sizeof(mi)};
             if (!GetMonitorInfo(hmon, &mi))
                 return NULL;
-            return CreateWindow(class_name,
-                                caption,
-                                WS_POPUP | WS_VISIBLE,
-                                mi.rcMonitor.left,
-                                mi.rcMonitor.top,
-                                mi.rcMonitor.right - mi.rcMonitor.left,
-                                mi.rcMonitor.bottom - mi.rcMonitor.top,
-                                hwnd, NULL, hinst, sneaky);
+            return CreateWindow(class_name, caption, WS_POPUP | WS_VISIBLE, mi.rcMonitor.left, mi.rcMonitor.top,
+                                mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top, hwnd,
+                                NULL, hinst, sneaky);
         }
 
     } // unnamed namespace
@@ -78,17 +72,17 @@ namespace win {
         style.lpfnWndProc = func;
         style.hInstance = hinstance;
         style.lpszClassName = u8"window";
-        //style.hCursor = LoadCursor(NULL, IDC_ARROW);
+        // style.hCursor = LoadCursor(NULL, IDC_ARROW);
 
         if (RegisterClassEx(&style) == 0)
         { // failure returns 0
             throw std::runtime_error{__func__};
         }
-        //hwnd = CreateFullscreenWindow(hwnd,hinstance,style.lpszClassName,caption,this);
+        // hwnd = CreateFullscreenWindow(hwnd,hinstance,style.lpszClassName,caption,this);
         hwnd = CreateWindow(style.lpszClassName, caption,
-                            //WS_VISIBLE,
-                            WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME,
-                            0, 0,             // dummy positions, adjusted later with ResizeWindow()
+                            // WS_VISIBLE,
+                            WS_OVERLAPPEDWINDOW ^ WS_THICKFRAME, 0,
+                            0,                // dummy positions, adjusted later with ResizeWindow()
                             0, 0,             // dummy width and height, adjusted later with ResizeWindow()
                             nullptr, nullptr, // hWndParent and hMenu
                             hinstance,
@@ -97,7 +91,7 @@ namespace win {
         {
             throw std::runtime_error{__func__};
         }
-        //SetCursor(LoadCursor(NULL,IDC_ARROW));
+        // SetCursor(LoadCursor(NULL,IDC_ARROW));
         ShowCursor(true);
         resize_window(hwnd, width_px, height_px); // remove for fullscreen
     }
@@ -108,7 +102,7 @@ namespace win {
         { // we must have thrown..
             // assert(std::uncaught_exceptions());
             PostMessage(hwnd, WM_CLOSE, 0, 0);
-            //PostQuitMessage(0);
+            // PostQuitMessage(0);
             enter_message_loop([](auto&) {}); // do nothing with messages..
         }
     }

@@ -26,8 +26,7 @@ class resource_locator {
     std::string filename_;
 
 public:
-    resource_locator(std::string filename, gtl::tags::xml_format)
-        : ptree_{}, filename_{std::move(filename)}
+    resource_locator(std::string filename, gtl::tags::xml_format) : ptree_{}, filename_{std::move(filename)}
     {
         boost::property_tree::read_xml(filename_, ptree_);
     }
@@ -44,8 +43,8 @@ public:
         return func(ptree_.get<data_type>(std::forward<P>(param)));
     }
 
-    //template <typename ...Ts>
-    //decltype(auto) get(Ts&&...ts) noexcept(noexcept(ptree_.get(std::forward<Ts>(ts)...)))
+    // template <typename ...Ts>
+    // decltype(auto) get(Ts&&...ts) noexcept(noexcept(ptree_.get(std::forward<Ts>(ts)...)))
     //{
     //    return ptree_.get(std::forward<Ts>(ts)...);
     //}

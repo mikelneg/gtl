@@ -31,18 +31,18 @@ MIT license. See LICENSE.txt in project root for details.
 namespace gtl {
 
 struct EntityInfo {
-    //Eigen::Vector4f xywh_;
-    //Eigen::Vector4f rgb_angle_;
+    // Eigen::Vector4f xywh_;
+    // Eigen::Vector4f rgb_angle_;
 
-    //uint32_t bone_offset_;
-    //uint32_t bone_count_;
+    // uint32_t bone_offset_;
+    // uint32_t bone_count_;
 
     union {
         uintptr_t entity_data_;
         uint16_t arr[4];
     };
 
-    //uintptr_t entity_data_; // 64 bit: <mesh_id, entity_id, material_id, EMPTY>
+    // uintptr_t entity_data_; // 64 bit: <mesh_id, entity_id, material_id, EMPTY>
     // ..
     // 64 bit: <mesh_id, entity_id, material_id, ?? something_physics_consumes>
     // 64 bit: <mesh_id, entity_id, material_id, ?? something_rendering_consumes>
@@ -69,24 +69,20 @@ struct InstanceInfo { // HACK hackish..
         uint16_t arr[4]; // uint16_t <bone_offset, material_id, entity_id, mesh_id>
     };
 
-    explicit InstanceInfo(uintptr_t i, uint16_t p) noexcept
-        : data{i}
+    explicit InstanceInfo(uintptr_t i, uint16_t p) noexcept : data{i}
     {
         pack<0>(p);
     }
-    constexpr explicit InstanceInfo(uintptr_t v) noexcept
-        : data{v}
+    constexpr explicit InstanceInfo(uintptr_t v) noexcept : data{v}
     {
     }
-    constexpr explicit InstanceInfo(uint16_t a, uint16_t b, uint16_t c, uint16_t d) noexcept
-        : arr{a, b, c, d}
+    constexpr explicit InstanceInfo(uint16_t a, uint16_t b, uint16_t c, uint16_t d) noexcept : arr{a, b, c, d}
     {
     }
 
     InstanceInfo() = default;
 
-    constexpr InstanceInfo(InstanceInfo const& i) noexcept
-        : data{i.data}
+    constexpr InstanceInfo(InstanceInfo const& i) noexcept : data{i.data}
     {
     }
 
@@ -144,7 +140,7 @@ struct InstanceInfo { // HACK hackish..
         return data;
     }
 
-    //friend bool operator<(InstanceInfo const& lhs, InstanceInfo const& rhs) noexcept {
+    // friend bool operator<(InstanceInfo const& lhs, InstanceInfo const& rhs) noexcept {
     //    return
     //}
 
@@ -166,7 +162,7 @@ namespace physics {
             position<float> xy_;
             dimensions<float> wh_;
             angle<float> angle_;
-            //uint32_t id;
+            // uint32_t id;
             InstanceInfo info_;
         };
 
@@ -174,7 +170,7 @@ namespace physics {
             position<float> xy_;
             dimensions<float> wh_;
             angle<float> angle_;
-            //uint32_t id;
+            // uint32_t id;
             InstanceInfo info_;
         };
 
@@ -207,14 +203,10 @@ namespace physics {
         };
     }
 
-    using generator = boost::variant<generators::static_box,
-                                     generators::dynamic_box,
-                                     generators::dynamic_jointed_boxes,
-                                     generators::static_circle,
-                                     generators::destroy_object_implode,
-                                     generators::boost_object,
-                                     generators::boost_object_vec,
-                                     generators::drive_object_vec>;
+    using generator
+        = boost::variant<generators::static_box, generators::dynamic_box, generators::dynamic_jointed_boxes,
+                         generators::static_circle, generators::destroy_object_implode, generators::boost_object,
+                         generators::boost_object_vec, generators::drive_object_vec>;
 }
 
 struct render_data {

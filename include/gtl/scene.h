@@ -33,14 +33,15 @@ class scene {
 
     public:
         template <typename... Qs>
-        scene_priv_impl(Qs&&... qs) //noexcept(noexcept(obj(std::forward<Qs>(qs)...)))
+        scene_priv_impl(Qs&&... qs) // noexcept(noexcept(obj(std::forward<Qs>(qs)...)))
             : obj(std::forward<Qs>(qs)...)
         {
         }
 
         virtual void dispatch(CommandVariant v) const final
         {
-            apply_visitor(obj, v); // adl call, should pick up boost::apply_visitor if using boost::variant CommandVariant
+            apply_visitor(obj,
+                          v); // adl call, should pick up boost::apply_visitor if using boost::variant CommandVariant
         }
     };
 
@@ -48,14 +49,12 @@ class scene {
 
 public:
     template <typename C, typename... Ps>
-    scene(gtl::tags::construct<C>, Ps&&... ps)
-        : ptr{std::make_unique<scene_priv_impl<C>>(std::forward<Ps>(ps)...)}
+    scene(gtl::tags::construct<C>, Ps&&... ps) : ptr{std::make_unique<scene_priv_impl<C>>(std::forward<Ps>(ps)...)}
     {
     }
 
     template <typename T>
-    scene(T&& t)
-        : ptr{std::make_unique<scene_priv_impl<std::remove_reference_t<T>>>(std::forward<T>(t))}
+    scene(T&& t) : ptr{std::make_unique<scene_priv_impl<std::remove_reference_t<T>>>(std::forward<T>(t))}
     {
     }
 
@@ -68,7 +67,7 @@ public:
         ptr->dispatch(t);
     }
 
-    //friend void swap(scene& lhs, scene& rhs) { using std::swap; swap(lhs.ptr,rhs.ptr); }
+    // friend void swap(scene& lhs, scene& rhs) { using std::swap; swap(lhs.ptr,rhs.ptr); }
 };
 }
 #endif

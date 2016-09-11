@@ -63,8 +63,7 @@ namespace win {
         HANDLE handle_;
 
     public:
-        waitable_handle()
-            : handle_(CreateEvent(nullptr, FALSE, FALSE, nullptr))
+        waitable_handle() : handle_(CreateEvent(nullptr, FALSE, FALSE, nullptr))
         {
             if (handle_ == NULL)
                 throw std::runtime_error{__func__};

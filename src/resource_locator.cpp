@@ -17,7 +17,7 @@ MIT license. See LICENSE.txt in project root for details.
 
 namespace gtl {
 
-//resource_locator::resource_locator(std::string filename, gtl::tags::xml_format)
+// resource_locator::resource_locator(std::string filename, gtl::tags::xml_format)
 //    :   ptree_{},
 //        filename_{std::move(filename)}
 //{

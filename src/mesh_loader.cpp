@@ -61,7 +61,10 @@ struct mesh_loader::priv_impl {
 
     priv_impl(std::string filename, gtl::tags::fbx_format)
     {
-        auto destroy_ptr = [](auto* p) { if (p) p->Destroy(); };
+        auto destroy_ptr = [](auto* p) {
+            if (p)
+                p->Destroy();
+        };
         auto do_nothing_ptr = [](auto*) {};
 
         fbx_ptr<FbxManager> manager{FbxManager::Create(), destroy_ptr};
@@ -80,7 +83,8 @@ struct mesh_loader::priv_impl {
         {
 
             fbx_ptr<FbxMesh> mesh_loader{static_cast<FbxMesh*>(child->GetNodeAttribute()), do_nothing_ptr};
-            fbx_ptr<FbxSkin> skin{static_cast<FbxSkin*>(mesh_loader->GetDeformer(0, FbxDeformer::eSkin)), do_nothing_ptr};
+            fbx_ptr<FbxSkin> skin{static_cast<FbxSkin*>(mesh_loader->GetDeformer(0, FbxDeformer::eSkin)),
+                                  do_nothing_ptr};
 
             mesh_loader->GenerateNormals(true, true, false);
 
@@ -134,22 +138,17 @@ struct mesh_loader::priv_impl {
                     mesh_loader->GetPolygonVertexNormal(i, j, normal);
                     normal.Normalize();
 
-                    vertices.emplace_back(static_cast<float>(position[0]),
-                                          static_cast<float>(position[1]),
-                                          -1.0f * static_cast<float>(position[2]),
-                                          1.0f);
+                    vertices.emplace_back(static_cast<float>(position[0]), static_cast<float>(position[1]),
+                                          -1.0f * static_cast<float>(position[2]), 1.0f);
 
-                    normals.emplace_back(static_cast<float>(normal[0]),
-                                         static_cast<float>(normal[1]),
-                                         -1.0f * static_cast<float>(normal[2]),
-                                         0.0f);
+                    normals.emplace_back(static_cast<float>(normal[0]), static_cast<float>(normal[1]),
+                                         -1.0f * static_cast<float>(normal[2]), 0.0f);
 
                     indices.emplace_back(j + (i * sz)); // TODO optimize meshes
 
                     auto& bone_data = cp_bones[control_point_index];
 
-                    vertex_bones.emplace_back(bone_data.deforming_bone_ids,
-                                              bone_data.deforming_bone_weights);
+                    vertex_bones.emplace_back(bone_data.deforming_bone_ids, bone_data.deforming_bone_weights);
                 }
             }
         }
@@ -170,14 +169,12 @@ size_t mesh_loader::bone_count() const
     return impl_->number_of_bones;
 }
 
-mesh_loader::aligned_vector<Eigen::Vector4f>
-mesh_loader::vertices() const
+mesh_loader::aligned_vector<Eigen::Vector4f> mesh_loader::vertices() const
 {
     return impl_->vertices;
 }
 
-mesh_loader::aligned_vector<vertex_type_bone>
-mesh_loader::bone_vertices() const
+mesh_loader::aligned_vector<vertex_type_bone> mesh_loader::bone_vertices() const
 {
     std::vector<vertex_type_bone, Eigen::aligned_allocator<vertex_type_bone>> ret;
 

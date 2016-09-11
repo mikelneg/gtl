@@ -42,22 +42,16 @@ namespace gtl {
 namespace {
 
     struct collision_category {
-        enum : uint16_t {
-            BOUNDARY = 1,
-            ENTITY = 2,
-            SENSOR = 4
-        };
+        enum : uint16_t { BOUNDARY = 1, ENTITY = 2, SENSOR = 4 };
     };
 
     template <typename T, typename U>
-    static void simulation_thread(vn::swap_object<T>&,
-                                  gtl::swap_vector<U>& physics_task_queue_,
+    static void simulation_thread(vn::swap_object<T>&, gtl::swap_vector<U>& physics_task_queue_,
                                   std::atomic_flag& quit_);
 
     template <typename T>
     struct query_callback_helper : b2QueryCallback, T {
-        query_callback_helper(T t)
-            : T(t)
+        query_callback_helper(T t) : T(t)
         {
         }
         bool ReportFixture(b2Fixture* fixture_) override
@@ -72,13 +66,13 @@ namespace {
         return query_callback_helper<T>{std::move(t)};
     }
 
-    //inline
-    //void* to_user_data(b2Body* p) noexcept {
+    // inline
+    // void* to_user_data(b2Body* p) noexcept {
     //    return p;
     //}
     //
-    //inline
-    //b2Body* from_user_data(void* p) noexcept {
+    // inline
+    // b2Body* from_user_data(void* p) noexcept {
     //    return reinterpret_cast<b2Body*>(p);
     //}
 
@@ -90,8 +84,7 @@ namespace {
 
         map_type& entity_map_;
 
-        box2d_generator_visitor(b2World& w_, map_type& map_) noexcept
-            : world_{w_}, entity_map_{map_}
+        box2d_generator_visitor(b2World& w_, map_type& map_) noexcept : world_{w_}, entity_map_{map_}
         {
         }
 
@@ -113,14 +106,14 @@ namespace {
             body_.angle = o.angle_ / si::radians;
             body_.userData = reinterpret_cast<void*>(o.info_.value());
             body_.type = b2_staticBody;
-            //body_.awake = true; // default
+            // body_.awake = true; // default
             // etc..
 
             b2Body* ptr = world_.CreateBody(&body_);
 
             b2PolygonShape shape_;
             shape_.SetAsBox(o.wh_.first / si::meters, o.wh_.second / si::meters);
-            //shape_.SetAsBox(o.wh_.first.value(),o.wh_.second.value());//,b2Vec2{o.x,o.y},o.a);
+            // shape_.SetAsBox(o.wh_.first.value(),o.wh_.second.value());//,b2Vec2{o.x,o.y},o.a);
 
             // TODO b2EdgeShape instead of box..
 
@@ -159,11 +152,12 @@ namespace {
             auto do_the_rest = [&](auto& a, auto& body, auto const& userdata) {
                 b2PolygonShape s;
                 s.SetAsBox(0.5f * (a.wh_.first / si::meters), 0.5f * (a.wh_.second / si::meters));
-                //s.SetAsBox(a.wh_.first / si::meters,a.wh_.second / si::meters);
+                // s.SetAsBox(a.wh_.first / si::meters,a.wh_.second / si::meters);
 
                 b2FixtureDef f;
                 f.filter.categoryBits = collision_category::ENTITY;
-                f.filter.maskBits = collision_category::ENTITY | collision_category::SENSOR | collision_category::BOUNDARY;
+                f.filter.maskBits
+                    = collision_category::ENTITY | collision_category::SENSOR | collision_category::BOUNDARY;
                 f.shape = &s;
                 f.userData = userdata;
 
@@ -178,8 +172,7 @@ namespace {
                 body->SetAngularDamping(0.5f);
                 body->SetSleepingAllowed(true);
 
-                body->ApplyLinearImpulse(b2Vec2{std::cos(a.angle_ / si::radians),
-                                                std::sin(a.angle_ / si::radians)},
+                body->ApplyLinearImpulse(b2Vec2{std::cos(a.angle_ / si::radians), std::sin(a.angle_ / si::radians)},
                                          body->GetWorldCenter(), true);
             };
 
@@ -209,7 +202,7 @@ namespace {
                 body_ptrs_.emplace_back(create_body(b, reinterpret_cast<void*>(b.info_.value())));
             }
 
-            //entity_map_.emplace(o.boxes_[0].id, body_ptrs_[0]);
+            // entity_map_.emplace(o.boxes_[0].id, body_ptrs_[0]);
 
             for (unsigned i = 0; i < body_ptrs_.size(); ++i)
             {
@@ -242,7 +235,7 @@ namespace {
             body_.angle = o.angle_ / si::radians;
             body_.userData = reinterpret_cast<void*>(o.info_.value());
             body_.type = b2_dynamicBody;
-            //body_.awake = true; // default
+            // body_.awake = true; // default
             // etc..
 
             b2Body* ptr = world_.CreateBody(&body_);
@@ -251,12 +244,13 @@ namespace {
 
             b2PolygonShape shape_;
             shape_.SetAsBox(o.wh_.first / si::meters, o.wh_.second / si::meters);
-            //shape_.SetAsBox(o.wh_.first.value(),o.wh_.second.value());//,b2Vec2{o.x,o.y},o.a);
+            // shape_.SetAsBox(o.wh_.first.value(),o.wh_.second.value());//,b2Vec2{o.x,o.y},o.a);
 
             b2FixtureDef fixture_;
 
             fixture_.filter.categoryBits = collision_category::ENTITY;
-            fixture_.filter.maskBits = collision_category::ENTITY | collision_category::SENSOR | collision_category::BOUNDARY;
+            fixture_.filter.maskBits
+                = collision_category::ENTITY | collision_category::SENSOR | collision_category::BOUNDARY;
             fixture_.shape = &shape_;
             fixture_.userData = reinterpret_cast<void*>(ptr);
 
@@ -271,8 +265,7 @@ namespace {
             ptr->SetAngularDamping(0.5f);
             ptr->SetSleepingAllowed(true);
 
-            ptr->ApplyLinearImpulse(b2Vec2{std::cos(o.angle_ / si::radians),
-                                           std::sin(o.angle_ / si::radians)},
+            ptr->ApplyLinearImpulse(b2Vec2{std::cos(o.angle_ / si::radians), std::sin(o.angle_ / si::radians)},
                                     ptr->GetLocalCenter(), true);
 
             return ptr;
@@ -302,16 +295,15 @@ namespace {
                 body_aabb_.upperBound += b2Vec2{12.0f, 12.0f};
             }
 
-            auto implode_around_AABB = make_query_callback(
-                [&](b2Fixture* fixture_) {
-                    b2Body* b = fixture_->GetBody();
-                    b->SetAwake(true);
-                    b2Vec2 vec_{body_aabb_.GetCenter() - b->GetWorldCenter()};
-                    float mag_ = vec_.Normalize();
-                    vec_ *= ((1000.0f * b->GetMass()) / mag_);
-                    b->ApplyForceToCenter(vec_, true);
-                    return true; // continue the query
-                });
+            auto implode_around_AABB = make_query_callback([&](b2Fixture* fixture_) {
+                b2Body* b = fixture_->GetBody();
+                b->SetAwake(true);
+                b2Vec2 vec_{body_aabb_.GetCenter() - b->GetWorldCenter()};
+                float mag_ = vec_.Normalize();
+                vec_ *= ((1000.0f * b->GetMass()) / mag_);
+                b->ApplyForceToCenter(vec_, true);
+                return true; // continue the query
+            });
 
             for (auto it = range.first; it != range.second; ++it)
             {
@@ -340,7 +332,7 @@ namespace {
             main_body_->ApplyLinearImpulse(b2Vec2{100.0f * std::cos(-1.0f * main_body_->GetAngle()),
                                                   100.0f * std::sin(-1.0f * main_body_->GetAngle())},
                                            main_body_->GetWorldCenter(), true);
-            //main_body_->GetPosition(), true);
+            // main_body_->GetPosition(), true);
             return nullptr;
         }
 
@@ -358,7 +350,7 @@ namespace {
 
             main_body_->ApplyLinearImpulse(b2Vec2{o.x, o.y}, // o.x / 100.0f,o.y / 100.0f},
                                            main_body_->GetWorldCenter(), true);
-            //main_body_->GetPosition(), true);
+            // main_body_->GetPosition(), true);
             return nullptr;
         }
 
@@ -376,33 +368,34 @@ namespace {
 
             main_body_->ApplyForce(b2Vec2{o.x, o.y}, main_body_->GetWorldCenter(), true);
 
-            //main_body_->ApplyLinearImpulse(b2Vec2{o.x,o.y},// o.x / 100.0f,o.y / 100.0f},
+            // main_body_->ApplyLinearImpulse(b2Vec2{o.x,o.y},// o.x / 100.0f,o.y / 100.0f},
             //                                      main_body_->GetWorldCenter(), true);
-            //main_body_->GetPosition(), true);
+            // main_body_->GetPosition(), true);
             return nullptr;
         }
     };
 }
 
-physics_simulation::physics_simulation(gtl::swap_vector<gtl::physics::generator>& tasks_) //boost::units::quantity<boost::units::si::area> area_,
-//std::vector<Eigen::Vector4f> positions_)
+physics_simulation::physics_simulation(
+    gtl::swap_vector<gtl::physics::generator>& tasks_) // boost::units::quantity<boost::units::si::area> area_,
+// std::vector<Eigen::Vector4f> positions_)
 
 {
     quit_.test_and_set();
-    //thread_ = std::thread{&simulation_thread<render_data,gtl::physics::generator>,std::ref(entities_),std::ref(tasks_),std::ref(quit_)};
-    thread_ = std::thread{&simulation_thread<render_data, gtl::physics::generator>,
-                          std::ref(render_data_), std::ref(tasks_), std::ref(quit_)};
+    // thread_ =
+    // std::thread{&simulation_thread<render_data,gtl::physics::generator>,std::ref(entities_),std::ref(tasks_),std::ref(quit_)};
+    thread_ = std::thread{&simulation_thread<render_data, gtl::physics::generator>, std::ref(render_data_),
+                          std::ref(tasks_), std::ref(quit_)};
 }
 
 namespace {
 
     template <typename T, typename U>
-    static void simulation_thread(vn::swap_object<T>& rend_data_,
-                                  gtl::swap_vector<U>& physics_task_queue_,
-                                  //std::vector<physics::generator> generators_,
+    static void simulation_thread(vn::swap_object<T>& rend_data_, gtl::swap_vector<U>& physics_task_queue_,
+                                  // std::vector<physics::generator> generators_,
                                   std::atomic_flag& quit_)
     {
-        //b2World world_{b2Vec2{0.0f,-9.8f}};
+        // b2World world_{b2Vec2{0.0f,-9.8f}};
         b2World world_{b2Vec2{0.0f, 0.0f}};
         map_type map_;
 
@@ -427,8 +420,8 @@ namespace {
         auto& positions_ = local_rend_data_.entities_;
         auto& bones_ = local_rend_data_.bones_;
 
-        //std::vector<T> positions_;
-        //positions_.reserve(100);
+        // std::vector<T> positions_;
+        // positions_.reserve(100);
 
         std::vector<b2Body*> selected_bodies_;
         selected_bodies_.reserve(100);
@@ -436,61 +429,62 @@ namespace {
         int64_t max_wait_ = 0;
 
         auto query_bodies = [&]() {
-            //positions_.clear();
+            // positions_.clear();
             for (b2Body* b = world_.GetBodyList(); b; b = b->GetNext())
             {
                 b2Vec2 position = b->GetPosition();
-                //uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(b->GetUserData()));
+                // uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(b->GetUserData()));
                 // temporar
 
-                //positions_.emplace_back(InstanceInfo{{position.x,
+                // positions_.emplace_back(InstanceInfo{{position.x,
                 //                           position.y,
                 //                           1.0f,1.0f},
                 //                           0, // MESH_ID
                 //                           index_});
             }
-            //swapvec_.swap_in(positions_);
+            // swapvec_.swap_in(positions_);
         };
 
-        auto query_around_AABB = make_query_callback(
-            [&](b2Fixture* fixture_) {
-                //b2Body *b = fixture_->GetBody();
-                //b->SetAwake(true);
-                //b2Vec2 position = b->GetPosition();
-                //uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(b->GetUserData()));
-                //
-                ////b2AABB aabb_ = fixture_->GetAABB(0);
-                //
-                //positions_.emplace_back(InstanceInfo{{position.x,
-                //                           position.y,
-                //                           1.0f,1.0f},
-                //                           {1.0f, 1.0f, 1.0f, b->GetAngle()},index_});
-                ////positions_.emplace_back(T{{position.x,
-                ////                           position.y,
-                ////                           aabb_.GetExtents().x,aabb_.GetExtents().y},
-                ////                           {1.0f, 1.0f, 1.0f, 0.0f},index_});
-                //return true; // continue the query
+        auto query_around_AABB = make_query_callback([&](b2Fixture* fixture_) {
+            // b2Body *b = fixture_->GetBody();
+            // b->SetAwake(true);
+            // b2Vec2 position = b->GetPosition();
+            // uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(b->GetUserData()));
+            //
+            ////b2AABB aabb_ = fixture_->GetAABB(0);
+            //
+            // positions_.emplace_back(InstanceInfo{{position.x,
+            //                           position.y,
+            //                           1.0f,1.0f},
+            //                           {1.0f, 1.0f, 1.0f, b->GetAngle()},index_});
+            ////positions_.emplace_back(T{{position.x,
+            ////                           position.y,
+            ////                           aabb_.GetExtents().x,aabb_.GetExtents().y},
+            ////                           {1.0f, 1.0f, 1.0f, 0.0f},index_});
+            // return true; // continue the query
 
-                b2Body& body_ = *(fixture_->GetBody());
-                body_.SetAwake(true);
+            b2Body& body_ = *(fixture_->GetBody());
+            body_.SetAwake(true);
 
-                //uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(body_.GetUserData()));
-                b2Vec2 const& p = body_.GetPosition();
+            // uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(body_.GetUserData()));
+            b2Vec2 const& p = body_.GetPosition();
 
-                //positions_.emplace_back(InstanceInfo{{p.x, p.y, 1.0f, 1.0f},
-                //                                   //{1.0f, 1.0f, 1.0f, body_.GetAngle()},
-                //                                   0, // MESH_ID
-                //                                   static_cast<uint32_t>(bones_.size()),
-                //                                   index_});
-                // single body addition..
-                Eigen::Matrix4f m = (Eigen::Affine3f{Eigen::Translation3f{Eigen::Vector3f{p.x, p.y, 0.1f}}} // HACK specify plane (0.1f) elsewhere..
-                                     * Eigen::Affine3f{Eigen::AngleAxisf{body_.GetAngle(), Eigen::Vector3f{0.0f, 0.0f, 1.0f}}})
-                                        .matrix(); //Eigen::Rotation2Df{body_.GetAngle()}.matrix();
+            // positions_.emplace_back(InstanceInfo{{p.x, p.y, 1.0f, 1.0f},
+            //                                   //{1.0f, 1.0f, 1.0f, body_.GetAngle()},
+            //                                   0, // MESH_ID
+            //                                   static_cast<uint32_t>(bones_.size()),
+            //                                   index_});
+            // single body addition..
+            Eigen::Matrix4f m
+                = (Eigen::Affine3f{Eigen::Translation3f{Eigen::Vector3f{p.x, p.y, 0.1f}}}
+                   // HACK specify plane (0.1f) elsewhere..
+                   * Eigen::Affine3f{Eigen::AngleAxisf{body_.GetAngle(), Eigen::Vector3f{0.0f, 0.0f, 1.0f}}})
+                      .matrix(); // Eigen::Rotation2Df{body_.GetAngle()}.matrix();
 
-                bones_.emplace_back(m.transpose());
+            bones_.emplace_back(m.transpose());
 
-                return true;
-            });
+            return true;
+        });
 
         auto dump_fixtures = [&](b2Body& body_) {
             InstanceInfo instance{reinterpret_cast<uintptr_t>(body_.GetUserData()),
@@ -508,21 +502,19 @@ namespace {
                 float const& angle = it->second->GetAngle();
 
                 Eigen::Matrix4f m = (Eigen::Affine3f{Eigen::Translation3f{Eigen::Vector3f{p.x, p.y, 0.1f}}}
-                                     * Eigen::Affine3f{Eigen::AngleAxisf{angle,
-                                                                         Eigen::Vector3f{0.0f, 0.0f, 1.0f}}})
+                                     * Eigen::Affine3f{Eigen::AngleAxisf{angle, Eigen::Vector3f{0.0f, 0.0f, 1.0f}}})
                                         .matrix();
 
                 bones_.emplace_back(m.transpose());
             }
         };
 
-        auto query_bodies_around_AABB = make_query_callback(
-            [&](b2Fixture* fixture_) {
-                b2Body* const body_ptr_ = reinterpret_cast<b2Body*>(fixture_->GetUserData());
-                body_ptr_->SetAwake(true);
-                selected_bodies_.emplace_back(body_ptr_);
-                return true; // continue the query
-            });
+        auto query_bodies_around_AABB = make_query_callback([&](b2Fixture* fixture_) {
+            b2Body* const body_ptr_ = reinterpret_cast<b2Body*>(fixture_->GetUserData());
+            body_ptr_->SetAwake(true);
+            selected_bodies_.emplace_back(body_ptr_);
+            return true; // continue the query
+        });
 
         b2AABB aabb;
         aabb.lowerBound.Set(-60.0f, -60.0f);
@@ -549,10 +541,10 @@ namespace {
             }
 
             // all bodies as objects..
-            //world_.QueryAABB(&query_around_AABB, aabb);
+            // world_.QueryAABB(&query_around_AABB, aabb);
 
-            //query_bodies();
-            //swapvec_.swap_in(positions_);
+            // query_bodies();
+            // swapvec_.swap_in(positions_);
 
             rend_data_.swap_in(local_rend_data_);
 

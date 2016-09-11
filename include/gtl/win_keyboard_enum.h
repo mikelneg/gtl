@@ -8,7 +8,7 @@ MIT license. See LICENSE.txt in project root for details.
 #ifndef WQWOWQPPZSF_GTL_WIN_KEYBOARD_ENUM_H_
 #define WQWOWQPPZSF_GTL_WIN_KEYBOARD_ENUM_H_
 
-/*----------------------------------------------------------------------------    
+/*----------------------------------------------------------------------------
     Some key value definitions, put together by Josh Jackson:
     http://www.codeproject.com/script/Membership/View.aspx?mid=4951186
 -----------------------------------------------------------------------------*/

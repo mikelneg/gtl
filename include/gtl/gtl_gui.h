@@ -60,7 +60,8 @@ namespace gui {
         using gui_listener_push = gui_listener::push_type;
         using gui_listener_pull = gui_listener::pull_type;
 
-        using gui_channel_params = std::tuple<layer&, event_pull&, event_push&>; // reference to parent, reference to msg stream
+        using gui_channel_params = std::tuple<layer&, event_pull&, event_push&>; // reference to parent, reference to
+       msg stream
 
         using gui_channel = boost::coroutines::asymmetric_coroutine< gui_channel_params >;
         using gui_pull = gui_channel::pull_type;
@@ -90,7 +91,8 @@ namespace gui {
             layer&& add(id, ui_variant&& g) &&;
 
             layer& register_listener(id const& child_, listener_registry&) &;
-            layer&& register_listener(id const& child_, listener_registry& reg_) && { register_listener(child_,reg_); return std::move(*this); }
+            layer&& register_listener(id const& child_, listener_registry& reg_) && { register_listener(child_,reg_);
+       return std::move(*this); }
 
             ui_variant& get_child(id const&);
         };
@@ -167,7 +169,8 @@ namespace gui {
         void listen(T&,R&) { throw std::runtime_error{"gtl_gui:: generic listen(T&,R&) should not be called.."}; }
 
         //template <typename T, typename R>
-        //void set_focus(T&,R&) { throw std::runtime_error{"gtl_gui:: generic set_focus(T&,R&) should not be called.."}; }
+        //void set_focus(T&,R&) { throw std::runtime_error{"gtl_gui:: generic set_focus(T&,R&) should not be called.."};
+       }
 
         inline void listen(ui_variant& u, gui_listener_pull& p) {
             auto vis = vn::make_lambda_visitor(

@@ -26,11 +26,13 @@ namespace d3d {
         uint64_t const cycle_length_{};
 
     public:
-        synchronization_object(gtl::d3d::command_queue&,                 // example:
-                               unsigned max_value_in_cycle,              // If desired cycle is [0,1,2,3], max_value_in_cycle should be 3.
-                               unsigned tolerated_difference_in_values); // If tolerated_diff is 2, the "completed" index value can lag behind
-                                                                         //    the index value submitted to op() by 2; when it is greater,
-                                                                         //    the desync_call is executed instead (might be useful for logging..)
+        synchronization_object(
+            gtl::d3d::command_queue&,    // example:
+            unsigned max_value_in_cycle, // If desired cycle is [0,1,2,3], max_value_in_cycle should be 3.
+            unsigned
+                tolerated_difference_in_values); // If tolerated_diff is 2, the "completed" index value can lag behind
+                                                 //    the index value submitted to op() by 2; when it is greater,
+        //    the desync_call is executed instead (might be useful for logging..)
         template <typename F, typename G>
         void operator()(F&& sync_call, G&& desync_call)
         {
@@ -103,8 +105,7 @@ namespace d3d {
             }
 
         public:
-            constexpr frame_index(frame_synchronizer& p) noexcept
-                : parent_{p}
+            constexpr frame_index(frame_synchronizer& p) noexcept : parent_{p}
             {
             }
             friend auto max_value(frame_index const& s)

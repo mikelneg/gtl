@@ -24,8 +24,7 @@ class event_listener {
 public:
     event_listener() = default;
 
-    event_listener(event_listener&& o)
-        : event_generators_{o.detach_event_listeners()}
+    event_listener(event_listener&& o) : event_generators_{o.detach_event_listeners()}
     {
         attach_listeners();
     }

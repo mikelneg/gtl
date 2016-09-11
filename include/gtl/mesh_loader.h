@@ -31,10 +31,8 @@ struct vertex_type_bone {
 
     friend std::ostream& operator<<(std::ostream& str, vertex_type_bone const& b)
     {
-        str << "pos(\n"
-            << b.pos << ")\n";
-        str << "norm(\n"
-            << b.normal << ")\n";
+        str << "pos(\n" << b.pos << ")\n";
+        str << "norm(\n" << b.normal << ")\n";
         return str;
     }
 };

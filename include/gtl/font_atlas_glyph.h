@@ -34,7 +34,7 @@ namespace d3d {
 
         friend std::ostream& operator<<(std::ostream& s, font_atlas_glyph& f);
 
-        //private:
+        // private:
         std::array<float, 4> padding{}; // padding around each character
         std::string face_name{};        // name of the font
         std::string texture_file{};     // name of the file that contains the font texture

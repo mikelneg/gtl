@@ -51,9 +51,10 @@ public:
     };
 
 private:
-    vn::swap_object<imgui_data> output_buffer_; // TODO implement copy-free buffer updating (instead of swap_object<vector> or whatever)
+    vn::swap_object<imgui_data>
+        output_buffer_; // TODO implement copy-free buffer updating (instead of swap_object<vector> or whatever)
     imgui_data local_data_;
-    
+
     std::vector<char> text_box_a_;
     std::vector<char> text_box_b_;
 
@@ -115,27 +116,27 @@ public:
     }
 
     void render()
-    {        
+    {
         ImGui::NewFrame();
 
         ImGui::Begin("Window Title");
 
-        //ImGui::PushID(55);
+        // ImGui::PushID(55);
         if (ImGui::Button("Button"))
         {
             std::cout << "resize button pressed..\n";
         }
-        //ImGui::PopID();
+        // ImGui::PopID();
         ImGui::PushID(44);
         ImGui::InputText("input:", text_box_a_.data(), text_box_a_.size());
         ImGui::PopID();
         if (ImGui::IsItemActive())
         {
-            //callbacks_["steal_focus"]();
+            // callbacks_["steal_focus"]();
         }
         else
         {
-            //callbacks_["return_focus"]();
+            // callbacks_["return_focus"]();
         }
         ImGui::InputText("other:", text_box_b_.data(), text_box_b_.size());
 
@@ -161,7 +162,7 @@ public:
 
         unsigned char* pixels{};
         int width{}, height{}, bytes_per_pixel{};
-        //io.Fonts->GetTexDataAsRGBA32(&pixels,&width,&height,&bytes_per_pixel);
+        // io.Fonts->GetTexDataAsRGBA32(&pixels,&width,&height,&bytes_per_pixel);
         io.Fonts->GetTexDataAsAlpha8(&pixels, &width, &height, &bytes_per_pixel);
 
         std::vector<uint32_t> font_data;
@@ -224,10 +225,13 @@ public:
 /* Old reference code...
 
     t_buffers_{{{dev,vert_descriptor_heap_.get_handle(0),MAX_VERTS * sizeof(ImDrawVert), gtl::d3d::tags::shader_view{}},
-                           {dev,vert_descriptor_heap_.get_handle(1),MAX_VERTS * sizeof(ImDrawVert), gtl::d3d::tags::shader_view{}},
-                           {dev,vert_descriptor_heap_.get_handle(2),MAX_VERTS * sizeof(ImDrawVert), gtl::d3d::tags::shader_view{}}}},
+                           {dev,vert_descriptor_heap_.get_handle(1),MAX_VERTS * sizeof(ImDrawVert),
+gtl::d3d::tags::shader_view{}},
+                           {dev,vert_descriptor_heap_.get_handle(2),MAX_VERTS * sizeof(ImDrawVert),
+gtl::d3d::tags::shader_view{}}}},
             idx_descriptor_heap_{dev,3,gtl::d3d::tags::shader_visible{}},
-            idx_buffers_{{{dev,idx_descriptor_heap_.get_handle(0),MAX_INDICES * sizeof(ImDrawIdx), gtl::d3d::tags::shader_view{}},
+            idx_buffers_{{{dev,idx_descriptor_heap_.get_handle(0),MAX_INDICES * sizeof(ImDrawIdx),
+gtl::d3d::tags::shader_view{}},
 
 
         void insert_callback(std::string key, std::function<void()> func) {
@@ -239,7 +243,8 @@ public:
         }
 
         void resize(int w, int h, gtl::d3d::command_queue& cqueue_) { // needs dev cqueue etc
-            font_texture_ = gtl::d3d::srv{get_device_from(cqueue_), {texture_descriptor_heap_.get_handle(0)}, cqueue_, get_font_bitmap(std::make_pair(w,h))};
+            font_texture_ = gtl::d3d::srv{get_device_from(cqueue_), {texture_descriptor_heap_.get_handle(0)}, cqueue_,
+get_font_bitmap(std::make_pair(w,h))};
             viewport_.Width = static_cast<float>(w);
             viewport_.Height = static_cast<float>(h);
             scissor_ = gtl::d3d::raw::ScissorRect{0,0,w,h};
@@ -305,19 +310,26 @@ public:
 
             ImGui::End();
 
-            ImGui::Render();                  // TODO implement copy-free buffer updating (instead of swap_object<vector> or whatever)
+            ImGui::Render();                  // TODO implement copy-free buffer updating (instead of
+swap_object<vector> or whatever)
         }
 
-//    ImVec2      MousePos;                   // Mouse position, in pixels (set to -1,-1 if no mouse / on another screen, etc.)
-//    bool        MouseDown[5];               // Mouse buttons: left, right, middle + extras. ImGui itself mostly only uses left button (BeginPopupContext** are using right button). Others buttons allows us to track if the mouse is being used by your application + available to user as a convenience via IsMouse** API.
+//    ImVec2      MousePos;                   // Mouse position, in pixels (set to -1,-1 if no mouse / on another
+screen, etc.)
+//    bool        MouseDown[5];               // Mouse buttons: left, right, middle + extras. ImGui itself mostly only
+uses left button (BeginPopupContext** are using right button). Others buttons allows us to track if the mouse is being
+used by your application + available to user as a convenience via IsMouse** API.
 //    float       MouseWheel;                 // Mouse wheel: 1 unit scrolls about 5 lines text.
-//    bool        MouseDrawCursor;            // Request ImGui to draw a mouse cursor for you (if you are on a platform without a mouse cursor).
+//    bool        MouseDrawCursor;            // Request ImGui to draw a mouse cursor for you (if you are on a platform
+without a mouse cursor).
 //    bool        KeyCtrl;                    // Keyboard modifier pressed: Control
 //    bool        KeyShift;                   // Keyboard modifier pressed: Shift
 //    bool        KeyAlt;                     // Keyboard modifier pressed: Alt
 //    bool        KeySuper;                   // Keyboard modifier pressed: Cmd/Super/Windows
-//    bool        KeysDown[512];              // Keyboard keys that are pressed (in whatever storage order you naturally have access to keyboard data)
-//    ImWchar     InputCharacters[16+1];      // List of characters input (translated by user from keypress+keyboard state). Fill using AddInputCharacter() helper.
+//    bool        KeysDown[512];              // Keyboard keys that are pressed (in whatever storage order you naturally
+have access to keyboard data)
+//    ImWchar     InputCharacters[16+1];      // List of characters input (translated by user from keypress+keyboard
+state). Fill using AddInputCharacter() helper.
 
 
         void update(unsigned idx, ImDrawData* draw_data) const

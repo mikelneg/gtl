@@ -18,9 +18,9 @@ namespace gtl {
 namespace win {
 
     namespace detail {
-        //namespace {
+        // namespace {
 
-        //inline void set_window_user_data(HWND hwnd, LPARAM lparam) {
+        // inline void set_window_user_data(HWND hwnd, LPARAM lparam) {
         //    auto tmp_ptr = reinterpret_cast<LONG_PTR>(
         //                        reinterpret_cast<LPCREATESTRUCT>(lparam)->lpCreateParams);
         //    SetLastError(0);
@@ -29,8 +29,8 @@ namespace win {
         //        throw std::runtime_error{__func__};
         //    }
         //}
-        //template <typename T>
-        //inline T& get_window_user_data(HWND hwnd) {
+        // template <typename T>
+        // inline T& get_window_user_data(HWND hwnd) {
         //    return *reinterpret_cast<T*>(GetWindowLongPtr(hwnd,GWLP_USERDATA));
         //}
         //}
@@ -40,15 +40,17 @@ namespace win {
         {
             using namespace gtl::events;
 
-            auto handler_ref = [](HWND hwnd) -> T& { return *reinterpret_cast<T*>(GetWindowLongPtr(hwnd, GWLP_USERDATA)); };
+            auto handler_ref
+                = [](HWND hwnd) -> T& { return *reinterpret_cast<T*>(GetWindowLongPtr(hwnd, GWLP_USERDATA)); };
 
             auto set_user_data = [](HWND hwnd, LPARAM lparam) {
-                                auto tmp_ptr = reinterpret_cast<LONG_PTR>(
-                                                    reinterpret_cast<LPCREATESTRUCT>(lparam)->lpCreateParams); 
-                                SetLastError(0);
-                                if (SetWindowLongPtr(hwnd, GWLP_USERDATA, tmp_ptr) == 0 && GetLastError() != 0){
-                                    throw std::runtime_error{__func__};
-                                } };
+                auto tmp_ptr = reinterpret_cast<LONG_PTR>(reinterpret_cast<LPCREATESTRUCT>(lparam)->lpCreateParams);
+                SetLastError(0);
+                if (SetWindowLongPtr(hwnd, GWLP_USERDATA, tmp_ptr) == 0 && GetLastError() != 0)
+                {
+                    throw std::runtime_error{__func__};
+                }
+            };
 
             // Notes:
             // Wndproc signature = LRESULT(CALLBACK*)(HWND,UINT,WPARAM,LPARAM);
@@ -70,7 +72,7 @@ namespace win {
 
                 case WM_CHAR:
                 {
-                    //if ((HIWORD(lparam) & KF_REPEAT) < 1)
+                    // if ((HIWORD(lparam) & KF_REPEAT) < 1)
                     //{ // block auto-repeat
                     //    switch (wparam)
                     //    {
@@ -84,7 +86,7 @@ namespace win {
                     //            break;
                     //    }
                     //}
-                    //return 0;
+                    // return 0;
                 }
                 break;
 
@@ -114,45 +116,56 @@ namespace win {
                 {
                     POINT xy_coords{GET_X_LPARAM(lparam), GET_Y_LPARAM(lparam)};
                     ScreenToClient(hwnd, &xy_coords);
-                    handler_ref(hwnd).emplace_back(gtl::events::mouse_wheel_scroll{GET_WHEEL_DELTA_WPARAM(wparam),
-                                                                                   GET_KEYSTATE_WPARAM(wparam),
-                                                                                   xy_coords.x, xy_coords.y});
+                    handler_ref(hwnd).emplace_back(gtl::events::mouse_wheel_scroll{
+                        GET_WHEEL_DELTA_WPARAM(wparam), GET_KEYSTATE_WPARAM(wparam), xy_coords.x, xy_coords.y});
                     return 0;
                 }
                 break;
 
                 case WM_LBUTTONDOWN:
                 {
-                    handler_ref(hwnd).emplace_back(gtl::events::mouse_lbutton_down{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
-                    //The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the upper-left corner of the client area.
-                    //The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the upper-left corner of the client area.
+                    handler_ref(hwnd).emplace_back(
+                        gtl::events::mouse_lbutton_down{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+                    // The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the
+                    // upper-left corner of the client area.
+                    // The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the
+                    // upper-left corner of the client area.
                     return 0;
                 }
                 break;
 
                 case WM_RBUTTONDOWN:
                 {
-                    handler_ref(hwnd).emplace_back(gtl::events::mouse_rbutton_down{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
-                    //The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the upper-left corner of the client area.
-                    //The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the upper-left corner of the client area.
+                    handler_ref(hwnd).emplace_back(
+                        gtl::events::mouse_rbutton_down{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+                    // The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the
+                    // upper-left corner of the client area.
+                    // The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the
+                    // upper-left corner of the client area.
                     return 0;
                 }
                 break;
 
                 case WM_LBUTTONUP:
                 {
-                    handler_ref(hwnd).emplace_back(gtl::events::mouse_lbutton_up{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
-                    //The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the upper-left corner of the client area.
-                    //The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the upper-left corner of the client area.
+                    handler_ref(hwnd).emplace_back(
+                        gtl::events::mouse_lbutton_up{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+                    // The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the
+                    // upper-left corner of the client area.
+                    // The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the
+                    // upper-left corner of the client area.
                     return 0;
                 }
                 break;
 
                 case WM_RBUTTONUP:
                 {
-                    handler_ref(hwnd).emplace_back(gtl::events::mouse_rbutton_up{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
-                    //The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the upper-left corner of the client area.
-                    //The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the upper-left corner of the client area.
+                    handler_ref(hwnd).emplace_back(
+                        gtl::events::mouse_rbutton_up{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+                    // The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the
+                    // upper-left corner of the client area.
+                    // The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the
+                    // upper-left corner of the client area.
                     return 0;
                 }
                 break;
@@ -165,12 +178,13 @@ namespace win {
 
                 case WM_MOUSEMOVE:
                 {
-                    handler_ref(hwnd).emplace_back(gtl::events::mouse_moved{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+                    handler_ref(hwnd).emplace_back(
+                        gtl::events::mouse_moved{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
                     return 0;
                 }
                 break;
 
-                //case WM_NCMOUSEMOVE: break;
+                // case WM_NCMOUSEMOVE: break;
 
                 //---- WM_APP custom messages ------//
 

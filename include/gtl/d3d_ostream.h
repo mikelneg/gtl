@@ -25,7 +25,8 @@ namespace d3d {
             << "DedicatedVideoMemory: " << obj.DedicatedVideoMemory << "\n"
             << "DedicatedSystemMemory: " << obj.DedicatedSystemMemory << "\n"
             << "SharedSystemMemory: " << obj.SharedSystemMemory << "\n"
-            << "AdapterLuid: {HighPart, LowPart} = " << obj.AdapterLuid.HighPart << "," << obj.AdapterLuid.LowPart << "\n"
+            << "AdapterLuid: {HighPart, LowPart} = " << obj.AdapterLuid.HighPart << "," << obj.AdapterLuid.LowPart
+            << "\n"
             << "Flags: " << obj.Flags << "\n";
         return str;
     }

@@ -2,10 +2,10 @@
 #define RIOOEOACAFSDF_GTL_SCENES_SCENE_GRAPH_H_
 
 /*-----------------------------------------------------------------------------
-    Mikel Negugogor (http://github.com/mikelneg)                              
-    
+    Mikel Negugogor (http://github.com/mikelneg)
+
     namespace gtl::scene_graph
-        
+
 -----------------------------------------------------------------------------*/
 #include <iostream> // TODO remove
 
@@ -47,8 +47,8 @@ auto wait_on(T& yield, F fut)
 class scene_graph {
 
 public:
-    using scene_type = gtl::scenes::scene_variant< //gtl::scenes::intro_scene,
-        //gtl::scenes::main_scene,
+    using scene_type = gtl::scenes::scene_variant< // gtl::scenes::intro_scene,
+        // gtl::scenes::main_scene,
         gtl::scenes::transitions::swirl_effect,
         gtl::scenes::transitions::twinkle_effect>; // TODO private
 
@@ -86,12 +86,14 @@ public:
         using transition_scene = scenes::detail::transition_scene<scene_type>;
         using inv_transition_scene = scenes::detail::inverse_transition_scene<scene_type>;
         auto handle_events_v = vn::make_lambda_visitor([&](auto& v) { return v.handle_events(yield); });
-        auto handle_events = [&](auto& x) { return boost::apply_visitor(handle_events_v, x); }; //[&](scene_type& s) { return boost::apply_visitor(handle_events_v,s); };
-                                                                                                //
+        auto handle_events = [&](auto& x) {
+            return boost::apply_visitor(handle_events_v, x);
+        }; //[&](scene_type& s) { return boost::apply_visitor(handle_events_v,s); };
+           //
 
         scene_type& s = current_scene_;
 
-        //try {
+        // try {
 
         {
             std::unique_lock<std::mutex> lock_{work_mutex_};
@@ -117,7 +119,8 @@ public:
             {
                 std::unique_lock<std::mutex> lock_{work_mutex_};
 
-                s = scene_type{transition_scene{std::move(s), scenes::transitions::swirl_effect{dev, swapchain, cqueue}, std::chrono::seconds(2)}};
+                s = scene_type{transition_scene{std::move(s), scenes::transitions::swirl_effect{dev, swapchain, cqueue},
+                                                std::chrono::seconds(2)}};
             }
             if (!result_handler(handle_events(s).value()))
             {
@@ -133,20 +136,22 @@ public:
             {
                 return;
             }
-            //if (same_type(handle_events(s).value(),gtl::events::exit_all{})) {
+            // if (same_type(handle_events(s).value(),gtl::events::exit_all{})) {
             //    return;
             //}
 
             {
                 std::unique_lock<std::mutex> lock_{work_mutex_};
 
-                s = scene_type{inv_transition_scene{std::move(s), scenes::transitions::twinkle_effect{dev, swapchain, cqueue}, std::chrono::seconds(2)}};
+                s = scene_type{inv_transition_scene{std::move(s),
+                                                    scenes::transitions::twinkle_effect{dev, swapchain, cqueue},
+                                                    std::chrono::seconds(2)}};
             }
             if (!result_handler(handle_events(s).value()))
             {
                 return;
             }
-            //if (same_type(handle_events(s),gtl::events::exit_all{})) {
+            // if (same_type(handle_events(s),gtl::events::exit_all{})) {
             //    return;
             //}
 
@@ -159,7 +164,7 @@ public:
             {
                 return;
             }
-            //if (same_type(handle_events(s),gtl::events::exit_all{})) {
+            // if (same_type(handle_events(s),gtl::events::exit_all{})) {
             //    return;
             //}
         }
@@ -190,7 +195,8 @@ public:
     //    //auto handle_events_l = [&](auto& s){ return s.handle_events(yield); };
     //    //auto handle_events = boost::apply_visitor(handle_events_l);
     //    auto handle_events_v = vn::make_lambda_visitor<gtl::event>([&](auto& v){ return v.handle_events(yield); });
-    //    auto handle_events = boost::apply_visitor(handle_events_v);//[&](scene_type& s) { return boost::apply_visitor(handle_events_v,s); };
+    //    auto handle_events = boost::apply_visitor(handle_events_v);//[&](scene_type& s) { return
+    //    boost::apply_visitor(handle_events_v,s); };
     //
     //    scene_type& s = current_scene_;
     //

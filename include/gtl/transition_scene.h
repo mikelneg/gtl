@@ -18,7 +18,7 @@ namespace gtl {
 namespace scenes {
     namespace detail {
 
-        //class transition_scene; // currently defined in scenes.h
+        // class transition_scene; // currently defined in scenes.h
         //
         //            class transition_scene {
         //                scenes::scene_variant first_, second_;
@@ -29,7 +29,8 @@ namespace scenes {
         //            public:
         //
         //                transition_scene() = default;
-        //                transition_scene(scenes::scene_variant&& s1, scenes::scene_variant&& s2, std::chrono::milliseconds t)
+        //                transition_scene(scenes::scene_variant&& s1, scenes::scene_variant&& s2,
+        //                std::chrono::milliseconds t)
         //                    :   first_{std::move(s1)}, second_{std::move(s2)},
         //                        transition_duration_{t},
         //                        begin_timepoint_{std::chrono::high_resolution_clock::now()+t}
@@ -41,7 +42,8 @@ namespace scenes {
         //
         //                template <typename YieldType>
         //                gtl::event handle_events(YieldType& yield) const {
-        //                    std::chrono::high_resolution_clock::time_point const end_time_ = begin_timepoint_ + transition_duration_;
+        //                    std::chrono::high_resolution_clock::time_point const end_time_ = begin_timepoint_ +
+        //                    transition_duration_;
         //                    while ((current_timepoint_ = std::chrono::high_resolution_clock::now()) < end_time_)
         //                    {
         //                        if (same_type(yield.get(),gtl::events::exit_immediately{})) {
@@ -53,7 +55,8 @@ namespace scenes {
         //                }
         //
         //                void draw(float) const {
-        //                    float r = (current_timepoint_ - begin_timepoint_).count() / static_cast<float>(transition_duration_.count());
+        //                    float r = (current_timepoint_ - begin_timepoint_).count() /
+        //                    static_cast<float>(transition_duration_.count());
         //                    if (r < 0.0f) { r = 0.0f; } else if (r > 1.0f) { r = 1.0f; }
         //                    boost::apply_visitor([&](auto& v){ v.draw(1.0f-r); },first_);
         //                    boost::apply_visitor([&](auto& v){ v.draw(r); },second_);

@@ -82,33 +82,19 @@ namespace events {
             int new_width, new_height;
         };
 
-        using mouse_event = boost::variant<mouse_lbutton_down,
-                                           mouse_rbutton_down,
-                                           mouse_lbutton_up,
-                                           mouse_rbutton_up,
-                                           mouse_wheel_scroll,
-                                           mouse_click,
-                                           mouse_moved,
-                                           mousedown>;
+        using mouse_event = boost::variant<mouse_lbutton_down, mouse_rbutton_down, mouse_lbutton_up, mouse_rbutton_up,
+                                           mouse_wheel_scroll, mouse_click, mouse_moved, mousedown>;
     }
 
     // TODO this variant needs to be broken into several different variantes (there is a limit of 16 types by default)
 
-    using event_variant_base_ = boost::variant<done, dump_contents, focus_entity, exit_all,
-                                               none,
-                                               keep,
-                                               revert,
-                                               dpad_pressed,
-                                               keydown,
-                                               keyup,
-                                               mouse_event,
-                                               exit_immediately,
-                                               exit_state,
-                                               resize_swapchain>;
+    using event_variant_base_
+        = boost::variant<done, dump_contents, focus_entity, exit_all, none, keep, revert, dpad_pressed, keydown, keyup,
+                         mouse_event, exit_immediately, exit_state, resize_swapchain>;
 
-    //class event_variant : public event_variant_base_ {
+    // class event_variant : public event_variant_base_ {
     //
-    //public:
+    // public:
     //    template <typename ...Args>
     //    event_variant(Args&&...args) noexcept(noexcept(event_variant_base_(std::forward<Args>(args)...)))
     //        : event_variant_base_(std::forward<Args>(args)...) {}
@@ -142,8 +128,7 @@ namespace events {
 
     public:
         template <typename T>
-        event_variant(T const& e)
-            : value_{e}
+        event_variant(T const& e) : value_{e}
         {
         }
 
@@ -174,7 +159,7 @@ namespace events {
             return apply_visitor(vn::visitors::has_variant_type<T>{}, e.value());
         }
 
-        //operator variant&() { return value_; }
+        // operator variant&() { return value_; }
     };
 
     template <typename T> // currently unused..

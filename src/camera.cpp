@@ -30,8 +30,8 @@ namespace {
 
         n = -1.0f;
         f = 1.0f;
-        //n = -1.0f;   // HACK fix this, currently set externally (but meaningless..)
-        //f = 1.0f;
+        // n = -1.0f;   // HACK fix this, currently set externally (but meaningless..)
+        // f = 1.0f;
 
         // // D3DXMatrixOrthoLH()
         //   2/w  0    0           0
@@ -40,12 +40,10 @@ namespace {
         //   0    0    zn/(zn-zf)  1
 
         Eigen::Matrix4f matrix_;
-        matrix_ << 2.0f / (r - l), 0.0f, 0.0f, 0.0f,
-            0.0f, 2.0f / (t - b), 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f / (f - n), 0.0f,
+        matrix_ << 2.0f / (r - l), 0.0f, 0.0f, 0.0f, 0.0f, 2.0f / (t - b), 0.0f, 0.0f, 0.0f, 0.0f, 1.0f / (f - n), 0.0f,
             0.0f, 0.0f, n / (n - f), 1.0f;
 
-        //matrix_ << 2.0f/(r-l), 0.0f, 0.0f, 0.0f,
+        // matrix_ << 2.0f/(r-l), 0.0f, 0.0f, 0.0f,
         //           0.0f, 2.0f/(t-b), 0.0f, 0.0f,
         //           0.0f, 0.0f, 1.0f/(f-n), 0.0f,
         //           0.0f, 0.0f, 0.0f, 1.0f;
@@ -65,23 +63,19 @@ namespace {
         //  recommended that you graph this with your near/far values to examine
         //  the scale
 
-        matrix_ << s / aspect_ratio, 0.0f, 0.0f, 0.0f,
-            0.0f, s, 0.0f, 0.0f,
-            0.0f, 0.0f, 1.0f / (z_far - z_near), 1.0f,
+        matrix_ << s / aspect_ratio, 0.0f, 0.0f, 0.0f, 0.0f, s, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f / (z_far - z_near), 1.0f,
             0.0f, 0.0f, -z_near / (z_far - z_near), 0.0f;
         return matrix_;
     }
 
 } // namespace
 
-camera::camera(gtl::physics::position<float> center_,
-               gtl::physics::dimensions<float> lens_dimensions_,
-               gtl::physics::angle<float> fov_,
-               gtl::physics::length<float> distance_to_lens_,
+camera::camera(gtl::physics::position<float> center_, gtl::physics::dimensions<float> lens_dimensions_,
+               gtl::physics::angle<float> fov_, gtl::physics::length<float> distance_to_lens_,
                gtl::physics::length<float> distance_to_plane_)
     : transform_{make_ortho_proj_matrix(distance_to_lens_ / boost::units::si::meters,
                                         distance_to_plane_ / boost::units::si::meters)}
-//transform_{make_projection_matrix(fov_ / boost::units::si::radians,
+// transform_{make_projection_matrix(fov_ / boost::units::si::radians,
 //                                  lens_dimensions_.first / lens_dimensions_.second,
 //                                  distance_to_lens_ / boost::units::si::meters,
 //                                  distance_to_plane_ / boost::units::si::meters)}

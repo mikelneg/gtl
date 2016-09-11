@@ -79,7 +79,8 @@ namespace d3d {
                 return desc;
             }
 
-            raw::SwapChainDesc create_swapchain_desc(tags::flipmodel_windowed, HWND hwnd, unsigned num_buffers, unsigned width, unsigned height)
+            raw::SwapChainDesc create_swapchain_desc(tags::flipmodel_windowed, HWND hwnd, unsigned num_buffers,
+                                                     unsigned width, unsigned height)
             {
                 if (num_buffers < 2 || num_buffers > 16)
                 {
@@ -90,7 +91,7 @@ namespace d3d {
                 desc.BufferDesc.Width = width;
                 desc.BufferDesc.Height = height; // Rumor suggests this must be a multiple of 4..
                 desc.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-                //desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
+                // desc.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
                 desc.BufferDesc.Scaling = DXGI_MODE_SCALING_CENTERED;
                 desc.OutputWindow = hwnd;
                 desc.BufferCount = num_buffers; // Required to be 2-16
@@ -112,8 +113,7 @@ namespace d3d {
             void enable_debug()
             {
                 release_ptr<raw::Debug> debug_;
-                win::throw_on_fail(D3D12GetDebugInterface(__uuidof(raw::Debug), expose_as_void_pp(debug_)),
-                                   __func__);
+                win::throw_on_fail(D3D12GetDebugInterface(__uuidof(raw::Debug), expose_as_void_pp(debug_)), __func__);
                 debug_->EnableDebugLayer();
             }
         }
@@ -132,16 +132,17 @@ namespace d3d {
             {
                 str_ << e;
             }
-            win::throw_on_fail(D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_0, __uuidof(type), expose_as_void_pp(*this)), __func__);
+            win::throw_on_fail(
+                D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_0, __uuidof(type), expose_as_void_pp(*this)), __func__);
         }
 
         device::device(gtl::tags::release)
         {
-            win::throw_on_fail(D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_0, __uuidof(type), expose_as_void_pp(*this)), __func__);
+            win::throw_on_fail(
+                D3D12CreateDevice(nullptr, D3D_FEATURE_LEVEL_12_0, __uuidof(type), expose_as_void_pp(*this)), __func__);
         }
 
-        command_queue::command_queue(device& dev)
-            : fence_{dev}
+        command_queue::command_queue(device& dev) : fence_{dev}
         {
             D3D12_COMMAND_QUEUE_DESC cq_desc{};
             cq_desc.Flags = D3D12_COMMAND_QUEUE_FLAG_NONE;
@@ -156,7 +157,7 @@ namespace d3d {
             fence_.synchronized_increment(*this);
         }
 
-        //rtv_descriptor_heap::rtv_descriptor_heap(device& dev, std::vector<resource>& resources_)
+        // rtv_descriptor_heap::rtv_descriptor_heap(device& dev, std::vector<resource>& resources_)
         //    : size_{static_cast<unsigned>(resources_.size())}
         //{
         //    raw::DescriptorHeapDesc desc{};
@@ -168,8 +169,7 @@ namespace d3d {
         //    set_debug_name(*get(),L"rtv_desc_heap");
         //}
 
-        rtv_descriptor_heap::rtv_descriptor_heap(device& dev, unsigned num_descriptors)
-            : size_{num_descriptors}
+        rtv_descriptor_heap::rtv_descriptor_heap(device& dev, unsigned num_descriptors) : size_{num_descriptors}
         {
             raw::DescriptorHeapDesc desc{};
             desc.NumDescriptors = size_;
@@ -180,7 +180,8 @@ namespace d3d {
             set_debug_name(*get(), L"rtv_heap_");
         }
 
-        resource_descriptor_heap::resource_descriptor_heap(device& dev, unsigned num_descriptors, d3d::tags::shader_visible)
+        resource_descriptor_heap::resource_descriptor_heap(device& dev, unsigned num_descriptors,
+                                                           d3d::tags::shader_visible)
             : size_{num_descriptors}
         {
             raw::DescriptorHeapDesc desc{};
@@ -192,7 +193,8 @@ namespace d3d {
             set_debug_name(*get(), L"res_heap");
         }
 
-        resource_descriptor_heap::resource_descriptor_heap(device& dev, unsigned num_descriptors, d3d::tags::depth_stencil_view)
+        resource_descriptor_heap::resource_descriptor_heap(device& dev, unsigned num_descriptors,
+                                                           d3d::tags::depth_stencil_view)
             : size_{num_descriptors}
         {
             raw::DescriptorHeapDesc desc{};
@@ -204,8 +206,7 @@ namespace d3d {
             set_debug_name(*get(), L"res_heap_dsv");
         }
 
-        sampler_descriptor_heap::sampler_descriptor_heap(device& dev, unsigned num_descriptors)
-            : size_{num_descriptors}
+        sampler_descriptor_heap::sampler_descriptor_heap(device& dev, unsigned num_descriptors) : size_{num_descriptors}
         {
             raw::DescriptorHeapDesc desc{};
             desc.NumDescriptors = num_descriptors;
@@ -224,24 +225,26 @@ namespace d3d {
             {
                 throw std::runtime_error{__func__};
             }
-            //auto desc = create_swapchain_desc(tags::flipmodel_windowed{}, hwnd, num_buffers_, width(client_area), height(client_area));
-            auto desc = create_swapchain_desc(tags::flipmodel_windowed{}, hwnd, num_buffers_,
-                                              960, 540);
+            // auto desc = create_swapchain_desc(tags::flipmodel_windowed{}, hwnd, num_buffers_, width(client_area),
+            // height(client_area));
+            auto desc = create_swapchain_desc(tags::flipmodel_windowed{}, hwnd, num_buffers_, 960, 540);
             release_ptr<IDXGISwapChain> tmp_ptr; // We first get a generic IDXGISwapChain* and then
             // use QueryInterface() to get our desired type, raw::SwapChain
 
-            win::throw_on_fail(dxgi_factory {}->CreateSwapChain(cqueue_.get(), &desc, std::addressof(expose(tmp_ptr))), __func__);
+            win::throw_on_fail(dxgi_factory {}->CreateSwapChain(cqueue_.get(), &desc, std::addressof(expose(tmp_ptr))),
+                               __func__);
             win::throw_on_fail(tmp_ptr->QueryInterface(__uuidof(type), expose_as_void_pp(*this)), __func__);
 
-            //raw::cx::CpuDescriptorHandle handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
+            // raw::cx::CpuDescriptorHandle handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
             auto dev_ = get_device_from(cqueue_);
 
             for (unsigned i = 0; i < frames_.size(); ++i)
             {
-                win::throw_on_fail(get()->GetBuffer(i, __uuidof(resource::type), expose_as_void_pp(frames_[i])), __func__);
-                //dev_->CreateRenderTargetView(frames_[i], nullptr, handle);
+                win::throw_on_fail(get()->GetBuffer(i, __uuidof(resource::type), expose_as_void_pp(frames_[i])),
+                                   __func__);
+                // dev_->CreateRenderTargetView(frames_[i], nullptr, handle);
                 dev_->CreateRenderTargetView(frames_[i], nullptr, rtv_heap_.get_handle(i));
-                //handle.Offset(1, rtv_heap_.increment_value());
+                // handle.Offset(1, rtv_heap_.increment_value());
                 set_debug_name(*(frames_[i].get()), L"swchain");
             }
             get()->SetMaximumFrameLatency(num_buffers_);
@@ -283,28 +286,28 @@ namespace d3d {
             std::cout << "new client width == " << client_rect_.right - client_rect_.left << "\n";
             std::cout << "new window width == " << window_rect_.right - window_rect_.left << "\n";
 
-            //GetClientRect(hwnd, &client_rect_);
-            //GetWindowRect(hwnd, &window_rect_);
+            // GetClientRect(hwnd, &client_rect_);
+            // GetWindowRect(hwnd, &window_rect_);
             //
-            //std::cout << "mid client width == " << client_rect_.right - client_rect_.left << "\n";
-            //std::cout << "mid window width == " << window_rect_.right - window_rect_.left << "\n";
+            // std::cout << "mid client width == " << client_rect_.right - client_rect_.left << "\n";
+            // std::cout << "mid window width == " << window_rect_.right - window_rect_.left << "\n";
             //
             //
-            //int dx = static_cast<int>((new_width - client_rect_.right) / 2);
-            //int dy = static_cast<int>((new_height - client_rect_.bottom) / 2);
+            // int dx = static_cast<int>((new_width - client_rect_.right) / 2);
+            // int dy = static_cast<int>((new_height - client_rect_.bottom) / 2);
             //
-            //InflateRect(&window_rect_, dx, dy);
+            // InflateRect(&window_rect_, dx, dy);
             //
-            //new_desc.Width = window_rect_.right - window_rect_.left;
-            //new_desc.Height = window_rect_.bottom - window_rect_.top;
+            // new_desc.Width = window_rect_.right - window_rect_.left;
+            // new_desc.Height = window_rect_.bottom - window_rect_.top;
             //
-            //this->get()->ResizeTarget(&new_desc);
+            // this->get()->ResizeTarget(&new_desc);
             //
-            //GetClientRect(hwnd, &client_rect_);
-            //GetWindowRect(hwnd, &window_rect_);
+            // GetClientRect(hwnd, &client_rect_);
+            // GetWindowRect(hwnd, &window_rect_);
             //
-            //std::cout << "new client width == " << client_rect_.right - client_rect_.left << "\n";
-            //std::cout << "new window width == " << window_rect_.right - window_rect_.left << "\n";
+            // std::cout << "new client width == " << client_rect_.right - client_rect_.left << "\n";
+            // std::cout << "new window width == " << window_rect_.right - window_rect_.left << "\n";
 
             // waitable = get()->GetFrameLatencyWaitableObject();
             // get()->Present1(0,DXGI_PRESENT_RESTART,std::addressof(p));
@@ -315,10 +318,12 @@ namespace d3d {
             //        get()->Present1(0,DXGI_PRESENT_RESTART,std::addressof(p));
             //        WaitForSingleObject(waitable,INFINITE);
 
-            this->get()->ResizeBuffers(0,                                                 // maintains current buffer count
-                                       0, 0,                                              // uses client area dimensions
-                                       DXGI_FORMAT_UNKNOWN,                               // maintains current buffer format
-                                       DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT // HACK verify this (it raises issues surrounding fullscreen/non-fullscreen)
+            this->get()->ResizeBuffers(0,                   // maintains current buffer count
+                                       0, 0,                // uses client area dimensions
+                                       DXGI_FORMAT_UNKNOWN, // maintains current buffer format
+                                       DXGI_SWAP_CHAIN_FLAG_FRAME_LATENCY_WAITABLE_OBJECT // HACK verify this (it raises
+                                                                                          // issues surrounding
+                                                                                          // fullscreen/non-fullscreen)
                                        );
 
             //      waitable = get()->GetFrameLatencyWaitableObject();
@@ -329,10 +334,11 @@ namespace d3d {
             auto dev_ = get_device_from(*this);
             for (unsigned i = 0; i < frames_.size(); ++i)
             {
-                win::throw_on_fail(get()->GetBuffer(i, __uuidof(resource::type), expose_as_void_pp(frames_[i])), __func__);
-                //dev_->CreateRenderTargetView(frames_[i], nullptr, handle);
+                win::throw_on_fail(get()->GetBuffer(i, __uuidof(resource::type), expose_as_void_pp(frames_[i])),
+                                   __func__);
+                // dev_->CreateRenderTargetView(frames_[i], nullptr, handle);
                 dev_->CreateRenderTargetView(frames_[i], nullptr, rtv_heap_.get_handle(i));
-                //handle.Offset(1, rtv_heap_.increment_value());
+                // handle.Offset(1, rtv_heap_.increment_value());
                 set_debug_name(*(frames_[i].get()), L"swchain");
             }
 
@@ -343,16 +349,17 @@ namespace d3d {
         {
             raw::SwapChainDesc desc;
             win::throw_on_fail(get()->GetDesc(&desc), __func__);
-            return std::make_pair(static_cast<unsigned>(desc.BufferDesc.Width), static_cast<unsigned>(desc.BufferDesc.Height));
+            return std::make_pair(static_cast<unsigned>(desc.BufferDesc.Width),
+                                  static_cast<unsigned>(desc.BufferDesc.Height));
         }
 
         raw::Viewport swap_chain::viewport() const
         {
             raw::SwapChainDesc desc;
             win::throw_on_fail(get()->GetDesc(&desc), __func__);
-            return raw::Viewport{0.0f, 0.0f, static_cast<float>(desc.BufferDesc.Width),
-                                 static_cast<float>(desc.BufferDesc.Height),
-                                 0.0f, 1.0f}; // HACK using fixed values; should be determined..
+            return raw::Viewport{
+                0.0f, 0.0f, static_cast<float>(desc.BufferDesc.Width), static_cast<float>(desc.BufferDesc.Height),
+                0.0f, 1.0f}; // HACK using fixed values; should be determined..
         }
 
         unsigned swap_chain::frame_count() const
@@ -362,27 +369,35 @@ namespace d3d {
 
         direct_command_allocator::direct_command_allocator(device& dev)
         {
-            win::throw_on_fail(dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(type), expose_as_void_pp(*this)), __func__);
+            win::throw_on_fail(
+                dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, __uuidof(type), expose_as_void_pp(*this)),
+                __func__);
             set_debug_name(*get(), L"direct_calloc");
         }
 
         compute_command_allocator::compute_command_allocator(device& dev)
         {
-            win::throw_on_fail(dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COMPUTE, __uuidof(type), expose_as_void_pp(*this)), __func__);
+            win::throw_on_fail(
+                dev->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_COMPUTE, __uuidof(type), expose_as_void_pp(*this)),
+                __func__);
             set_debug_name(*get(), L"compute_calloc");
         }
 
         root_signature::root_signature(device& dev, blob signature_)
         {
             release_ptr<raw::Blob> error_; // not currently using
-            win::throw_on_fail(dev->CreateRootSignature(0, signature_->GetBufferPointer(), signature_->GetBufferSize(), __uuidof(type), expose_as_void_pp(*this)), __func__);
+            win::throw_on_fail(dev->CreateRootSignature(0, signature_->GetBufferPointer(), signature_->GetBufferSize(),
+                                                        __uuidof(type), expose_as_void_pp(*this)),
+                               __func__);
             set_debug_name(*get(), L"root_sig");
         }
 
         root_signature::root_signature(device& dev, vertex_shader& shader_)
         {
             release_ptr<raw::Blob> error_; // not currently using
-            win::throw_on_fail(dev->CreateRootSignature(0, shader_->GetBufferPointer(), shader_->GetBufferSize(), __uuidof(type), expose_as_void_pp(*this)), __func__);
+            win::throw_on_fail(dev->CreateRootSignature(0, shader_->GetBufferPointer(), shader_->GetBufferSize(),
+                                                        __uuidof(type), expose_as_void_pp(*this)),
+                               __func__);
             set_debug_name(*get(), L"root_sig");
         }
 
@@ -432,9 +447,11 @@ namespace d3d {
         //      release_ptr<D3DBlob> signature;
         //      release_ptr<D3DBlob> error;
         //
-        //	win::throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
+        //	win::throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1,
+        //&signature, &error)
         //                    ,__func__);
-        //	win::throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(),
+        //	win::throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(),
+        //signature->GetBufferSize(),
         //                                              __uuidof(type), expose_as_void_pp(*this))
         //                    ,__func__);
         //      set_debug_name(*get(),L"cbsig");
@@ -471,9 +488,11 @@ namespace d3d {
         //      release_ptr<D3DBlob> signature;
         //      release_ptr<D3DBlob> error;
         //
-        //	win::throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1, &signature, &error)
+        //	win::throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1,
+        //&signature, &error)
         //                    ,__func__);
-        //	win::throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(), signature->GetBufferSize(),
+        //	win::throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(),
+        //signature->GetBufferSize(),
         //                                              __uuidof(type), expose_as_void_pp(*this))
         //                    ,__func__);
         //      set_debug_name(*get(),L"cbsig");
@@ -503,29 +522,21 @@ namespace d3d {
         {
             release_ptr<raw::Resource> upload_vbuffer_;
 
-            HRESULT result2 = dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
-                                                           D3D12_HEAP_FLAG_NONE,
-                                                           &raw::cx::ResourceDesc::Buffer(size_), // buffer alignment is 64k..
-                                                           D3D12_RESOURCE_STATE_COPY_DEST,
-                                                           nullptr,
-                                                           __uuidof(type),
-                                                           expose_as_void_pp(*this));
+            HRESULT result2 = dev->CreateCommittedResource(
+                &raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+                &raw::cx::ResourceDesc::Buffer(size_), // buffer alignment is 64k..
+                D3D12_RESOURCE_STATE_COPY_DEST, nullptr, __uuidof(type), expose_as_void_pp(*this));
             win::throw_on_fail(result2, __func__);
 
-            result2 = dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD),
-                                                   D3D12_HEAP_FLAG_NONE,
-                                                   &raw::cx::ResourceDesc::Buffer(size_), // buffer alignment is 64k..
-                                                   D3D12_RESOURCE_STATE_GENERIC_READ,
-                                                   nullptr,
-                                                   __uuidof(type),
-                                                   expose_as_void_pp(upload_vbuffer_));
+            result2 = dev->CreateCommittedResource(
+                &raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+                &raw::cx::ResourceDesc::Buffer(size_), // buffer alignment is 64k..
+                D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, __uuidof(type), expose_as_void_pp(upload_vbuffer_));
             win::throw_on_fail(result2, __func__);
 
             void* buffer_ptr_{};
-            win::throw_on_fail(
-                upload_vbuffer_.get()->Map(0, nullptr, &buffer_ptr_),
-                __func__);
-            //std::copy_n(begin_, size_, buffer_ptr_);
+            win::throw_on_fail(upload_vbuffer_.get()->Map(0, nullptr, &buffer_ptr_), __func__);
+            // std::copy_n(begin_, size_, buffer_ptr_);
             std::memcpy(buffer_ptr_, begin_, size_);
             upload_vbuffer_.get()->Unmap(0, nullptr);
 
@@ -558,29 +569,21 @@ namespace d3d {
         {
             resource upload_ibuffer_;
 
-            HRESULT result2 = dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
-                                                           D3D12_HEAP_FLAG_NONE,
-                                                           &raw::cx::ResourceDesc::Buffer(size_), // buffer alignment is 64k..
-                                                           D3D12_RESOURCE_STATE_COPY_DEST,
-                                                           nullptr,
-                                                           __uuidof(type),
-                                                           expose_as_void_pp(*this));
+            HRESULT result2 = dev->CreateCommittedResource(
+                &raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+                &raw::cx::ResourceDesc::Buffer(size_), // buffer alignment is 64k..
+                D3D12_RESOURCE_STATE_COPY_DEST, nullptr, __uuidof(type), expose_as_void_pp(*this));
             win::throw_on_fail(result2, __func__);
 
-            result2 = dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD),
-                                                   D3D12_HEAP_FLAG_NONE,
-                                                   &raw::cx::ResourceDesc::Buffer(size_), // buffer alignment is 64k..
-                                                   D3D12_RESOURCE_STATE_GENERIC_READ,
-                                                   nullptr,
-                                                   __uuidof(type),
-                                                   expose_as_void_pp(upload_ibuffer_));
+            result2 = dev->CreateCommittedResource(
+                &raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+                &raw::cx::ResourceDesc::Buffer(size_), // buffer alignment is 64k..
+                D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, __uuidof(type), expose_as_void_pp(upload_ibuffer_));
             win::throw_on_fail(result2, __func__);
 
             void* buffer_ptr_{};
-            win::throw_on_fail(
-                upload_ibuffer_.get()->Map(0, nullptr, &buffer_ptr_),
-                __func__);
-            //std::copy_n(begin_, size_, buffer_ptr_);
+            win::throw_on_fail(upload_ibuffer_.get()->Map(0, nullptr, &buffer_ptr_), __func__);
+            // std::copy_n(begin_, size_, buffer_ptr_);
             std::memcpy(buffer_ptr_, begin_, size_);
             upload_ibuffer_.get()->Unmap(0, nullptr);
 
@@ -609,9 +612,10 @@ namespace d3d {
             set_debug_name(*get(), L"ibuffer");
         }
 
-        srv::srv(device& dev, std::vector<raw::CpuDescriptorHandle> handles_, command_queue& cqueue_, std::wstring filename)
+        srv::srv(device& dev, std::vector<raw::CpuDescriptorHandle> handles_, command_queue& cqueue_,
+                 std::wstring filename)
         {
-            //win::throw_on_fail(dev->CreateCommittedResource(
+            // win::throw_on_fail(dev->CreateCommittedResource(
             //                    &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_UPLOAD),
             //                    D3D12_HEAP_FLAG_NONE,
             //                    &CD3DX12_RESOURCE_DESC::Buffer(1024 * 64),
@@ -622,13 +626,13 @@ namespace d3d {
             //             ,__func__);
 
             // From docs on CreateDDSTextureFromFile...
-            //Device->CreateCommittedResource(
+            // Device->CreateCommittedResource(
             //&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-            //D3D12_HEAP_FLAG_NONE,
+            // D3D12_HEAP_FLAG_NONE,
             //&exampleResourceDesc,
-            //D3D12_RESOURCE_STATE_COMMON,
-            //nullptr,
-            //IID_PPV_ARGS(exampleTexture.GetAddressOf()));
+            // D3D12_RESOURCE_STATE_COMMON,
+            // nullptr,
+            // IID_PPV_ARGS(exampleTexture.GetAddressOf()));
 
             release_ptr<raw::Resource> texture;
 
@@ -638,10 +642,11 @@ namespace d3d {
 
             bool is_cube{};
 
-            HRESULT result = DirectX::CreateDDSTextureFromFile(dev, res_batch, filename.c_str(), &expose(texture), false,
-                                                               0, nullptr, std::addressof(is_cube));
+            HRESULT result = DirectX::CreateDDSTextureFromFile(dev, res_batch, filename.c_str(), &expose(texture),
+                                                               false, 0, nullptr, std::addressof(is_cube));
 
-            //HRESULT result = DirectX::CreateDDSTextureFromFile(dev,filename.c_str(),&texture,&srvdesc); // pre-directxtk function
+            // HRESULT result = DirectX::CreateDDSTextureFromFile(dev,filename.c_str(),&texture,&srvdesc); //
+            // pre-directxtk function
 
             res_batch.End(cqueue_);
 
@@ -650,12 +655,8 @@ namespace d3d {
             raw::ResourceDesc desc = texture->GetDesc();
 
             HRESULT result2 = dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
-                                                           D3D12_HEAP_FLAG_NONE,
-                                                           &desc,
-                                                           D3D12_RESOURCE_STATE_COMMON,
-                                                           nullptr,
-                                                           __uuidof(type),
-                                                           expose_as_void_pp(*this));
+                                                           D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COMMON,
+                                                           nullptr, __uuidof(type), expose_as_void_pp(*this));
             win::throw_on_fail(result2, __func__);
 
             raw::ResourceBarrier barrierDesc{};
@@ -676,10 +677,10 @@ namespace d3d {
 
             barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
             barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
-            //The texture must be in D3D12_RESOURCE_STATE_GENERIC_READ before it can be sampled from
+            // The texture must be in D3D12_RESOURCE_STATE_GENERIC_READ before it can be sampled from
             clist->ResourceBarrier(1, &barrierDesc);
 
-            //Tell the GPU that it can free the heap
+            // Tell the GPU that it can free the heap
             clist->DiscardResource(texture.get(), nullptr);
 
             clist->Close();
@@ -691,14 +692,15 @@ namespace d3d {
 
             for (auto&& h : handles_)
             {
-                //dev->CreateShaderResourceView(get(), &srvdesc, h);
+                // dev->CreateShaderResourceView(get(), &srvdesc, h);
                 DirectX::CreateShaderResourceView(dev, *this, h, is_cube);
             }
 
             set_debug_name(*get(), L"srv");
         }
 
-        srv::srv(device& dev, std::vector<raw::CpuDescriptorHandle> handles_, command_queue& cqueue_, std::tuple<std::vector<uint32_t>, unsigned, unsigned> data)
+        srv::srv(device& dev, std::vector<raw::CpuDescriptorHandle> handles_, command_queue& cqueue_,
+                 std::tuple<std::vector<uint32_t>, unsigned, unsigned> data)
         {
             release_ptr<raw::Resource> texture;
 
@@ -706,22 +708,19 @@ namespace d3d {
 
             unsigned width = std::get<1>(data), height = std::get<2>(data);
 
-            win::throw_on_fail(dev->CreateCommittedResource(
-                                   &raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD),
-                                   D3D12_HEAP_FLAG_NONE,
-                                   &raw::cx::ResourceDesc::Buffer(align(align(width) * height * 4)),
-                                   D3D12_RESOURCE_STATE_GENERIC_READ,
-                                   //D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-                                   nullptr,
-                                   __uuidof(resource::type),
-                                   expose_as_void_pp(texture)),
-                               __func__);
+            win::throw_on_fail(
+                dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+                                             &raw::cx::ResourceDesc::Buffer(align(align(width) * height * 4)),
+                                             D3D12_RESOURCE_STATE_GENERIC_READ,
+                                             // D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+                                             nullptr, __uuidof(resource::type), expose_as_void_pp(texture)),
+                __func__);
 
             // Initialize and map the constant buffers. We don't unmap this until the
             // app closes. Keeping things mapped for the lifetime of the resource is okay.
             uint8_t* data_ptr{};
             win::throw_on_fail(texture.get()->Map(0, nullptr, reinterpret_cast<void**>(&data_ptr)), __func__);
-            //std::copy_n(std::get<0>(data).begin(),std::get<0>(data).size(),data_ptr);
+            // std::copy_n(std::get<0>(data).begin(),std::get<0>(data).size(),data_ptr);
 
             //
 
@@ -734,7 +733,8 @@ namespace d3d {
 
             //
             // Note that the helper function UpdateSubresource in D3DX12.h, and ID3D12Device::GetCopyableFootprints
-            // can help applications fill out D3D12_SUBRESOURCE_FOOTPRINT and D3D12_PLACED_SUBRESOURCE_FOOTPRINT structures.
+            // can help applications fill out D3D12_SUBRESOURCE_FOOTPRINT and D3D12_PLACED_SUBRESOURCE_FOOTPRINT
+            // structures.
             //
             // Refer to the D3D12 Code example for the previous section "Uploading Different Types of Resources"
             // for the code for SuballocateFromBuffer.
@@ -762,12 +762,8 @@ namespace d3d {
             auto desc = raw::cx::ResourceDesc::Tex2D(DXGI_FORMAT_R8G8B8A8_UNORM, width, height);
 
             HRESULT result2 = dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
-                                                           D3D12_HEAP_FLAG_NONE,
-                                                           &desc,
-                                                           D3D12_RESOURCE_STATE_COMMON,
-                                                           nullptr,
-                                                           __uuidof(type),
-                                                           expose_as_void_pp(*this));
+                                                           D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COMMON,
+                                                           nullptr, __uuidof(type), expose_as_void_pp(*this));
             win::throw_on_fail(result2, __func__);
 
             raw::ResourceBarrier barrierDesc{};
@@ -786,23 +782,20 @@ namespace d3d {
             clist->Reset(calloc.get(), nullptr);
 
             clist->ResourceBarrier(1, &barrierDesc);
-            //clist->CopyResource(get(), texture.get());
+            // clist->CopyResource(get(), texture.get());
             //        clist->CopyBufferRegion(get(),0,texture.get(),0,std::get<0>(data).size());
 
-            clist->CopyTextureRegion(
-                &CD3DX12_TEXTURE_COPY_LOCATION(get(), 0),
-                0, 0, 0,
-                &CD3DX12_TEXTURE_COPY_LOCATION(texture.get(), placedTexture2D),
-                nullptr);
+            clist->CopyTextureRegion(&CD3DX12_TEXTURE_COPY_LOCATION(get(), 0), 0, 0, 0,
+                                     &CD3DX12_TEXTURE_COPY_LOCATION(texture.get(), placedTexture2D), nullptr);
 
             //
 
             barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
             barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_GENERIC_READ;
-            //The texture must be in D3D12_RESOURCE_STATE_GENERIC_READ before it can be sampled from
+            // The texture must be in D3D12_RESOURCE_STATE_GENERIC_READ before it can be sampled from
             clist->ResourceBarrier(1, &barrierDesc);
 
-            //Tell the GPU that it can free the heap
+            // Tell the GPU that it can free the heap
             clist->DiscardResource(texture.get(), nullptr);
 
             clist->Close();
@@ -814,7 +807,7 @@ namespace d3d {
 
             for (auto&& h : handles_)
             {
-                //dev->CreateShaderResourceView(get(), &srvdesc, h);
+                // dev->CreateShaderResourceView(get(), &srvdesc, h);
                 DirectX::CreateShaderResourceView(dev, *this, h, false);
             }
 
@@ -826,16 +819,20 @@ namespace d3d {
         {
             auto dev = get_device(swchain);
             auto dims = swchain.dimensions();
-            //auto frame_count = swchain.frame_count();
+            // auto frame_count = swchain.frame_count();
 
-            raw::cx::ResourceDesc desc{D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0,
-                                       static_cast<UINT>(dims.first),
-                                       static_cast<UINT>(dims.second),
-                                       1,
-                                       1, // mip levels
-                                       DXGI_FORMAT_D32_FLOAT, 1, 0,
-                                       D3D12_TEXTURE_LAYOUT_UNKNOWN,
-                                       D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE};
+            raw::cx::ResourceDesc desc{
+                D3D12_RESOURCE_DIMENSION_TEXTURE2D,
+                0,
+                static_cast<UINT>(dims.first),
+                static_cast<UINT>(dims.second),
+                1,
+                1, // mip levels
+                DXGI_FORMAT_D32_FLOAT,
+                1,
+                0,
+                D3D12_TEXTURE_LAYOUT_UNKNOWN,
+                D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE};
 
             D3D12_CLEAR_VALUE clear_value;
             clear_value.Format = DXGI_FORMAT_D32_FLOAT;
@@ -848,12 +845,9 @@ namespace d3d {
             dsv_desc.Flags = D3D12_DSV_FLAG_NONE;
 
             win::throw_on_fail(dev->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-                                                            D3D12_HEAP_FLAG_NONE,
-                                                            &desc,
-                                                            D3D12_RESOURCE_STATE_DEPTH_WRITE,
-                                                            &clear_value,
-                                                            __uuidof(resource::type),
-                                                            expose_as_void_pp(*this)),
+                                                            D3D12_HEAP_FLAG_NONE, &desc,
+                                                            D3D12_RESOURCE_STATE_DEPTH_WRITE, &clear_value,
+                                                            __uuidof(resource::type), expose_as_void_pp(*this)),
                                __func__);
 
             dev->CreateDepthStencilView(get(), &dsv_desc, buffer_view_->GetCPUDescriptorHandleForHeapStart());
@@ -869,14 +863,15 @@ namespace d3d {
             desc.Height = h;
             desc.Width = w;
 
-            //raw::cx::ResourceDesc desc{D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0,
+            // raw::cx::ResourceDesc desc{D3D12_RESOURCE_DIMENSION_TEXTURE2D, 0,
             //                           static_cast<UINT>(w),
             //                           static_cast<UINT>(h),
             //                           1,
             //                           1, // mip levels
             //                           DXGI_FORMAT_D32_FLOAT, 1, 0,
             //                           D3D12_TEXTURE_LAYOUT_UNKNOWN,
-            //                           D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL | D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE};
+            //                           D3D12_RESOURCE_FLAG_ALLOW_DEPTH_STENCIL |
+            //                           D3D12_RESOURCE_FLAG_DENY_SHADER_RESOURCE};
 
             D3D12_CLEAR_VALUE clear_value;
             clear_value.Format = desc.Format;
@@ -889,25 +884,22 @@ namespace d3d {
             dsv_desc.Flags = D3D12_DSV_FLAG_NONE;
 
             win::throw_on_fail(dev->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_DEFAULT),
-                                                            D3D12_HEAP_FLAG_NONE,
-                                                            &desc,
-                                                            D3D12_RESOURCE_STATE_DEPTH_WRITE,
-                                                            &clear_value,
-                                                            __uuidof(resource::type),
-                                                            expose_as_void_pp(*this)),
+                                                            D3D12_HEAP_FLAG_NONE, &desc,
+                                                            D3D12_RESOURCE_STATE_DEPTH_WRITE, &clear_value,
+                                                            __uuidof(resource::type), expose_as_void_pp(*this)),
                                __func__);
 
             dev->CreateDepthStencilView(get(), &dsv_desc, buffer_view_->GetCPUDescriptorHandleForHeapStart());
             set_debug_name(*get(), L"depth_stencil");
         }
 
-        pipeline_state_object::pipeline_state_object(device& dev, root_signature& rsig,
-                                                     vertex_shader& vs, pixel_shader& ps)
+        pipeline_state_object::pipeline_state_object(device& dev, root_signature& rsig, vertex_shader& vs,
+                                                     pixel_shader& ps)
         {
             raw::StreamOutputDesc sodesc{};
 
             raw::GraphicsPipelineStateDesc desc = {};
-            //desc.InputLayout = { nullptr, 0};
+            // desc.InputLayout = { nullptr, 0};
             desc.pRootSignature = rsig.get();
             desc.VS = {reinterpret_cast<UINT8*>(vs->GetBufferPointer()), vs->GetBufferSize()};
             desc.PS = {reinterpret_cast<UINT8*>(ps->GetBufferPointer()), ps->GetBufferSize()};
@@ -918,16 +910,16 @@ namespace d3d {
             desc.BlendState.RenderTarget[0].BlendEnable = true;
             desc.BlendState.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
             desc.BlendState.RenderTarget[0].SrcBlend = D3D12_BLEND_BLEND_FACTOR;
-            //desc.BlendState.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_BLEND_FACTOR;
+            // desc.BlendState.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_BLEND_FACTOR;
             desc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_INV_BLEND_FACTOR;
-            //desc.BlendState.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_INV_BLEND_FACTOR;
+            // desc.BlendState.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_INV_BLEND_FACTOR;
 
             //
 
             desc.DepthStencilState.DepthEnable = FALSE;
             desc.DepthStencilState.StencilEnable = FALSE;
             desc.SampleMask = UINT_MAX;
-            //desc.StreamOutput = sodesc;
+            // desc.StreamOutput = sodesc;
             desc.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
             desc.NumRenderTargets = 2;
             desc.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
@@ -941,10 +933,10 @@ namespace d3d {
         pipeline_state_object::pipeline_state_object(device& dev, root_signature& rsig, compute_shader& cs)
         {
             raw::ComputePipelineStateDesc desc{};
-            //desc.InputLayout = { nullptr, 0};
+            // desc.InputLayout = { nullptr, 0};
             desc.pRootSignature = rsig.get();
             desc.CS = {reinterpret_cast<UINT8*>(cs->GetBufferPointer()), cs->GetBufferSize()};
-            //D3D12_PIPELINE_STATE_FLAG_TOOL_DEBUG
+            // D3D12_PIPELINE_STATE_FLAG_TOOL_DEBUG
             HRESULT result = dev->CreateComputePipelineState(&desc, __uuidof(type), expose_as_void_pp(*this));
             win::throw_on_fail(result, __func__);
             set_debug_name(*get(), L"pso-compute");
@@ -957,20 +949,22 @@ namespace d3d {
             set_debug_name(*get(), L"pso-g-desc");
         }
 
-        graphics_command_list::graphics_command_list(device& dev, direct_command_allocator& alloc, pipeline_state_object& pso)
+        graphics_command_list::graphics_command_list(device& dev, direct_command_allocator& alloc,
+                                                     pipeline_state_object& pso)
         {
-            win::throw_on_fail(dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, alloc.get(),
-                                                      pso.get(), __uuidof(type), expose_as_void_pp(*this)),
+            win::throw_on_fail(dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, alloc.get(), pso.get(),
+                                                      __uuidof(type), expose_as_void_pp(*this)),
                                __func__);
 
             win::throw_on_fail(get()->Close(), __func__);
             set_debug_name(*get(), L"clpsod");
         }
 
-        graphics_command_list::graphics_command_list(device& dev, compute_command_allocator& alloc, pipeline_state_object& pso)
+        graphics_command_list::graphics_command_list(device& dev, compute_command_allocator& alloc,
+                                                     pipeline_state_object& pso)
         {
-            win::throw_on_fail(dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_COMPUTE, alloc.get(),
-                                                      pso.get(), __uuidof(type), expose_as_void_pp(*this)),
+            win::throw_on_fail(dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_COMPUTE, alloc.get(), pso.get(),
+                                                      __uuidof(type), expose_as_void_pp(*this)),
                                __func__);
 
             win::throw_on_fail(get()->Close(), __func__);
@@ -979,8 +973,8 @@ namespace d3d {
 
         graphics_command_list::graphics_command_list(device& dev, direct_command_allocator& alloc)
         {
-            win::throw_on_fail(dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, alloc.get(),
-                                                      nullptr, __uuidof(type), expose_as_void_pp(*this)),
+            win::throw_on_fail(dev->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, alloc.get(), nullptr,
+                                                      __uuidof(type), expose_as_void_pp(*this)),
                                __func__);
 
             win::throw_on_fail(get()->Close(), __func__);
@@ -1007,28 +1001,26 @@ namespace d3d {
         void fence::synchronized_set(uint64_t new_value, command_queue& cqueue)
         {
             fence tmp_fence_{get_device_from(cqueue)};
-            //gtl::win::waitable_handle handle;
-            //tmp_fence_->SetEventOnCompletion(tmp_fence_->GetCompletedValue()+1, handle);
+            // gtl::win::waitable_handle handle;
+            // tmp_fence_->SetEventOnCompletion(tmp_fence_->GetCompletedValue()+1, handle);
             cqueue->Signal(this->get(), new_value);
             tmp_fence_.synchronized_increment(cqueue);
-            //cqueue->Signal(tmp_fence_.get(), tmp_fence_->GetCompletedValue()+1);
-            //wait(handle);
+            // cqueue->Signal(tmp_fence_.get(), tmp_fence_->GetCompletedValue()+1);
+            // wait(handle);
             assert(this->get()->GetCompletedValue() == new_value);
         }
 
         constant_buffer::constant_buffer(device& dev, std::size_t cbuf_size)
         {
-            win::throw_on_fail(dev->CreateCommittedResource(
-                                   &raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD),
-                                   D3D12_HEAP_FLAG_NONE,
-                                   //D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS,
-                                   &raw::cx::ResourceDesc::Buffer((cbuf_size + 255) & ~255), // constant alignment is 256
-                                   D3D12_RESOURCE_STATE_GENERIC_READ,
-                                   //D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-                                   nullptr,
-                                   __uuidof(resource::type),
-                                   expose_as_void_pp(buffer)),
-                               __func__);
+            win::throw_on_fail(
+                dev->CreateCommittedResource(
+                    &raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+                    // D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS,
+                    &raw::cx::ResourceDesc::Buffer((cbuf_size + 255) & ~255), // constant alignment is 256
+                    D3D12_RESOURCE_STATE_GENERIC_READ,
+                    // D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+                    nullptr, __uuidof(resource::type), expose_as_void_pp(buffer)),
+                __func__);
 
             // Initialize and map the constant buffers. We don't unmap this until the
             // app closes. Keeping things mapped for the lifetime of the resource is okay.
@@ -1038,22 +1030,20 @@ namespace d3d {
 
         constant_buffer::constant_buffer(device& dev, raw::CpuDescriptorHandle descriptor_handle, std::size_t cbuf_size)
         {
-            win::throw_on_fail(dev->CreateCommittedResource(
-                                   &raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD),
-                                   D3D12_HEAP_FLAG_NONE,
-                                   //D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS,
-                                   &raw::cx::ResourceDesc::Buffer((cbuf_size + 255) & ~255), // constant alignment is 256
-                                   D3D12_RESOURCE_STATE_GENERIC_READ,
-                                   //D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-                                   nullptr,
-                                   __uuidof(resource::type),
-                                   expose_as_void_pp(buffer)),
-                               __func__);
+            win::throw_on_fail(
+                dev->CreateCommittedResource(
+                    &raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+                    // D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS,
+                    &raw::cx::ResourceDesc::Buffer((cbuf_size + 255) & ~255), // constant alignment is 256
+                    D3D12_RESOURCE_STATE_GENERIC_READ,
+                    // D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+                    nullptr, __uuidof(resource::type), expose_as_void_pp(buffer)),
+                __func__);
 
             raw::ConstantBufferViewDesc cbvDesc{};
             cbvDesc.BufferLocation = buffer.get()->GetGPUVirtualAddress();
             cbvDesc.SizeInBytes = (cbuf_size + 255) & ~255; // CB size is required to be 256-byte aligned.
-            //dev->CreateConstantBufferView(&cbvDesc, resource_heap.get()->GetCPUDescriptorHandleForHeapStart());
+            // dev->CreateConstantBufferView(&cbvDesc, resource_heap.get()->GetCPUDescriptorHandleForHeapStart());
             dev->CreateConstantBufferView(&cbvDesc, descriptor_handle);
 
             // Initialize and map the constant buffers. We don't unmap this until the
@@ -1062,21 +1052,19 @@ namespace d3d {
             set_debug_name(*(buffer.get()), L"cbuf");
         }
 
-        constant_buffer::constant_buffer(device& dev, raw::CpuDescriptorHandle descriptor_handle, std::size_t size, d3d::tags::shader_view)
+        constant_buffer::constant_buffer(device& dev, raw::CpuDescriptorHandle descriptor_handle, std::size_t size,
+                                         d3d::tags::shader_view)
         {
             win::throw_on_fail(dev->CreateCommittedResource(
-                                   &raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD),
-                                   D3D12_HEAP_FLAG_NONE,
-                                   //D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS,
+                                   &raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
+                                   // D3D12_HEAP_FLAG_ALLOW_ONLY_BUFFERS,
                                    &raw::cx::ResourceDesc::Buffer((size + 255) & ~255), // constant alignment is 256
                                    D3D12_RESOURCE_STATE_GENERIC_READ,
-                                   //D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
-                                   nullptr,
-                                   __uuidof(resource::type),
-                                   expose_as_void_pp(buffer)),
+                                   // D3D12_RESOURCE_STATE_VERTEX_AND_CONSTANT_BUFFER,
+                                   nullptr, __uuidof(resource::type), expose_as_void_pp(buffer)),
                                __func__);
 
-            //raw::ConstantBufferViewDesc cbvDesc{};
+            // raw::ConstantBufferViewDesc cbvDesc{};
             raw::SrvDesc srvDesc{};
             srvDesc.Format = DXGI_FORMAT_R32_TYPELESS;
             srvDesc.ViewDimension = D3D12_SRV_DIMENSION_BUFFER;
@@ -1087,12 +1075,12 @@ namespace d3d {
             srvDesc.Buffer.NumElements = static_cast<UINT>(size) / 4;
             srvDesc.Buffer.StructureByteStride = 0;
 
-            //typedef struct D3D12_SHADER_RESOURCE_VIEW_DESC
+            // typedef struct D3D12_SHADER_RESOURCE_VIEW_DESC
             //{
-            //DXGI_FORMAT Format;
-            //D3D12_SRV_DIMENSION ViewDimension;
-            //UINT Shader4ComponentMapping;
-            //union
+            // DXGI_FORMAT Format;
+            // D3D12_SRV_DIMENSION ViewDimension;
+            // UINT Shader4ComponentMapping;
+            // union
             //    {
             //    D3D12_BUFFER_SRV Buffer;
             //    D3D12_TEX1D_SRV Texture1D;
@@ -1107,10 +1095,10 @@ namespace d3d {
             //    } 	;
             //} 	D3D12_SHADER_RESOURCE_VIEW_DESC;
 
-            //srvDesc.BufferLocation = buffer.get()->GetGPUVirtualAddress();
-            //srvDesc.SizeInBytes = (cbuf_size + 255) & ~255;	// CB size is required to be 256-byte aligned.
-            //dev->CreateConstantBufferView(&cbvDesc, resource_heap.get()->GetCPUDescriptorHandleForHeapStart());
-            //dev->CreateConstantBufferView(&cbvDesc, descriptor_handle);
+            // srvDesc.BufferLocation = buffer.get()->GetGPUVirtualAddress();
+            // srvDesc.SizeInBytes = (cbuf_size + 255) & ~255;	// CB size is required to be 256-byte aligned.
+            // dev->CreateConstantBufferView(&cbvDesc, resource_heap.get()->GetCPUDescriptorHandleForHeapStart());
+            // dev->CreateConstantBufferView(&cbvDesc, descriptor_handle);
             dev->CreateShaderResourceView(buffer.get(), &srvDesc, descriptor_handle);
 
             // Initialize and map the constant buffers. We don't unmap this until the
@@ -1154,41 +1142,37 @@ namespace d3d {
             desc.ComparisonFunc = D3D12_COMPARISON_FUNC_ALWAYS;
 
             dev->CreateSampler(&desc, handle_);
-            //set_debug_name(*get(),L"samplers");
+            // set_debug_name(*get(),L"samplers");
         }
 
         sampler::sampler(device& dev, raw::SamplerDesc const& desc, raw::CpuDescriptorHandle handle_)
         {
             dev->CreateSampler(&desc, handle_);
-            //set_debug_name(*get(),L"samplers");
+            // set_debug_name(*get(),L"samplers");
         }
 
-        rtv_srv_texture2D::rtv_srv_texture2D(swap_chain& swchain, raw::Format format, unsigned num_buffers, d3d::tags::shader_visible)
-            : rtv_heap_{get_device_from(swchain), num_buffers}, srv_heap_{get_device_from(swchain), 1, d3d::tags::shader_visible{}}
+        rtv_srv_texture2D::rtv_srv_texture2D(swap_chain& swchain, raw::Format format, unsigned num_buffers,
+                                             d3d::tags::shader_visible)
+            : rtv_heap_{get_device_from(swchain), num_buffers},
+              srv_heap_{get_device_from(swchain), 1, d3d::tags::shader_visible{}}
         {
             raw::SwapChainDesc swchaindesc_{};
             swchain->GetDesc(&swchaindesc_);
 
             device dev{get_device_from(swchain)};
 
-            //D3D12_TEXTURE_LAYOUT layout{};
+            // D3D12_TEXTURE_LAYOUT layout{};
 
-            auto tdesc = raw::cx::ResourceDesc::Tex2D(format,
-                                                      swchaindesc_.BufferDesc.Width,
-                                                      swchaindesc_.BufferDesc.Height,
-                                                      num_buffers, 1, 1, 0,
-                                                      D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+            auto tdesc
+                = raw::cx::ResourceDesc::Tex2D(format, swchaindesc_.BufferDesc.Width, swchaindesc_.BufferDesc.Height,
+                                               num_buffers, 1, 1, 0, D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
             D3D12_CLEAR_VALUE clear_value_{};
             clear_value_.Format = format;
 
-            dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
-                                         D3D12_HEAP_FLAG_NONE,
-                                         &tdesc,
-                                         D3D12_RESOURCE_STATE_RENDER_TARGET,
-                                         std::addressof(clear_value_),
-                                         __uuidof(type),
-                                         expose_as_void_pp(*this));
+            dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+                                         &tdesc, D3D12_RESOURCE_STATE_RENDER_TARGET, std::addressof(clear_value_),
+                                         __uuidof(type), expose_as_void_pp(*this));
 
             raw::cx::CpuDescriptorHandle rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
             raw::cx::CpuDescriptorHandle srv_handle{srv_heap_->GetCPUDescriptorHandleForHeapStart()};
@@ -1201,7 +1185,7 @@ namespace d3d {
             rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
             rtv_desc.Texture2DArray.ArraySize = 1; // not num_buffers..
             rtv_desc.Texture2DArray.MipSlice = 0;
-            //rtv_desc.Texture2DArray.FirstArraySlice = 0;
+            // rtv_desc.Texture2DArray.FirstArraySlice = 0;
 
             auto calc = [](UINT MipSlice, UINT ArraySlice, UINT PlaneSlice, UINT MipLevels, UINT ArraySize) {
                 return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize;
@@ -1230,13 +1214,9 @@ namespace d3d {
             D3D12_CLEAR_VALUE clear_value_{};
             clear_value_.Format = desc.Format;
 
-            dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
-                                         D3D12_HEAP_FLAG_NONE,
-                                         &desc,
-                                         D3D12_RESOURCE_STATE_RENDER_TARGET,
-                                         std::addressof(clear_value_),
-                                         __uuidof(type),
-                                         expose_as_void_pp(*this));
+            dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE, &desc,
+                                         D3D12_RESOURCE_STATE_RENDER_TARGET, std::addressof(clear_value_),
+                                         __uuidof(type), expose_as_void_pp(*this));
 
             raw::cx::CpuDescriptorHandle rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
             raw::cx::CpuDescriptorHandle srv_handle{srv_heap_->GetCPUDescriptorHandleForHeapStart()};
@@ -1249,7 +1229,7 @@ namespace d3d {
             rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
             rtv_desc.Texture2DArray.ArraySize = 1; // not num_buffers..
             rtv_desc.Texture2DArray.MipSlice = 0;
-            //rtv_desc.Texture2DArray.FirstArraySlice = 0;
+            // rtv_desc.Texture2DArray.FirstArraySlice = 0;
 
             auto calc = [](UINT MipSlice, UINT ArraySlice, UINT PlaneSlice, UINT MipLevels, UINT ArraySize) {
                 return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize;
@@ -1266,7 +1246,8 @@ namespace d3d {
         }
 
         rtv_srv_texture2D::rtv_srv_texture2D(swap_chain& swchain, unsigned num_buffers, d3d::tags::shader_visible)
-            : rtv_heap_{get_device_from(swchain), num_buffers}, srv_heap_{get_device_from(swchain), 1, d3d::tags::shader_visible{}}
+            : rtv_heap_{get_device_from(swchain), num_buffers},
+              srv_heap_{get_device_from(swchain), 1, d3d::tags::shader_visible{}}
         {
             raw::SwapChainDesc swchaindesc_{};
             swchain->GetDesc(&swchaindesc_);
@@ -1275,22 +1256,16 @@ namespace d3d {
 
             raw::TextureLayout layout{};
 
-            auto tdesc = raw::cx::ResourceDesc::Tex2D(swchaindesc_.BufferDesc.Format,
-                                                      swchaindesc_.BufferDesc.Width,
-                                                      swchaindesc_.BufferDesc.Height,
-                                                      num_buffers, 1, 1, 0,
+            auto tdesc = raw::cx::ResourceDesc::Tex2D(swchaindesc_.BufferDesc.Format, swchaindesc_.BufferDesc.Width,
+                                                      swchaindesc_.BufferDesc.Height, num_buffers, 1, 1, 0,
                                                       D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
             D3D12_CLEAR_VALUE clear_value_{};
             clear_value_.Format = swchaindesc_.BufferDesc.Format;
 
-            dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
-                                         D3D12_HEAP_FLAG_NONE,
-                                         &tdesc,
-                                         D3D12_RESOURCE_STATE_RENDER_TARGET,
-                                         std::addressof(clear_value_),
-                                         __uuidof(type),
-                                         expose_as_void_pp(*this));
+            dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+                                         &tdesc, D3D12_RESOURCE_STATE_RENDER_TARGET, std::addressof(clear_value_),
+                                         __uuidof(type), expose_as_void_pp(*this));
 
             raw::cx::CpuDescriptorHandle rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
             raw::cx::CpuDescriptorHandle srv_handle{srv_heap_->GetCPUDescriptorHandleForHeapStart()};
@@ -1303,7 +1278,7 @@ namespace d3d {
             rtv_desc.ViewDimension = D3D12_RTV_DIMENSION_TEXTURE2DARRAY;
             rtv_desc.Texture2DArray.ArraySize = 1; // not num_buffers..
             rtv_desc.Texture2DArray.MipSlice = 0;
-            //rtv_desc.Texture2DArray.FirstArraySlice = 0;
+            // rtv_desc.Texture2DArray.FirstArraySlice = 0;
 
             auto calc = [](UINT MipSlice, UINT ArraySlice, UINT PlaneSlice, UINT MipLevels, UINT ArraySize) {
                 return MipSlice + ArraySlice * MipLevels + PlaneSlice * MipLevels * ArraySize;
@@ -1329,28 +1304,22 @@ namespace d3d {
 
             raw::TextureLayout layout{};
 
-            auto tdesc = raw::cx::ResourceDesc::Tex2D(swchaindesc_.BufferDesc.Format,
-                                                      swchaindesc_.BufferDesc.Width,
-                                                      swchaindesc_.BufferDesc.Height,
-                                                      1, 0, 1, 0,
-                                                      D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
+            auto tdesc = raw::cx::ResourceDesc::Tex2D(
+                swchaindesc_.BufferDesc.Format, swchaindesc_.BufferDesc.Width, swchaindesc_.BufferDesc.Height, 1, 0, 1,
+                0, D3D12_RESOURCE_FLAG_ALLOW_UNORDERED_ACCESS | D3D12_RESOURCE_FLAG_ALLOW_RENDER_TARGET);
 
             D3D12_CLEAR_VALUE clear_value_{};
             clear_value_.Format = swchaindesc_.BufferDesc.Format;
 
-            dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
-                                         D3D12_HEAP_FLAG_NONE,
-                                         &tdesc,
-                                         D3D12_RESOURCE_STATE_UNORDERED_ACCESS,
-                                         std::addressof(clear_value_),
-                                         __uuidof(type),
-                                         expose_as_void_pp(*this));
+            dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
+                                         &tdesc, D3D12_RESOURCE_STATE_UNORDERED_ACCESS, std::addressof(clear_value_),
+                                         __uuidof(type), expose_as_void_pp(*this));
 
-            //CD3DX12_CPU_DESCRIPTOR_HANDLE uav_handle{uav_heap_->GetCPUDescriptorHandleForHeapStart()};
-            //CD3DX12_CPU_DESCRIPTOR_HANDLE srv_handle{srv_heap_->GetCPUDescriptorHandleForHeapStart()};
-            //CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
+            // CD3DX12_CPU_DESCRIPTOR_HANDLE uav_handle{uav_heap_->GetCPUDescriptorHandleForHeapStart()};
+            // CD3DX12_CPU_DESCRIPTOR_HANDLE srv_handle{srv_heap_->GetCPUDescriptorHandleForHeapStart()};
+            // CD3DX12_CPU_DESCRIPTOR_HANDLE rtv_handle{rtv_heap_->GetCPUDescriptorHandleForHeapStart()};
 
-            //dev->CreateShaderResourceView(get(), nullptr, srv_handle);
+            // dev->CreateShaderResourceView(get(), nullptr, srv_handle);
 
             raw::UnorderedAccessViewDesc uav_desc{};
 
@@ -1368,4 +1337,4 @@ namespace d3d {
         }
     }
 }
-} //namespaces
+} // namespaces

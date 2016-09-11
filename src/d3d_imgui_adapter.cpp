@@ -9,6 +9,5 @@ MIT license. See LICENSE.txt in project root for details.
 
 namespace gtl {
 namespace d3d {
-
 }
 } // namespaces

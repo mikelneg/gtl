@@ -36,11 +36,12 @@ namespace gtl {
 
 namespace scenes {
 
-    //class intro_scene;
-    //class main_scene;
+    // class intro_scene;
+    // class main_scene;
 
     namespace detail {
-        struct empty_scene { // we are using a custom empty_scene for the variant, so no need for boost::blank cases in visitors..
+        struct empty_scene { // we are using a custom empty_scene for the variant, so no need for boost::blank cases in
+                             // visitors..
             empty_scene() = default;
             empty_scene(empty_scene const&) = default;
             empty_scene(empty_scene&&) = default;
@@ -56,8 +57,10 @@ namespace scenes {
             }
         };
 
-        static_assert(boost::has_nothrow_copy<empty_scene>::value, "empty_scene() must satisfy boost::has_nothrow_copy");
-        static_assert(boost::has_nothrow_constructor<empty_scene>::value, "empty_scene() must satisfy boost::has_nothrow_constructor");
+        static_assert(boost::has_nothrow_copy<empty_scene>::value,
+                      "empty_scene() must satisfy boost::has_nothrow_copy");
+        static_assert(boost::has_nothrow_constructor<empty_scene>::value,
+                      "empty_scene() must satisfy boost::has_nothrow_constructor");
 
         template <typename>
         class transition_scene;
@@ -67,10 +70,10 @@ namespace scenes {
     }
 
     template <typename... Ts>
-    using scene_variant = typename boost::make_recursive_variant<detail::empty_scene,
-                                                                 Ts...,
-                                                                 detail::transition_scene<boost::recursive_variant_>,
-                                                                 detail::inverse_transition_scene<boost::recursive_variant_>>::type;
+    using scene_variant =
+        typename boost::make_recursive_variant<detail::empty_scene, Ts...,
+                                               detail::transition_scene<boost::recursive_variant_>,
+                                               detail::inverse_transition_scene<boost::recursive_variant_>>::type;
 
     template <typename VariantType>
     bool has_same_type(VariantType const& lhs, VariantType const& rhs)
@@ -88,19 +91,23 @@ namespace scenes {
 
         public:
             transition_scene(T&& s1, T&& s2, std::chrono::milliseconds t)
-                : first_{std::move(s1)}, second_{std::move(s2)}, transition_duration_{t}, begin_timepoint_{std::chrono::high_resolution_clock::now()}
+                : first_{std::move(s1)},
+                  second_{std::move(s2)},
+                  transition_duration_{t},
+                  begin_timepoint_{std::chrono::high_resolution_clock::now()}
             {
                 assert(t.count() > 0);
             }
 
-            //transition_scene() = default;
+            // transition_scene() = default;
             transition_scene(transition_scene&&) = default;
             transition_scene& operator=(transition_scene&&) = default;
 
             template <typename YieldType>
             gtl::event handle_events(YieldType& yield) const
             {
-                std::chrono::high_resolution_clock::time_point const end_time_ = begin_timepoint_ + transition_duration_;
+                std::chrono::high_resolution_clock::time_point const end_time_
+                    = begin_timepoint_ + transition_duration_;
                 while ((current_timepoint_ = std::chrono::high_resolution_clock::now()) < end_time_)
                 {
                     if (same_type(yield.get(), gtl::event{gtl::events::exit_immediately{}}))
@@ -112,23 +119,26 @@ namespace scenes {
                 return gtl::events::exit_state{0};
             }
 
-            //template <typename I, typename RTV, typename CLIST>
-            //void draw(float, I idx, RTV& rtv, CLIST& clist_) const {
-            //    float r = (current_timepoint_ - begin_timepoint_).count() / static_cast<float>(transition_duration_.count());
+            // template <typename I, typename RTV, typename CLIST>
+            // void draw(float, I idx, RTV& rtv, CLIST& clist_) const {
+            //    float r = (current_timepoint_ - begin_timepoint_).count() /
+            //    static_cast<float>(transition_duration_.count());
             //    if (r < 0.0f) { r = 0.0f; } else if (r > 1.0f) { r = 1.0f; }
             //    boost::apply_visitor([&](auto& v){ v.draw(idx,rtv,clist_,1.0f-r); },first_);
             //    boost::apply_visitor([&](auto& v){ v.draw(idx,rtv,clist_,r); },second_);
             //}
 
             //  How to approach this:
-            //  (1) render targets are completely decided internally by the scene, they do all the binding, and they close
+            //  (1) render targets are completely decided internally by the scene, they do all the binding, and they
+            //  close
             //      their own list(s)
             //  (2) vector<commandlist*> is returned and somewhere up the chain they are executed..
             //  (3) what about indices for double-buffered resources..
 
             std::vector<ID3D12CommandList*> draw(int idx, float, gtl::d3d::rtv_descriptor_heap& rtv) const
             {
-                float r = (current_timepoint_ - begin_timepoint_).count() / static_cast<float>(transition_duration_.count());
+                float r = (current_timepoint_ - begin_timepoint_).count()
+                    / static_cast<float>(transition_duration_.count());
                 if (r < 0.0f)
                 {
                     r = 0.0f;
@@ -175,19 +185,23 @@ namespace scenes {
 
         public:
             inverse_transition_scene(T&& s1, T&& s2, std::chrono::milliseconds t)
-                : first_{std::move(s1)}, second_{std::move(s2)}, transition_duration_{t}, begin_timepoint_{std::chrono::high_resolution_clock::now()}
+                : first_{std::move(s1)},
+                  second_{std::move(s2)},
+                  transition_duration_{t},
+                  begin_timepoint_{std::chrono::high_resolution_clock::now()}
             {
                 assert(t.count() > 0);
             }
 
-            //transition_scene() = default;
+            // transition_scene() = default;
             inverse_transition_scene(inverse_transition_scene&&) = default;
             inverse_transition_scene& operator=(inverse_transition_scene&&) = default;
 
             template <typename YieldType>
             gtl::event handle_events(YieldType& yield) const
             {
-                std::chrono::high_resolution_clock::time_point const end_time_ = begin_timepoint_ + transition_duration_;
+                std::chrono::high_resolution_clock::time_point const end_time_
+                    = begin_timepoint_ + transition_duration_;
                 while ((current_timepoint_ = std::chrono::high_resolution_clock::now()) < end_time_)
                 {
                     if (same_type(yield.get(), gtl::event{gtl::events::exit_immediately{}}))
@@ -199,23 +213,26 @@ namespace scenes {
                 return gtl::events::exit_state{0};
             }
 
-            //template <typename I, typename RTV, typename CLIST>
-            //void draw(float, I idx, RTV& rtv, CLIST& clist_) const {
-            //    float r = (current_timepoint_ - begin_timepoint_).count() / static_cast<float>(transition_duration_.count());
+            // template <typename I, typename RTV, typename CLIST>
+            // void draw(float, I idx, RTV& rtv, CLIST& clist_) const {
+            //    float r = (current_timepoint_ - begin_timepoint_).count() /
+            //    static_cast<float>(transition_duration_.count());
             //    if (r < 0.0f) { r = 0.0f; } else if (r > 1.0f) { r = 1.0f; }
             //    boost::apply_visitor([&](auto& v){ v.draw(idx,rtv,clist_,1.0f-r); },first_);
             //    boost::apply_visitor([&](auto& v){ v.draw(idx,rtv,clist_,r); },second_);
             //}
 
             //  How to approach this:
-            //  (1) render targets are completely decided internally by the scene, they do all the binding, and they close
+            //  (1) render targets are completely decided internally by the scene, they do all the binding, and they
+            //  close
             //      their own list(s)
             //  (2) vector<commandlist*> is returned and somewhere up the chain they are executed..
             //  (3) what about indices for double-buffered resources..
 
             std::vector<ID3D12CommandList*> draw(int idx, float, gtl::d3d::rtv_descriptor_heap& rtv) const
             {
-                float r = (current_timepoint_ - begin_timepoint_).count() / static_cast<float>(transition_duration_.count());
+                float r = (current_timepoint_ - begin_timepoint_).count()
+                    / static_cast<float>(transition_duration_.count());
                 if (r < 0.0f)
                 {
                     r = 0.0f;
@@ -265,7 +282,7 @@ namespace scenes {
             inline std::size_t operator()(transition_scene<T> const& t) const
             {
                 std::size_t s = 0;
-                //boost::hash<int>{}( vn::index_of<transition_scene<T>, vn::mpl_sequence_to_list<V>>::value);
+                // boost::hash<int>{}( vn::index_of<transition_scene<T>, vn::mpl_sequence_to_list<V>>::value);
                 boost::hash_combine(s, apply_visitor(*this, t.first()));
                 boost::hash_combine(s, apply_visitor(*this, t.second()));
                 return s;
@@ -275,8 +292,8 @@ namespace scenes {
 
 } // namespace
 
-//template <typename ...Ts>
-//using scene = scenes::scene_variant<Ts...>;
+// template <typename ...Ts>
+// using scene = scenes::scene_variant<Ts...>;
 
 } // namespace gtl
 

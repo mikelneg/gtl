@@ -18,10 +18,8 @@ class camera {
     Eigen::Matrix4f transform_;
 
 public:
-    camera(gtl::physics::position<float> center_,
-           gtl::physics::dimensions<float> lens_dimensions_,
-           gtl::physics::angle<float> fov_,
-           gtl::physics::length<float> distance_to_lens_,
+    camera(gtl::physics::position<float> center_, gtl::physics::dimensions<float> lens_dimensions_,
+           gtl::physics::angle<float> fov_, gtl::physics::length<float> distance_to_lens_,
            gtl::physics::length<float> distance_to_plane_);
 
     Eigen::Matrix4f const& matrix() const
