@@ -1,0 +1,19 @@
+# ignore everything
+*
+
+# ... except for /data folder
+!/data/*
+
+# ... and the following file types:
+!CMakeLists.txt
+!README.md
+!LICENSE
+!LICENSE.txt
+!.gitignore
+!*.cpp
+!*.c
+!*.cc
+!*.h
+!*.hpp
+!*.hlsl
+!*.clang-format

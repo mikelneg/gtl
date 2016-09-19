@@ -51,12 +51,15 @@ public:
     };
 
 private:
-    vn::swap_object<imgui_data>
-        output_buffer_; // TODO implement copy-free buffer updating (instead of swap_object<vector> or whatever)
+    // TODO implement copy-free buffer updating (instead of swap_object<vector> or whatever)
+    vn::swap_object<imgui_data> output_buffer_; 
+
     imgui_data local_data_;
 
     std::vector<char> text_box_a_;
     std::vector<char> text_box_b_;
+    
+    ImVec2 dpadoffset{};
 
 public:
     imgui_adapter()
@@ -79,6 +82,9 @@ public:
 
     void dump_data(ImDrawData& draw_data)
     {
+        using std::begin;
+        using std::end;
+
         auto& verts = local_data_.vertices_;
         auto& indices = local_data_.indices_;
 
@@ -97,14 +103,15 @@ public:
             assert(voffs < static_cast<int>(verts.size()));
             assert(ioffs < static_cast<int>(indices.size()));
 
-            std::copy_n(cmd_list->VtxBuffer.begin(), cmd_list->VtxBuffer.size(), verts.data() + voffs);
-            std::copy_n(cmd_list->IdxBuffer.begin(), cmd_list->IdxBuffer.size(), indices.data() + ioffs);
+            std::copy(begin(cmd_list->VtxBuffer), end(cmd_list->VtxBuffer), begin(verts) + voffs);            
+            std::transform(begin(cmd_list->IdxBuffer), end(cmd_list->IdxBuffer), begin(indices) + ioffs, 
+                           [&](auto const& v) { return v + voffs; });            
 
             voffs += cmd_list->VtxBuffer.size();
             ioffs += cmd_list->IdxBuffer.size();
 
             local_data_.vertex_count_ += cmd_list->VtxBuffer.size();
-            local_data_.index_count_ += cmd_list->IdxBuffer.size();
+            local_data_.index_count_ += cmd_list->IdxBuffer.size();            
         }
 
         output_buffer_.swap_in(local_data_);
@@ -139,7 +146,47 @@ public:
             // callbacks_["return_focus"]();
         }
         ImGui::InputText("other:", text_box_b_.data(), text_box_b_.size());
+        ImGui::End();
 
+
+        ImGui::SetNextWindowContentSize(ImVec2{100.0f,100.0f});
+        ImGui::SetNextWindowSizeConstraints(ImVec2{100.0f,100.0f},ImVec2{160.0f,160.0f});
+        
+        if (ImGui::Begin("Controller Stick")) {        
+            ImGui::Text("SomeText..");                
+
+            ImDrawList* draw_list = ImGui::GetWindowDrawList();
+            
+            ImU32 col32 = ImColor{1.0f,1.0f,1.0f,1.0f};
+
+            auto winpos = ImGui::GetWindowPos();
+            auto wincent = ImGui::GetWindowSize();
+            
+            winpos.x += (wincent.x / 2.0f);
+            winpos.y += (wincent.y / 2.0f);
+
+            draw_list->AddCircle(winpos, 21.21f, col32); 
+
+            winpos.x += dpadoffset.x;
+            winpos.y += dpadoffset.y;
+
+            col32 = ImColor{1.0f,0.0f,0.4f,1.0f};
+
+            draw_list->AddCircle(winpos, 5.0f, col32, 4, 0.6f);
+
+                //draw_list->AddCircle(ImVec2(x+sz*0.5f, y+sz*0.5f), sz*0.5f, col32, 20, thickness); x += sz+spacing;
+                //draw_list->AddRect(ImVec2(x, y), ImVec2(x+sz, y+sz), col32, 0.0f, ~0, thickness); x += sz+spacing;
+                //draw_list->AddRect(ImVec2(x, y), ImVec2(x+sz, y+sz), col32, 10.0f, ~0, thickness); x += sz+spacing;
+                //draw_list->AddTriangle(ImVec2(x+sz*0.5f, y), ImVec2(x+sz,y+sz-0.5f), ImVec2(x,y+sz-0.5f), col32, thickness); x += sz+spacing;
+                //draw_list->AddLine(ImVec2(x, y), ImVec2(x+sz, y   ), col32, thickness); x += sz+spacing;
+                //draw_list->AddLine(ImVec2(x, y), ImVec2(x+sz, y+sz), col32, thickness); x += sz+spacing;
+                //draw_list->AddLine(ImVec2(x, y), ImVec2(x,    y+sz), col32, thickness); x += spacing;
+                //draw_list->AddBezierCurve(ImVec2(x, y), ImVec2(x+sz*1.3f,y+sz*0.3f), ImVec2(x+sz-sz*1.3f,y+sz-sz*0.3f), ImVec2(x+sz, y+sz), col32, thickness);
+                //x = p.x + 4;
+                //y += sz+spacing;
+
+        }
+        
         ImGui::End();
 
         ImGui::Render();
@@ -180,12 +227,16 @@ public:
         return std::make_tuple(std::move(font_data), static_cast<unsigned>(width), static_cast<unsigned>(height));
     }
 
+    void dpad_offset(float x, float y) {
+        dpadoffset = ImVec2{x,y};
+    }
+
     static void mouse_up(int x, int y)
     {
         auto& io = ImGui::GetIO();
         io.MousePos.x = static_cast<float>(x);
         io.MousePos.y = static_cast<float>(y);
-        io.MouseDown[0] = false;
+        io.MouseDown[0] = false;        
     }
 
     static void mouse_down(int x, int y)

@@ -63,67 +63,130 @@ namespace scenes {
 
         vn::single_consumer_queue<std::function<void()>> mutable draw_task_queue_;
 
+        auto default_generator() {
+            using namespace gtl::physics::generators;
+            using namespace boost::units;
+            std::vector<gtl::physics::generator> generators_;
+
+            generators_.emplace_back(static_box{{0.0f * si::meters, -100.0f * si::meters},
+                                                {200.0f * si::meters, 5.0f * si::meters},
+                                                0.0f * si::radians,
+                                                {}});
+            generators_.emplace_back(static_box{{0.0f * si::meters, 100.0f * si::meters},
+                                                {200.0f * si::meters, 5.0f * si::meters},
+                                                0.0f * si::radians,
+                                                {}});
+            generators_.emplace_back(static_box{{-100.0f * si::meters, 0.0f * si::meters},
+                                                {5.0f * si::meters, 200.0f * si::meters},
+                                                0.0f * si::radians,
+                                                {}});
+            generators_.emplace_back(static_box{{100.0f * si::meters, 0.0f * si::meters},
+                                                {5.0f * si::meters, 200.0f * si::meters},
+                                                0.0f * si::radians,
+                                                {}});
+
+            for (unsigned j = 0; j < 80; ++j)
+            {
+                std::vector<dynamic_box> jointed_boxes_;
+                auto x = vn::math::rand_neg_one_one() * 45.0f * si::meter;
+                auto y = vn::math::rand_neg_one_one() * 45.0f * si::meter;
+                auto angle = 0.0f * si::radians; // vn::math::rand_neg_one_one() * si::radians;
+
+                for (unsigned i = 0; i < 4; ++i)
+                {
+                    jointed_boxes_.emplace_back(
+                        dynamic_box{{x, y - ((i * 1.0f) * si::meter)},
+                                    {1.0f * si::meter, 1.0f * si::meter},
+                                    angle,
+                                    InstanceInfo{}.pack_entity_id(j + 600).pack_mesh_id(0)});
+                }
+                generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});
+            }
+
+            for (unsigned j = 80; j < 160; ++j)
+            {
+                std::vector<dynamic_box> jointed_boxes_;
+                auto x = vn::math::rand_neg_one_one() * 45.0f * si::meter;
+                auto y = vn::math::rand_neg_one_one() * 45.0f * si::meter;
+                auto angle = 0.0f * si::radians; // vn::math::rand_neg_one_one() * si::radians;
+
+                // for (unsigned i = 0; i < 4; ++i) {
+                //  jointed_boxes_.emplace_back(
+                generators_.emplace_back(dynamic_box{{x, y},
+                                                     {1.0f * si::meter, 1.0f * si::meter},
+                                                     angle,
+                                                     InstanceInfo{}.pack_entity_id(j + 600).pack_mesh_id(1)});
+                //}
+                // generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});
+            }
+
+            return generators_;
+        }
+
+        auto test_generator() {
+            using namespace gtl::physics::generators;
+            using namespace boost::units;
+            std::vector<gtl::physics::generator> generators_;
+
+            generators_.emplace_back(static_box{{0.0f * si::meters, -100.0f * si::meters},
+                                                {200.0f * si::meters, 5.0f * si::meters},
+                                                0.0f * si::radians,
+                                                {}});
+            generators_.emplace_back(static_box{{0.0f * si::meters, 100.0f * si::meters},
+                                                {200.0f * si::meters, 5.0f * si::meters},
+                                                0.0f * si::radians,
+                                                {}});
+            generators_.emplace_back(static_box{{-100.0f * si::meters, 0.0f * si::meters},
+                                                {5.0f * si::meters, 200.0f * si::meters},
+                                                0.0f * si::radians,
+                                                {}});
+            generators_.emplace_back(static_box{{100.0f * si::meters, 0.0f * si::meters},
+                                                {5.0f * si::meters, 200.0f * si::meters},
+                                                0.0f * si::radians,
+                                                {}});
+
+            for (unsigned j = 0; j < 50; ++j)
+            {
+                std::vector<dynamic_box> jointed_boxes_;
+                auto x = vn::math::rand_neg_one_one() * 15.0f * si::meter;
+                auto y = vn::math::rand_neg_one_one() * 15.0f * si::meter;
+                auto angle = 0.0f * si::radians; // vn::math::rand_neg_one_one() * si::radians;
+
+                for (unsigned i = 0; i < 4; ++i)
+                {
+                    jointed_boxes_.emplace_back(
+                        dynamic_box{{x, y - ((i * 1.0f) * si::meter)},
+                                    {1.0f * si::meter, 1.0f * si::meter},
+                                    angle,
+                                    InstanceInfo{}.pack_entity_id(j + 600).pack_mesh_id(0)});
+                }
+                generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});
+            }
+
+            for (unsigned j = 50; j < 100; ++j)
+            {
+                std::vector<dynamic_box> jointed_boxes_;
+                auto x = vn::math::rand_neg_one_one() * 15.0f * si::meter;
+                auto y = vn::math::rand_neg_one_one() * 15.0f * si::meter;
+                auto angle = 0.0f * si::radians; // vn::math::rand_neg_one_one() * si::radians;
+
+                // for (unsigned i = 0; i < 4; ++i) {
+                //  jointed_boxes_.emplace_back(
+                generators_.emplace_back(dynamic_box{{x, y},
+                                                     {1.0f * si::meter, 1.0f * si::meter},
+                                                     angle,
+                                                     InstanceInfo{}.pack_entity_id(j + 600).pack_mesh_id(1)});
+                //}
+                // generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});
+            }
+
+            return generators_;
+        }
+
+
     public:
         main_scene(gtl::d3d::device& dev, gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue)
-            : physics_task_queue_{[]() {
-                  using namespace gtl::physics::generators;
-                  using namespace boost::units;
-                  std::vector<gtl::physics::generator> generators_;
-
-                  generators_.emplace_back(static_box{{0.0f * si::meters, -100.0f * si::meters},
-                                                      {200.0f * si::meters, 5.0f * si::meters},
-                                                      0.0f * si::radians,
-                                                      {}});
-                  generators_.emplace_back(static_box{{0.0f * si::meters, 100.0f * si::meters},
-                                                      {200.0f * si::meters, 5.0f * si::meters},
-                                                      0.0f * si::radians,
-                                                      {}});
-                  generators_.emplace_back(static_box{{-100.0f * si::meters, 0.0f * si::meters},
-                                                      {5.0f * si::meters, 200.0f * si::meters},
-                                                      0.0f * si::radians,
-                                                      {}});
-                  generators_.emplace_back(static_box{{100.0f * si::meters, 0.0f * si::meters},
-                                                      {5.0f * si::meters, 200.0f * si::meters},
-                                                      0.0f * si::radians,
-                                                      {}});
-
-                  for (unsigned j = 0; j < 80; ++j)
-                  {
-                      std::vector<dynamic_box> jointed_boxes_;
-                      auto x = vn::math::rand_neg_one_one() * 45.0f * si::meter;
-                      auto y = vn::math::rand_neg_one_one() * 45.0f * si::meter;
-                      auto angle = 0.0f * si::radians; // vn::math::rand_neg_one_one() * si::radians;
-
-                      for (unsigned i = 0; i < 4; ++i)
-                      {
-                          jointed_boxes_.emplace_back(
-                              dynamic_box{{x, y - ((i * 1.0f) * si::meter)},
-                                          {1.0f * si::meter, 1.0f * si::meter},
-                                          angle,
-                                          InstanceInfo{}.pack_entity_id(j + 600).pack_mesh_id(0)});
-                      }
-                      generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});
-                  }
-
-                  for (unsigned j = 80; j < 160; ++j)
-                  {
-                      std::vector<dynamic_box> jointed_boxes_;
-                      auto x = vn::math::rand_neg_one_one() * 45.0f * si::meter;
-                      auto y = vn::math::rand_neg_one_one() * 45.0f * si::meter;
-                      auto angle = 0.0f * si::radians; // vn::math::rand_neg_one_one() * si::radians;
-
-                      // for (unsigned i = 0; i < 4; ++i) {
-                      //  jointed_boxes_.emplace_back(
-                      generators_.emplace_back(dynamic_box{{x, y},
-                                                           {1.0f * si::meter, 1.0f * si::meter},
-                                                           angle,
-                                                           InstanceInfo{}.pack_entity_id(j + 600).pack_mesh_id(1)});
-                      //}
-                      // generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});
-                  }
-
-                  return generators_;
-              }()},
+            : physics_task_queue_{test_generator()},
               physics_camera_{{0.0f * boost::units::si::meters, 0.0f * boost::units::si::meters},
                               {1.0f * boost::units::si::meters, 1.0f * boost::units::si::meters},
                               gtl::physics::angle<float>{45.0f * boost::units::degree::degree},
@@ -133,7 +196,7 @@ namespace scenes {
               physics_{physics_task_queue_},
               swirl_effect_{dev, swchain, cqueue, physics_},
               imgui_adapter_{},
-              imgui_{dev, swchain, cqueue, imgui_adapter_}
+              imgui_{dev, swchain, cqueue, imgui_adapter_}              
         {
             imgui_adapter_.render();
         }

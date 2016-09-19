@@ -524,13 +524,13 @@ namespace d3d {
 
             HRESULT result2 = dev->CreateCommittedResource(
                 &raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-                &raw::cx::ResourceDesc::Buffer(size_), // buffer alignment is 64k..
+                &raw::cx::ResourceDesc::Buffer(size_, D3D12_RESOURCE_FLAG_NONE, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT), // buffer alignment is 64k..
                 D3D12_RESOURCE_STATE_COPY_DEST, nullptr, __uuidof(type), expose_as_void_pp(*this));
             win::throw_on_fail(result2, __func__);
 
             result2 = dev->CreateCommittedResource(
                 &raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-                &raw::cx::ResourceDesc::Buffer(size_), // buffer alignment is 64k..
+                &raw::cx::ResourceDesc::Buffer(size_, D3D12_RESOURCE_FLAG_NONE, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT), // buffer alignment is 64k..
                 D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, __uuidof(type), expose_as_void_pp(upload_vbuffer_));
             win::throw_on_fail(result2, __func__);
 
@@ -571,13 +571,13 @@ namespace d3d {
 
             HRESULT result2 = dev->CreateCommittedResource(
                 &raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
-                &raw::cx::ResourceDesc::Buffer(size_), // buffer alignment is 64k..
+                &raw::cx::ResourceDesc::Buffer(size_,D3D12_RESOURCE_FLAG_NONE, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT), // buffer alignment is 64k..
                 D3D12_RESOURCE_STATE_COPY_DEST, nullptr, __uuidof(type), expose_as_void_pp(*this));
             win::throw_on_fail(result2, __func__);
 
             result2 = dev->CreateCommittedResource(
                 &raw::cx::HeapProperties(D3D12_HEAP_TYPE_UPLOAD), D3D12_HEAP_FLAG_NONE,
-                &raw::cx::ResourceDesc::Buffer(size_), // buffer alignment is 64k..
+                &raw::cx::ResourceDesc::Buffer(size_,D3D12_RESOURCE_FLAG_NONE, D3D12_DEFAULT_RESOURCE_PLACEMENT_ALIGNMENT), // buffer alignment is 64k..
                 D3D12_RESOURCE_STATE_GENERIC_READ, nullptr, __uuidof(type), expose_as_void_pp(upload_ibuffer_));
             win::throw_on_fail(result2, __func__);
 
@@ -652,7 +652,7 @@ namespace d3d {
 
             win::throw_on_fail(result, __func__);
 
-            raw::ResourceDesc desc = texture->GetDesc();
+            raw::ResourceDesc desc = texture->GetDesc();            
 
             HRESULT result2 = dev->CreateCommittedResource(&raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT),
                                                            D3D12_HEAP_FLAG_NONE, &desc, D3D12_RESOURCE_STATE_COMMON,

@@ -119,6 +119,11 @@ namespace {
 
             b2FixtureDef fixture_;
 
+            fixture_.isSensor = false;
+            fixture_.restitution = 0.46f;
+            fixture_.density = 1.0f; // default numbers from the docs, revisit later..
+            fixture_.friction = 0.1f;
+
             fixture_.filter.categoryBits = collision_category::BOUNDARY;
             fixture_.filter.maskBits = collision_category::ENTITY;
             fixture_.shape = &shape_;
@@ -164,7 +169,7 @@ namespace {
                 f.isSensor = false;
                 f.restitution = 0.46f;
                 f.density = 1.0f; // default numbers from the docs, revisit later..
-                f.friction = 0.3f;
+                f.friction = 0.0f;
 
                 body->CreateFixture(&f);
 
@@ -257,7 +262,7 @@ namespace {
             fixture_.isSensor = false;
             fixture_.restitution = 0.46f;
             fixture_.density = 1.0f; // default numbers from the docs, revisit later..
-            fixture_.friction = 0.3f;
+            fixture_.friction = 0.2f;
 
             ptr->CreateFixture(&fixture_);
 

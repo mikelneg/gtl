@@ -37,8 +37,8 @@ namespace d3d {
 
         constexpr static std::size_t frame_count = 3; // TODO place elsewhere..
 
-        static constexpr unsigned MAX_VERTS = 700;
-        static constexpr unsigned MAX_INDICES = 700;
+        static constexpr unsigned MAX_VERTS = 1000;
+        static constexpr unsigned MAX_INDICES = 5000;
 
         // struct vertex { float x,y; float u,v; uint32_t color; };
         using vertex_type = ImDrawVert;
@@ -290,8 +290,8 @@ namespace d3d {
                 auto& verts = local_imgui_data_.vertices_;
                 auto& indices = local_imgui_data_.indices_;
 
-                vert_buffers_[idx].update(reinterpret_cast<char*>(verts.data()), verts.size() * sizeof(ImDrawVert));
-                idx_buffers_[idx].update(reinterpret_cast<char*>(indices.data()), indices.size() * sizeof(ImDrawIdx));
+                vert_buffers_[idx].update(reinterpret_cast<char*>(verts.data()), local_imgui_data_.vertex_count() * sizeof(ImDrawVert));
+                idx_buffers_[idx].update(reinterpret_cast<char*>(indices.data()), local_imgui_data_.index_count() * sizeof(ImDrawIdx));
 
                 imgui_dirty_flags_[idx] = false;
             }
