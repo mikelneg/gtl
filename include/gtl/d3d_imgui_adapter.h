@@ -20,7 +20,7 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/camera.h>
 #include <gtl/d3d_helper_funcs.h>
 #include <gtl/d3d_types.h>
-#include <gtl/keyboard_enum.h>
+#include <gtl/win_keyboard.h>
 
 //#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 //
@@ -213,6 +213,10 @@ namespace d3d {
         //}
 
     public:
+
+        imgui_adapter(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue,
+                      gtl::imgui_adapter& imgui_) : imgui_adapter(get_device_from(swchain_),swchain_,cqueue,imgui_) {}
+
         imgui_adapter(gtl::d3d::device& dev, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue,
                       gtl::imgui_adapter& imgui_)
             : cbheap_{dev, 3, gtl::d3d::tags::shader_visible{}},

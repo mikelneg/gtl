@@ -7,7 +7,7 @@ MIT license. See LICENSE.txt in project root for details.
 
 #include "gtl/gtl_window.h"
 
-#include <gtl/keyboard_enum.h>
+#include <gtl/win_keyboard.h>
 #include <gtl/system_caps.h>
 
 #include <gtl/gtl_window_wndproc.h>

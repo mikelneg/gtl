@@ -10,7 +10,7 @@ MIT license. See LICENSE.txt in project root for details.
 
 #include <gtl/d3d_types.h>
 #include <gtl/events.h>
-#include <gtl/keyboard_enum.h>
+#include <gtl/win_keyboard.h>
 
 #include <gtl/command_variant.h>
 #include <gtl/d3d_imgui_adapter.h>
@@ -37,8 +37,8 @@ MIT license. See LICENSE.txt in project root for details.
 
 #include <GamePad.h>
 
-#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
-#include <imgui.h>
+//#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+//#include <imgui.h>
 
 namespace gtl {
 namespace scenes {
@@ -54,8 +54,8 @@ namespace scenes {
 
         gtl::scenes::transitions::swirl_effect swirl_effect_;
 
-        gtl::imgui_adapter mutable imgui_adapter_;
-        gtl::d3d::imgui_adapter imgui_;
+        //gtl::imgui_adapter mutable imgui_adapter_;
+        //gtl::d3d::imgui_adapter imgui_;
 
         std::atomic<uint32_t> mutable current_id_{};
 
@@ -194,11 +194,11 @@ namespace scenes {
                               {100.0f * boost::units::si::meters}},
               camera_height_{10.0f * boost::units::si::meters},
               physics_{physics_task_queue_},
-              swirl_effect_{dev, swchain, cqueue, physics_},
-              imgui_adapter_{},
-              imgui_{dev, swchain, cqueue, imgui_adapter_}              
+              swirl_effect_{dev, swchain, cqueue, physics_}
+              //imgui_adapter_{},
+              //imgui_{dev, swchain, cqueue, imgui_adapter_}              
         {
-            imgui_adapter_.render();
+            //imgui_adapter_.render();
         }
 
         main_scene(main_scene&&) = default;
@@ -214,16 +214,13 @@ namespace scenes {
                           .matrix();
 
                 draw_task_queue_.consume([](auto&& f) { f(); }); // execute our waiting tasks..
-                swirl_effect_.draw(ps..., current_id_, cam_transform_ * physics_camera_.matrix());
-                imgui_adapter_.render();
-                imgui_.draw(ps...);
+                swirl_effect_.draw(ps..., current_id_, cam_transform_ * physics_camera_.matrix());                                
             });
         }
 
         void resize(int w, int h, gtl::d3d::command_queue& c)
         {
-            swirl_effect_.resize(w, h, c);
-            imgui_.resize(w, h, c);
+            swirl_effect_.resize(w, h, c);            
         }
 
         template <typename YieldType>
@@ -262,7 +259,7 @@ namespace scenes {
             // HACK tinkering.. change how things are dispatched..
 
             namespace ev = gtl::events;
-            namespace k = gtl::keyboard;
+            using k = gtl::keyboard;
             using namespace boost::units;
             using namespace gtl::physics::generators;
 
@@ -287,10 +284,10 @@ namespace scenes {
                     selected_id = current_id_.load(std::memory_order_relaxed);
                     std::cout << "selected object " << selected_id << "\n";
 
-                    int mx = GET_X_LPARAM(e.coord); // TODO replace this coordinate stuff..
-                    int my = GET_Y_LPARAM(e.coord);
+                    //int mx = GET_X_LPARAM(e.coord); // TODO replace this coordinate stuff..
+                    //int my = GET_Y_LPARAM(e.coord);
 
-                    draw_task_queue_.insert([=, this]() { this->imgui_adapter_.mouse_down(mx, my); });
+                    //draw_task_queue_.insert([=, this]() { this->imgui_adapter_.mouse_down(e.x, e.y); });
                     // resource_callback_(gtl::commands::get_audio_adapter{}, [](auto&& aud) { aud.play_effect("click");
                     // }); // TODO causes an ICE..
                 },
@@ -310,16 +307,16 @@ namespace scenes {
                     }
                 },
                 [&](ev::mouse_lbutton_up const& e) {
-                    int mx = GET_X_LPARAM(e.coord);
-                    int my = GET_Y_LPARAM(e.coord);
-                    draw_task_queue_.insert([=, this]() { this->imgui_adapter_.mouse_up(mx, my); });
+                    //int mx = GET_X_LPARAM(e.coord);
+                    //int my = GET_Y_LPARAM(e.coord);
+                    //draw_task_queue_.insert([=, this]() { this->imgui_adapter_.mouse_up(e.x, e.y); });
                 },
                 [&](ev::mouse_moved const& e) {
-                    swirl_effect_.set_mouse_coords(e.coord);
+                    swirl_effect_.set_mouse_coords(e.x,e.y);
 
-                    int mx = GET_X_LPARAM(e.coord);
-                    int my = GET_Y_LPARAM(e.coord);
-                    draw_task_queue_.insert([=, this]() { this->imgui_adapter_.mouse_move(mx, my); });
+                    //int mx = GET_X_LPARAM(e.coord);
+                    //int my = GET_Y_LPARAM(e.coord);
+                    //draw_task_queue_.insert([=, this]() { this->imgui_adapter_.mouse_move(e.x, e.y); });
                 },
                 [](auto const&) { // empty catch-all
                 });

@@ -125,7 +125,7 @@ namespace win {
                 case WM_LBUTTONDOWN:
                 {
                     handler_ref(hwnd).emplace_back(
-                        gtl::events::mouse_lbutton_down{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+                        gtl::events::mouse_lbutton_down{GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
                     // The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the
                     // upper-left corner of the client area.
                     // The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the
@@ -137,7 +137,7 @@ namespace win {
                 case WM_RBUTTONDOWN:
                 {
                     handler_ref(hwnd).emplace_back(
-                        gtl::events::mouse_rbutton_down{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+                        gtl::events::mouse_rbutton_down{GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
                     // The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the
                     // upper-left corner of the client area.
                     // The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the
@@ -149,7 +149,7 @@ namespace win {
                 case WM_LBUTTONUP:
                 {
                     handler_ref(hwnd).emplace_back(
-                        gtl::events::mouse_lbutton_up{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+                        gtl::events::mouse_lbutton_up{GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
                     // The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the
                     // upper-left corner of the client area.
                     // The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the
@@ -161,7 +161,7 @@ namespace win {
                 case WM_RBUTTONUP:
                 {
                     handler_ref(hwnd).emplace_back(
-                        gtl::events::mouse_rbutton_up{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+                        gtl::events::mouse_rbutton_up{GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
                     // The low-order word specifies the x-coordinate of the cursor. The coordinate is relative to the
                     // upper-left corner of the client area.
                     // The high-order word specifies the y-coordinate of the cursor. The coordinate is relative to the
@@ -179,7 +179,7 @@ namespace win {
                 case WM_MOUSEMOVE:
                 {
                     handler_ref(hwnd).emplace_back(
-                        gtl::events::mouse_moved{lparam}); // GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
+                        gtl::events::mouse_moved{GET_X_LPARAM(lparam),GET_Y_LPARAM(lparam)});
                     return 0;
                 }
                 break;

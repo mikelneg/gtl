@@ -19,8 +19,10 @@ MIT license. See LICENSE.txt in project root for details.
 
 #include <imgui.h>
 
-#include <gtl/keyboard_enum.h>
+#include <gtl/events.h>
+#include <gtl/win_keyboard.h>
 #include <vn/swap_object.h>
+#include <vn/boost_variant_utilities.h>
 
 namespace gtl {
 
@@ -61,6 +63,8 @@ private:
     
     ImVec2 dpadoffset{};
 
+    bool mutable scene_dirty_ = true;
+
 public:
     imgui_adapter()
     {
@@ -76,8 +80,8 @@ public:
         io.RenderDrawListsFn = NULL;
         io.Fonts->TexID = 0;
 
-        io.KeyMap[ImGuiKey_Backspace] = keyboard::Backspace;
-        io.KeyMap[ImGuiKey_Enter] = keyboard::Enter;
+        io.KeyMap[ImGuiKey_Backspace] = value(keyboard::Backspace);
+        io.KeyMap[ImGuiKey_Enter] = value(keyboard::Enter);
     }
 
     void dump_data(ImDrawData& draw_data)
@@ -122,8 +126,14 @@ public:
         return output_buffer_.swap_out(external);
     }
 
+    bool dirty() const { return scene_dirty_; }
+    void set_dirty() const { scene_dirty_ = true; }
+    void clear_dirty() const { scene_dirty_ = false; }
+
     void render()
     {
+    if (dirty()) {
+
         ImGui::NewFrame();
 
         ImGui::Begin("Window Title");
@@ -192,6 +202,9 @@ public:
         ImGui::Render();
 
         dump_data(*ImGui::GetDrawData());
+
+        clear_dirty();
+    }
     }
 
     static std::tuple<std::vector<uint32_t>,
@@ -214,8 +227,6 @@ public:
 
         std::vector<uint32_t> font_data;
 
-        // std::copy_n(pixels, width * height * bytes_per_pixel, font_data.data()); // incorrect
-
         for (int m = 0; m < height; ++m)
         {
             for (int n = 0; n < width; ++n)
@@ -230,28 +241,51 @@ public:
     void dpad_offset(float x, float y) {
         dpadoffset = ImVec2{x,y};
     }
-
-    static void mouse_up(int x, int y)
-    {
-        auto& io = ImGui::GetIO();
-        io.MousePos.x = static_cast<float>(x);
-        io.MousePos.y = static_cast<float>(y);
-        io.MouseDown[0] = false;        
+    
+    void dispatch_event(gtl::event const& e) const {
+        using boost::apply_visitor;
+        apply_visitor(*this,e.value());
     }
 
-    static void mouse_down(int x, int y)
+    template <typename T>
+    void operator()(T const&) const {}
+
+    void operator()(gtl::events::mouse_event const& e) const {
+        using namespace gtl::events;
+        
+        auto handler 
+        = vn::make_lambda_visitor(
+            [this](mouse_lbutton_up const& m) { set_dirty(); this->mouse_up(static_cast<float>(m.x),static_cast<float>(m.y)); },
+            [this](mouse_lbutton_down const& m) { set_dirty(); this->mouse_down(static_cast<float>(m.x),static_cast<float>(m.y)); },
+            [this](mouse_moved const& m) { set_dirty(); this->mouse_move(static_cast<float>(m.x),static_cast<float>(m.y)); },
+            [](auto const&) {}
+            );
+
+        handler(e);
+    }
+
+
+    static void mouse_up(float x, float y)
     {
         auto& io = ImGui::GetIO();
-        io.MousePos.x = static_cast<float>(x);
-        io.MousePos.y = static_cast<float>(y);
+        io.MousePos.x = x;
+        io.MousePos.y = y;
+        io.MouseDown[0] = false;               
+    }
+
+    static void mouse_down(float x, float y)
+    {
+        auto& io = ImGui::GetIO();
+        io.MousePos.x = x;
+        io.MousePos.y = y;
         io.MouseDown[0] = true;
     }
 
-    static void mouse_move(int x, int y)
+    static void mouse_move(float x, float y)
     {
         auto& io = ImGui::GetIO();
-        io.MousePos.x = static_cast<float>(x);
-        io.MousePos.y = static_cast<float>(y);
+        io.MousePos.x = x;
+        io.MousePos.y = y;
     }
 
     static void add_input_charcter(ImWchar c)
@@ -260,13 +294,13 @@ public:
         io.AddInputCharacter(c);
     }
 
-    static void key_up(gtl::keyboard::keyboard_enum k)
+    static void key_up(gtl::keyboard k)
     {
         auto& io = ImGui::GetIO();
         io.KeysDown[reinterpret_cast<std::underlying_type_t<decltype(k)>&>(k)] = false;
     }
 
-    static void key_down(gtl::keyboard::keyboard_enum k)
+    static void key_down(gtl::keyboard k)
     {
         auto& io = ImGui::GetIO();
         io.KeysDown[reinterpret_cast<std::underlying_type_t<decltype(k)>&>(k)] = true;
@@ -301,21 +335,21 @@ get_font_bitmap(std::make_pair(w,h))};
             scissor_ = gtl::d3d::raw::ScissorRect{0,0,w,h};
         }
 
-        void mouse_up(int x, int y) const {
+        void mouse_up(float x, float y) const {
             auto& io = ImGui::GetIO();
             io.MousePos.x = static_cast<float>(x);
             io.MousePos.y = static_cast<float>(y);
             io.MouseDown[0] = false;
         }
 
-        void mouse_down(int x, int y) const {
+        void mouse_down(float x, float y) const {
             auto& io = ImGui::GetIO();
             io.MousePos.x = static_cast<float>(x);
             io.MousePos.y = static_cast<float>(y);
             io.MouseDown[0] = true;
         }
 
-        void mouse_move(int x, int y) const {
+        void mouse_move(float x, float y) const {
             auto& io = ImGui::GetIO();
             io.MousePos.x = static_cast<float>(x);
             io.MousePos.y = static_cast<float>(y);

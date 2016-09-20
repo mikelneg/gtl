@@ -67,6 +67,8 @@ void stage::present(gtl::d3d::swap_chain& swchain_, DXGI_PRESENT_PARAMETERS dxgi
 {
     frame_rate_limiter_([&swchain_, &dxgi_pp, this]() {
 
+        imgui_adapter_.render();
+
         draw_thread_.if_available(
             [&](auto& frame_state_) { // (auto& state_){  // consumes itself if not consumed..
                 swchain_->Present1(0, 0, std::addressof(dxgi_pp)); // potentially blocking

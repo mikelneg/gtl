@@ -264,9 +264,9 @@ namespace scenes {
                 std::cout << "swirl_effect()\n";
             }
 
-            void set_mouse_coords(int64_t i) const
-            {
-                mouse_coord_.set(i);
+            void set_mouse_coords(int x, int y) const
+            {                
+                mouse_coord_.set( MAKELPARAM(x,y) );
             }
 
             swirl_effect& operator=(swirl_effect&&)

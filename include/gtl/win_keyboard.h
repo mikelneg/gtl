@@ -5,8 +5,8 @@ MIT license. See LICENSE.txt in project root for details.
 
 ---------------------------------------------------------------*/
 
-#ifndef WQWOWQPPZSF_GTL_WIN_KEYBOARD_ENUM_H_
-#define WQWOWQPPZSF_GTL_WIN_KEYBOARD_ENUM_H_
+#ifndef WQWOWQPPZSF_GTL_WIN_KEYBOARD_H_
+#define WQWOWQPPZSF_GTL_WIN_KEYBOARD_H_
 
 /*----------------------------------------------------------------------------
     Some key value definitions, put together by Josh Jackson:
@@ -16,7 +16,7 @@ MIT license. See LICENSE.txt in project root for details.
 #include <cstddef>
 #include <type_traits>
 
-// TODO sort out whether to use this or keyboard_enum.h
+// TODO sort out whether to use this or win_keyboard.h
 
 namespace gtl {
 

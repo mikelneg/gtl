@@ -20,14 +20,18 @@ namespace events {
     inline namespace event_types {
         struct done {
         };
+
         struct dump_contents {
             std::string id;
         };
+
         struct focus_entity {
             std::string id;
         };
+
         struct exit_all {
         };
+        
         //
         struct dpad_pressed {
             float x, y;
@@ -35,28 +39,35 @@ namespace events {
 
         struct keep {
         };
+
         struct revert {
         };
+
         struct none {
         };
+
         struct keydown {
             unsigned key;
         };
+
         struct keyup {
             unsigned key;
         };
+
         struct mouse_lbutton_down {
-            int64_t coord;
+            int x,y;            
         };
+
         struct mouse_rbutton_down {
-            int64_t coord;
+            int x,y;
         };
 
         struct mouse_lbutton_up {
-            int64_t coord;
+            int x,y;
         };
+
         struct mouse_rbutton_up {
-            int64_t coord;
+            int x,y;
         };
 
         struct mouse_wheel_scroll {
@@ -64,23 +75,31 @@ namespace events {
             int key_state;
             int x, y;
         };
+
         struct mouse_click {
             std::string id;
             int x, y;
         };
+
         struct mouse_moved {
-            int64_t coord;
+            int x,y;
         }; // TODO revisit: currently int64_t because windows uses hi and low bits to set both x and y coord..
+
         struct mousedown {
         };
+
         struct exit_immediately {
         };
+
         struct exit_state {
             int exitcode;
         };
+
         struct resize_swapchain {
             int new_width, new_height;
         };
+
+
 
         using mouse_event = boost::variant<mouse_lbutton_down, mouse_rbutton_down, mouse_lbutton_up, mouse_rbutton_up,
                                            mouse_wheel_scroll, mouse_click, mouse_moved, mousedown>;

@@ -15,10 +15,10 @@ MIT license. See LICENSE.txt in project root for details.
 
 -----------------------------------------------------------------------------*/
 
-// TODO sort out whether to use this or win_keyboard_enum.h
+// TODO sort out whether to use this or win_win_keyboard.h
 
 namespace gtl {
-namespace keyboard {
+namespace keyboard_break {
     enum keyboard_enum : unsigned {
         Backspace = 0x08,
         Tab = 0x09,

@@ -41,6 +41,13 @@ MIT license. See LICENSE.txt in project root for details.
 
 #include <gtl/audio_adapter.h>
 
+
+#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
+#include <gtl/d3d_imgui_adapter.h>
+#include <gtl/imgui_adapter.h>
+#include <imgui.h>
+
+
 namespace gtl {
 
 class stage {
@@ -65,6 +72,10 @@ class stage {
     vn::work_thread draw_thread_;    
     
     gtl::coroutine::event_handler event_handler_;    
+
+    gtl::imgui_adapter mutable imgui_adapter_;
+    gtl::d3d::imgui_adapter imgui_;
+
     
     // gtl::event_generator<gtl::command_variant> event_generator_;
 
@@ -82,6 +93,17 @@ public:
     void dispatch_event(gtl::event const& e)
     {
         event_handler_.dispatch_event(e);
+    }      
+
+    template <typename E>
+    void dispatch_events(E const& events)
+    {
+        for (auto&& e : events) {
+            event_handler_.dispatch_event(e);
+            imgui_adapter_.dispatch_event(e);
+        }
+
+        //imgui_adapter_.render();
     }      
 };
 
@@ -137,6 +159,8 @@ stage::stage(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, u
                           f(draw_queue_, static_cast<int>(current_index), 1.0f, swchain_.get_current_handle());
                       });
 
+                      imgui_.draw(draw_queue_,static_cast<int>(current_index), 1.0f, swchain_.get_current_handle()); 
+
                       draw_queue_.emplace_back(cla.get());
 
                       //
@@ -157,6 +181,8 @@ stage::stage(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, u
 
                               auto dims = swchain_.resize(r.w, r.h);
                               scene_.resize(dims.first, dims.second, cqueue_);
+                              
+                              imgui_.resize(dims.first,dims.second, cqueue_);
 
                               // event_generator_.send_event(gtl::commands::resize);
 
@@ -176,12 +202,16 @@ stage::stage(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, u
 
                             
             scene_.handle_events(handler_, yield);  
-        }}     
+        }},
+        imgui_adapter_{},
+        imgui_{swchain_, cqueue_, imgui_adapter_}                              
     {
         assert(num_buffers > 1);
         event_handler_.dispatch_event(gtl::events::none{});
     
         // scene_.attach_listener(event_generator_);
+
+        // imgui_adapter_.render();
     }
 
 
