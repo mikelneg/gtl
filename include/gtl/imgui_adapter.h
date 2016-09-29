@@ -11,6 +11,7 @@ MIT license. See LICENSE.txt in project root for details.
 #include <cassert>
 #include <utility>
 #include <vector>
+#include <chrono>
 
 #include <algorithm>
 #include <string>
@@ -130,9 +131,13 @@ public:
     void set_dirty() const { scene_dirty_ = true; }
     void clear_dirty() const { scene_dirty_ = false; }
 
-    void render()
+    void render(float dt)
     {
-    if (dirty()) {
+        auto& io = ImGui::GetIO();
+
+        io.DeltaTime = dt;
+
+    //if (dirty()) {
 
         ImGui::NewFrame();
 
@@ -203,8 +208,8 @@ public:
 
         dump_data(*ImGui::GetDrawData());
 
-        clear_dirty();
-    }
+    //    clear_dirty();
+    // }
     }
 
     static std::tuple<std::vector<uint32_t>,
@@ -244,7 +249,7 @@ public:
     
     void dispatch_event(gtl::event const& e) const {
         using boost::apply_visitor;
-        apply_visitor(*this,e.value());
+        apply_visitor(*this,e);
     }
 
     template <typename T>

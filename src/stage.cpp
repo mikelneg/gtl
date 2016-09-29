@@ -28,6 +28,7 @@ MIT license. See LICENSE.txt in project root for details.
 
 #include <algorithm>
 #include <cassert>
+#include <chrono>
 #include <unordered_map>
 
 #include <vn/composite_function.h>
@@ -65,9 +66,16 @@ namespace {
 
 void stage::present(gtl::d3d::swap_chain& swchain_, DXGI_PRESENT_PARAMETERS dxgi_pp)
 {
-    frame_rate_limiter_([&swchain_, &dxgi_pp, this]() {
+    using hrc = std::chrono::high_resolution_clock;
+    thread_local auto local_time = hrc::now();        
 
-        imgui_adapter_.render();
+    frame_rate_limiter_([&swchain_, &dxgi_pp, this]() {
+        
+        auto curr_time = hrc::now();
+
+        imgui_adapter_.render(std::chrono::duration<float>{curr_time - local_time}.count());
+
+        local_time = curr_time;
 
         draw_thread_.if_available(
             [&](auto& frame_state_) { // (auto& state_){  // consumes itself if not consumed..

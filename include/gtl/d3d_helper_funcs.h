@@ -33,6 +33,9 @@ namespace d3d {
         void wait_for_gpu(device&, command_queue&);
         void wait_for_gpu(command_queue&);
 
+        void initialize_null_descriptor_srv(device&,raw::CpuDescriptorHandle);
+        void initialize_null_descriptor_uav(device&,raw::CpuDescriptorHandle);
+
         template <typename T>
         device get_device_from(T& t)
         {

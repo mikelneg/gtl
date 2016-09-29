@@ -46,7 +46,8 @@ namespace d3d {
             using SwapChainDesc = DXGI_SWAP_CHAIN_DESC;
             using SamplerDesc = D3D12_SAMPLER_DESC;
             using CommandQueueDesc = D3D12_COMMAND_QUEUE_DESC;
-            using SrvDesc = D3D12_SHADER_RESOURCE_VIEW_DESC;
+            using SrvDesc = D3D12_SHADER_RESOURCE_VIEW_DESC;  
+            using UavDesc = D3D12_UNORDERED_ACCESS_VIEW_DESC;
             using DepthStencilDesc = D3D12_DEPTH_STENCIL_DESC;
             using DsvDesc = D3D12_DEPTH_STENCIL_VIEW_DESC;
             using VertexBufferView = D3D12_VERTEX_BUFFER_VIEW;

@@ -119,8 +119,7 @@ namespace d3d {
             blend_desc_.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ZERO;
             blend_desc_.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ONE;
             blend_desc_.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-            blend_desc_.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-            blend_desc_.RenderTarget[0].BlendEnable = true;
+            blend_desc_.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;            
 
             desc_.BlendState = blend_desc_;
 

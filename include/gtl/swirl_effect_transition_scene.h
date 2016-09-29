@@ -186,15 +186,17 @@ namespace scenes {
                 desc_.RasterizerState.AntialiasedLineEnable = true;
 
                 D3D12_BLEND_DESC blend_desc_ = {}; // CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-                blend_desc_.RenderTarget[0].BlendEnable = true;
+                //blend_desc_.RenderTarget[0].BlendEnable = true; // HACK testing..
+                blend_desc_.RenderTarget[0].BlendEnable = false;
                 blend_desc_.RenderTarget[0].SrcBlend = D3D12_BLEND_BLEND_FACTOR;
                 blend_desc_.RenderTarget[0].DestBlend = D3D12_BLEND_INV_BLEND_FACTOR;
                 blend_desc_.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
                 blend_desc_.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_BLEND_FACTOR;
                 blend_desc_.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_INV_BLEND_FACTOR;
                 blend_desc_.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-                blend_desc_.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-                blend_desc_.RenderTarget[0].BlendEnable = true;
+                blend_desc_.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;                
+
+                blend_desc_.RenderTarget[1].BlendEnable = false;
 
                 desc_.BlendState = blend_desc_;
 
@@ -243,7 +245,7 @@ namespace scenes {
                   id_sampler_clist_{{{dev_, calloc_[0]}, {dev_, calloc_[1]}, {dev_, calloc_[2]}}},
                   viewport_{swchain_.viewport()}, // {0.0f,0.0f,960.0f,540.0f,0.0f,1.0f},
                   scissor_{0, 0, 960, 540},       // HACK fixed values..
-                  resource_heap_{dev_, 2, gtl::d3d::tags::shader_visible{}},
+                  resource_heap_{dev_, 3, gtl::d3d::tags::shader_visible{}},
                   texture_{dev_,
                            {resource_heap_->GetCPUDescriptorHandleForHeapStart()},
                            cqueue_,
@@ -262,6 +264,10 @@ namespace scenes {
                     __uuidof(gtl::d3d::resource::type), expose_as_void_pp(id_readback_));
                 // cbuffer_[idx].update() --
                 std::cout << "swirl_effect()\n";
+
+                initialize_null_descriptor_srv(dev_, resource_heap_.get_handle(1));
+                initialize_null_descriptor_uav(dev_, resource_heap_.get_handle(2));
+
             }
 
             void set_mouse_coords(int x, int y) const

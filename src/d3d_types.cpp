@@ -189,8 +189,8 @@ namespace d3d {
             desc.Type = D3D12_DESCRIPTOR_HEAP_TYPE_CBV_SRV_UAV;
             desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_SHADER_VISIBLE;
             win::throw_on_fail(dev->CreateDescriptorHeap(&desc, __uuidof(type), expose_as_void_pp(*this)), __func__);
-            increment_ = dev->GetDescriptorHandleIncrementSize(desc.Type);
-            set_debug_name(*get(), L"res_heap");
+            increment_ = dev->GetDescriptorHandleIncrementSize(desc.Type);                     
+            set_debug_name(*get(), L"res_heap");                      
         }
 
         resource_descriptor_heap::resource_descriptor_heap(device& dev, unsigned num_descriptors,
@@ -203,7 +203,7 @@ namespace d3d {
             desc.Flags = D3D12_DESCRIPTOR_HEAP_FLAG_NONE;
             win::throw_on_fail(dev->CreateDescriptorHeap(&desc, __uuidof(type), expose_as_void_pp(*this)), __func__);
             increment_ = dev->GetDescriptorHandleIncrementSize(desc.Type);
-            set_debug_name(*get(), L"res_heap_dsv");
+            set_debug_name(*get(), L"res_heap_dsv");           
         }
 
         sampler_descriptor_heap::sampler_descriptor_heap(device& dev, unsigned num_descriptors) : size_{num_descriptors}
@@ -659,20 +659,28 @@ namespace d3d {
                                                            nullptr, __uuidof(type), expose_as_void_pp(*this));
             win::throw_on_fail(result2, __func__);
 
-            raw::ResourceBarrier barrierDesc{};
+            raw::ResourceBarrier barrierDesc{},textureBarrierDesc{};
 
             barrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
             barrierDesc.Transition.pResource = get();
             barrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
             barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_COMMON;
-            barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;
+            barrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_DEST;            
+
+            textureBarrierDesc.Type = D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
+            textureBarrierDesc.Transition.pResource = texture.get();
+            textureBarrierDesc.Transition.Subresource = D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES;
+            textureBarrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_PIXEL_SHADER_RESOURCE; //D3D12_RESOURCE_STATE_COMMON;
+            textureBarrierDesc.Transition.StateAfter = D3D12_RESOURCE_STATE_COPY_SOURCE;            
 
             gtl::d3d::direct_command_allocator calloc{dev};
             gtl::d3d::graphics_command_list clist{dev, calloc};
 
-            clist->Reset(calloc.get(), nullptr);
+            clist->Reset(calloc.get(), nullptr);            
 
             clist->ResourceBarrier(1, &barrierDesc);
+            clist->ResourceBarrier(1, &textureBarrierDesc);
+
             clist->CopyResource(get(), texture.get());
 
             barrierDesc.Transition.StateBefore = D3D12_RESOURCE_STATE_COPY_DEST;
@@ -914,7 +922,7 @@ namespace d3d {
             desc.BlendState.RenderTarget[0].DestBlend = D3D12_BLEND_INV_BLEND_FACTOR;
             // desc.BlendState.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_INV_BLEND_FACTOR;
 
-            //
+            desc.BlendState.RenderTarget[1].BlendEnable = false;
 
             desc.DepthStencilState.DepthEnable = FALSE;
             desc.DepthStencilState.StencilEnable = FALSE;

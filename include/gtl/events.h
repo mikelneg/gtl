@@ -140,52 +140,54 @@ namespace events {
     //    }
     //};
 
-    class event_variant { // HACK replace this clunky .value() interface..
+    using event_variant = event_variant_base_;
 
-        using variant = event_variant_base_;
-        variant value_;
+    //class event_variant { // HACK replace this clunky .value() interface..
+    //
+    //    using variant = event_variant_base_;
+    //    variant value_;
+    //
+    //public:
+    //    template <typename T>
+    //    event_variant(T const& e) : value_{e}
+    //    {
+    //    }
+    //
+    //    event_variant(event_variant const&) = default;
+    //    event_variant(event_variant&&) = default;
+    //
+    //    variant value() const
+    //    {
+    //        return value_;
+    //    }
+    //
+    //    friend bool same_type(event_variant const& lhs, event_variant const& rhs)
+    //    {
+    //        using boost::apply_visitor;
+    //        return apply_visitor(vn::visitors::same_type{}, lhs.value_, rhs.value_);
+    //    }
+    //
+    //    friend bool operator==(event_variant const& lhs, event_variant const& rhs)
+    //    {
+    //        using boost::apply_visitor;
+    //        return apply_visitor(vn::visitors::weak_equality{}, lhs.value_, rhs.value_);
+    //    }
+    //
+    //    template <typename T>
+    //    friend bool has_variant_type(event_variant const& e)
+    //    {
+    //        using boost::apply_visitor;
+    //        return apply_visitor(vn::visitors::has_variant_type<T>{}, e.value());
+    //    }
+    //
+    //    // operator variant&() { return value_; }
+    //};
 
-    public:
-        template <typename T>
-        event_variant(T const& e) : value_{e}
-        {
-        }
-
-        event_variant(event_variant const&) = default;
-        event_variant(event_variant&&) = default;
-
-        variant value() const
-        {
-            return value_;
-        }
-
-        friend bool same_type(event_variant const& lhs, event_variant const& rhs)
-        {
-            using boost::apply_visitor;
-            return apply_visitor(vn::visitors::same_type{}, lhs.value_, rhs.value_);
-        }
-
-        friend bool operator==(event_variant const& lhs, event_variant const& rhs)
-        {
-            using boost::apply_visitor;
-            return apply_visitor(vn::visitors::weak_equality{}, lhs.value_, rhs.value_);
-        }
-
-        template <typename T>
-        friend bool has_variant_type(event_variant const& e)
-        {
-            using boost::apply_visitor;
-            return apply_visitor(vn::visitors::has_variant_type<T>{}, e.value());
-        }
-
-        // operator variant&() { return value_; }
-    };
-
-    template <typename T> // currently unused..
-    void dispatch_event(T& t, event_variant e)
-    {
-        t.emplace_back(std::move(e));
-    }
+    //template <typename T> // currently unused..
+    //void dispatch_event(T& t, event_variant e)
+    //{
+    //    t.emplace_back(std::move(e));
+    //}
 
 } // namespace
 

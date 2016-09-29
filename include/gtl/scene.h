@@ -5,8 +5,8 @@ MIT license. See LICENSE.txt in project root for details.
 
 ---------------------------------------------------------------*/
 
-#ifndef YWGOWAZXCommandVariantBCommandVariantGH_GTL_SCENE_H_
-#define YWGOWAZXCommandVariantBCommandVariantGH_GTL_SCENE_H_
+#ifndef YWGOWAZXBQQWEFEVVOEFIJH_GTL_SCENE_H_
+#define YWGOWAZXBQQWEFEVVOEFIJH_GTL_SCENE_H_
 
 #include <memory>
 #include <type_traits>

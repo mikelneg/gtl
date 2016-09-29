@@ -229,13 +229,13 @@ namespace scenes {
             // timer begins
             // yes is pressed, no is pressed, esc is pressed, timer expires
             namespace ev = gtl::events;
-            namespace k = gtl::keyboard;
+            namespace k = gtl::keyboard;            
 
-            while (!same_type(yield().get().value(), ev::exit_immediately{}))
+            while (!same_type(yield().get(), ev::exit_immediately{}))
             {
-                if (same_type(yield.get().value(), ev::keydown{}))
+                if (same_type(yield.get(), ev::keydown{}))
                 {
-                    switch (boost::get<ev::keydown>(yield.get().value()).key)
+                    switch (boost::get<ev::keydown>(yield.get()).key)
                     {
                         case k::Escape: // falls through..
                         case k::N:
@@ -414,7 +414,7 @@ namespace scenes {
 
             while (!quit_)
             {
-                top_level_handler(yield().get().value());
+                top_level_handler(yield().get());
             }
 
             return ev::exit_state{0};

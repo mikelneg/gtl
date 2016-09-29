@@ -150,7 +150,8 @@ namespace d3d {
             blend_desc_.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ONE;
             blend_desc_.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
             blend_desc_.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-            blend_desc_.RenderTarget[0].BlendEnable = true;
+            
+            blend_desc_.RenderTarget[1].BlendEnable = false;
 
             desc_.BlendState = blend_desc_;
 
@@ -163,9 +164,9 @@ namespace d3d {
             desc_.SampleMask = UINT_MAX;
             desc_.PrimitiveTopologyType = D3D12_PRIMITIVE_TOPOLOGY_TYPE_TRIANGLE;
 
-            desc_.NumRenderTargets = 2;
+            desc_.NumRenderTargets = 1;
             desc_.RTVFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
-            desc_.RTVFormats[1] = DXGI_FORMAT_R32_UINT;
+            //desc_.RTVFormats[1] = DXGI_FORMAT_R32_UINT;   
             desc_.SampleDesc.Count = 1;
             return desc_;
         }
@@ -239,7 +240,7 @@ namespace d3d {
                              gtl::d3d::tags::shader_view{}},
                             {dev, idx_descriptor_heap_.get_handle(2), MAX_INDICES * sizeof(ImDrawIdx),
                              gtl::d3d::tags::shader_view{}}}},
-              texture_descriptor_heap_{dev, 1, gtl::d3d::tags::shader_visible{}},       
+              texture_descriptor_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},       
               font_texture_{dev,
                             {texture_descriptor_heap_.get_handle(0)},
                             cqueue,
@@ -260,6 +261,11 @@ namespace d3d {
             update(0);
             update(1);
             update(2);
+
+
+            initialize_null_descriptor_srv(dev, texture_descriptor_heap_.get_handle(1));
+            initialize_null_descriptor_uav(dev, texture_descriptor_heap_.get_handle(2));
+
         }
 
         // void insert_callback(std::string key, std::function<void()> func) {
@@ -334,8 +340,7 @@ namespace d3d {
             clist_[idx]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             clist_[idx]->SetGraphicsRootConstantBufferView(0, (cbuffer_[idx].resource())->GetGPUVirtualAddress());
             clist_[idx]->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
-            clist_[idx]->SetGraphicsRootDescriptorTable(2,
-                                                        texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());
+            clist_[idx]->SetGraphicsRootDescriptorTable(2, texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());
             clist_[idx]->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport_), 0);
             //
             // clist_[idx]->SetGraphicsRootShaderResourceView(4,cbuffer_[idx].resource()->GetGPUVirtualAddress());

@@ -137,7 +137,7 @@ namespace d3d {
             desc_.InputLayout.NumElements = static_cast<unsigned>(layout_.size());
 
             D3D12_BLEND_DESC blend_desc_ = CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-            blend_desc_.RenderTarget[0].BlendEnable = true;
+            blend_desc_.RenderTarget[0].BlendEnable = false;
             blend_desc_.RenderTarget[0].SrcBlend = D3D12_BLEND_SRC_ALPHA;
             blend_desc_.RenderTarget[0].DestBlend = D3D12_BLEND_INV_SRC_ALPHA;
             blend_desc_.RenderTarget[0].BlendOp = D3D12_BLEND_OP_ADD;
@@ -145,7 +145,9 @@ namespace d3d {
             blend_desc_.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ONE;
             blend_desc_.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
             blend_desc_.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-            blend_desc_.RenderTarget[0].BlendEnable = true;
+            
+            
+            blend_desc_.RenderTarget[1].BlendEnable = false;
 
             desc_.BlendState = blend_desc_;
 
@@ -194,7 +196,7 @@ namespace d3d {
               cbuffer_{{{dev, cbheap_[0], sizeof(gtl::camera)},
                         {dev, cbheap_[1], sizeof(gtl::camera)},
                         {dev, cbheap_[2], sizeof(gtl::camera)}}},
-              texture_descriptor_heap_{dev, 1, gtl::d3d::tags::shader_visible{}},
+              texture_descriptor_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},
               texture_{
                   dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, L"data\\images\\palettes\\greenish_palette.dds"},
               // vshader_{L"rect_draw_gui_vs.cso"},
