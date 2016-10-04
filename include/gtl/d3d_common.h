@@ -5,8 +5,8 @@ MIT license. See LICENSE.txt in project root for details.
 
 ---------------------------------------------------------------*/
 
-#ifndef NSNLLSLSFW_GTL_D3D_VERSION_H_
-#define NSNLLSLSFW_GTL_D3D_VERSION_H_
+#ifndef NSNLLSLSFW_GTL_D3D_COMMON_H_
+#define NSNLLSLSFW_GTL_D3D_COMMON_H_
 
 #include <d3d12.h>
 #include <d3dx12.h> // not supplied by the sdk (as of 8/2016)
@@ -46,7 +46,7 @@ namespace d3d {
             using SwapChainDesc = DXGI_SWAP_CHAIN_DESC;
             using SamplerDesc = D3D12_SAMPLER_DESC;
             using CommandQueueDesc = D3D12_COMMAND_QUEUE_DESC;
-            using SrvDesc = D3D12_SHADER_RESOURCE_VIEW_DESC;  
+            using SrvDesc = D3D12_SHADER_RESOURCE_VIEW_DESC;
             using UavDesc = D3D12_UNORDERED_ACCESS_VIEW_DESC;
             using DepthStencilDesc = D3D12_DEPTH_STENCIL_DESC;
             using DsvDesc = D3D12_DEPTH_STENCIL_VIEW_DESC;

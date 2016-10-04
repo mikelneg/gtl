@@ -14,6 +14,7 @@ MIT license. See LICENSE.txt in project root for details.
 #include <vector>
 
 #include <gtl/swap_vector.h>
+#include <vn/single_consumer_queue.h>
 #include <vn/swap_object.h>
 
 #include <Eigen/Core>
@@ -26,7 +27,9 @@ MIT license. See LICENSE.txt in project root for details.
 
 #include <boost/variant.hpp>
 
-#include <gtl/physics_units.h>
+#include <gtl/physics/common_units.h>
+#include <gtl/physics/generator.h>
+#include <gtl/box2d_adapter.h>
 
 namespace gtl {
 
@@ -201,12 +204,16 @@ namespace physics {
             uint16_t id;
             float x, y;
         };
+
+        struct polymorphic_generator {
+            std::unique_ptr<gtl::physics::generator> generator_;
+        };
+
     }
 
-    using generator
-        = boost::variant<generators::static_box, generators::dynamic_box, generators::dynamic_jointed_boxes,
-                         generators::static_circle, generators::destroy_object_implode, generators::boost_object,
-                         generators::boost_object_vec, generators::drive_object_vec>;
+    using generator_variant = boost::variant<generators::polymorphic_generator, 
+                                     generators::static_box, generators::dynamic_box, generators::dynamic_jointed_boxes, generators::static_circle,
+                                     generators::destroy_object_implode, generators::boost_object, generators::boost_object_vec, generators::drive_object_vec>;
 }
 
 struct render_data {
@@ -221,7 +228,9 @@ struct render_data {
     }
 };
 
-class physics_simulation {
+namespace physics {
+
+class simulation {
     using entity_type = InstanceInfo;
 
     vn::swap_object<render_data> render_data_;
@@ -230,19 +239,21 @@ class physics_simulation {
     std::thread thread_;
 
 public:
-    physics_simulation(gtl::swap_vector<gtl::physics::generator>&);
+    //physics_simulation(gtl::swap_vector<gtl::physics::generator>&);
+    simulation(vn::single_consumer_queue<gtl::physics::generator_variant>&, gtl::box2d_adapter&);
 
     bool extract_render_data(render_data& c)
     {
         return render_data_.swap_out(c);
     }
 
-    ~physics_simulation()
+    ~simulation()
     {
         quit_.clear();
         thread_.join();
     }
 };
+}
 
 } // namespace
 #endif

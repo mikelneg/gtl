@@ -64,8 +64,7 @@ namespace d3d {
         {
             return std::vector<D3D12_INPUT_ELEMENT_DESC>{
                 {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                {"UV", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-                 D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
+                {"UV", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
 
             // return std::vector<D3D12_INPUT_ELEMENT_DESC>{
             //    {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
@@ -74,8 +73,7 @@ namespace d3d {
             //};
         }
 
-        auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs,
-                      gtl::d3d::pixel_shader& ps)
+        auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps)
         {
             D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_{};
             desc_.pRootSignature = rsig.get();
@@ -119,7 +117,7 @@ namespace d3d {
             blend_desc_.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_ZERO;
             blend_desc_.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ONE;
             blend_desc_.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-            blend_desc_.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;            
+            blend_desc_.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
             desc_.BlendState = blend_desc_;
 
@@ -154,8 +152,7 @@ namespace d3d {
         font_atlas(font_atlas&&) = default;
         font_atlas& operator=(font_atlas&&) = default;
 
-        font_atlas(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, gtl::d3d::root_signature& rsig,
-                   std::wstring definition_filename, gtl::d3d::tags::xml_format tag)
+        font_atlas(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, gtl::d3d::root_signature& rsig, std::wstring definition_filename, gtl::d3d::tags::xml_format tag)
             : layout_(vertex_layout()),
               font_definition{definition_filename, tag},
               vbuffer_descriptors_{dev, 3, gtl::d3d::tags::shader_visible{}},
@@ -163,10 +160,7 @@ namespace d3d {
                          {dev, vbuffer_descriptors_.get_handle(1), MAX_STRING_WIDTH * sizeof(Vertex)},
                          {dev, vbuffer_descriptors_.get_handle(2), MAX_STRING_WIDTH * sizeof(Vertex)}}},
               texture_descriptor_heap_{dev, 1, gtl::d3d::tags::shader_visible{}},
-              texture_{dev,
-                       {texture_descriptor_heap_.get_handle(0)},
-                       cqueue,
-                       L"data\\images\\fonts\\depth-field-font72\\font.dds"},
+              texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, L"data\\images\\fonts\\depth-field-font72\\font.dds"},
               vshader_{L"font_atlas_vs.cso"},
               pshader_{L"font_atlas_ps.cso"},
               root_sig_{rsig},
@@ -183,9 +177,8 @@ namespace d3d {
             vbuffers_[idx].update(reinterpret_cast<char*>(mesh_.data()), mesh_.size() * sizeof(Vertex));
         }
 
-        void operator()(unsigned idx, float, gtl::d3d::graphics_command_list& cl,
-                        gtl::d3d::raw::Viewport const& viewport, gtl::d3d::raw::ScissorRect const& scissor,
-                        float font_scale, raw::CpuDescriptorHandle const& rtv_handle) const
+        void operator()(unsigned idx, float, gtl::d3d::graphics_command_list& cl, gtl::d3d::raw::Viewport const& viewport,
+                        gtl::d3d::raw::ScissorRect const& scissor, float font_scale, raw::CpuDescriptorHandle const& rtv_handle) const
         {
 
             update_vertex_buffer(idx);
@@ -201,8 +194,7 @@ namespace d3d {
             cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);
             cl->SetGraphicsRoot32BitConstants(3, 1, std::addressof(font_scale), 4);
 
-            D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(),
-                                          static_cast<unsigned>(mesh_.size() * sizeof(Vertex)), sizeof(Vertex)};
+            D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_.size() * sizeof(Vertex)), sizeof(Vertex)};
             cl->IASetVertexBuffers(0, 1, &cbv_);
 
             auto viewports = {std::addressof(viewport)};

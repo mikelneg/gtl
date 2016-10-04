@@ -5,8 +5,8 @@ MIT license. See LICENSE.txt in project root for details.
 
 ---------------------------------------------------------------*/
 
-#ifndef HBWWABVWAFSF_GTL_D3D_IMGUI_ADAPTER_H_
-#define HBWWABVWAFSF_GTL_D3D_IMGUI_ADAPTER_H_
+#ifndef WOIAJFAJBOAWFAW_GTL_D3D_BOX2D_ADAPTER_H_
+#define WOIAJFAJBOAWFAW_GTL_D3D_BOX2D_ADAPTER_H_
 
 #include <array>
 #include <utility>
@@ -26,18 +26,18 @@ MIT license. See LICENSE.txt in project root for details.
 //
 //#include <imgui.h>
 
-#include <gtl/imgui_adapter.h>
+#include <gtl/box2d_adapter.h>
 
 namespace gtl {
 namespace d3d {
 
-    class imgui_adapter {
+    class box2d_adapter {
         // texture
         // vertices
 
         constexpr static std::size_t frame_count = 3; // TODO place elsewhere..
 
-        static constexpr unsigned MAX_VERTS = 1000;
+        static constexpr unsigned MAX_VERTS = 2000;
         static constexpr unsigned MAX_INDICES = 5000;
 
         // struct vertex { float x,y; float u,v; uint32_t color; };
@@ -55,8 +55,7 @@ namespace d3d {
         d3d::resource_descriptor_heap idx_descriptor_heap_;
         std::array<gtl::d3d::constant_buffer, 3> mutable idx_buffers_;
 
-        gtl::d3d::resource_descriptor_heap texture_descriptor_heap_;
-        gtl::d3d::srv font_texture_;
+        gtl::d3d::resource_descriptor_heap texture_descriptor_heap_;        
 
         gtl::d3d::vertex_shader vshader_;
         gtl::d3d::pixel_shader pshader_;
@@ -73,8 +72,8 @@ namespace d3d {
         gtl::d3d::viewport viewport_;        //{0.0f,0.0f,960.0f,540.0f,0.0f,1.0f};
         gtl::d3d::raw::ScissorRect scissor_; //{0,0,960,540};
 
-        gtl::imgui_adapter& imgui_adapter_;
-        gtl::imgui_adapter::imgui_data mutable local_imgui_data_;
+        gtl::box2d_adapter& box2d_adapter_;
+        gtl::box2d_adapter::imgui_data mutable local_imgui_data_;
 
         std::array<bool, frame_count> mutable imgui_dirty_flags_;
         // unsigned mutable idx_count{},vtx_count{};
@@ -210,12 +209,12 @@ namespace d3d {
         //}
 
     public:
-        imgui_adapter(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue, gtl::imgui_adapter& imgui_)
-            : imgui_adapter(get_device_from(swchain_), swchain_, cqueue, imgui_)
+        box2d_adapter(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue, gtl::box2d_adapter& imgui_)
+            : box2d_adapter(get_device_from(swchain_), swchain_, cqueue, imgui_)
         {
         }
 
-        imgui_adapter(gtl::d3d::device& dev, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue, gtl::imgui_adapter& imgui_)
+        box2d_adapter(gtl::d3d::device& dev, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue, gtl::box2d_adapter& imgui_)
             : cbheap_{dev, 3, gtl::d3d::tags::shader_visible{}},
               cbuffer_{{{dev, cbheap_.get_handle(0), sizeof(gtl::camera)}, {dev, cbheap_.get_handle(1), sizeof(gtl::camera)}, {dev, cbheap_.get_handle(2), sizeof(gtl::camera)}}},
 
@@ -228,10 +227,9 @@ namespace d3d {
               idx_buffers_{{{dev, idx_descriptor_heap_.get_handle(0), MAX_INDICES * sizeof(ImDrawIdx), gtl::d3d::tags::shader_view{}},
                             {dev, idx_descriptor_heap_.get_handle(1), MAX_INDICES * sizeof(ImDrawIdx), gtl::d3d::tags::shader_view{}},
                             {dev, idx_descriptor_heap_.get_handle(2), MAX_INDICES * sizeof(ImDrawIdx), gtl::d3d::tags::shader_view{}}}},
-              texture_descriptor_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},
-              font_texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, gtl::imgui_adapter::get_font_bitmap(swchain_.dimensions())},
-              vshader_{L"imgui_vs.cso"},
-              pshader_{L"imgui_ps.cso"},
+              texture_descriptor_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},              
+              vshader_{L"box2d_vs.cso"},
+              pshader_{L"box2d_ps.cso"},
               root_sig_{dev, vshader_},
               pso_{dev, pso_desc(dev, root_sig_, vshader_, pshader_)},
               calloc_{{{dev}, {dev}, {dev}}},
@@ -240,7 +238,7 @@ namespace d3d {
               sampler_{dev, sampler_desc(), sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
               viewport_{swchain_.viewport()},
               scissor_{0, 0, 960, 540},
-              imgui_adapter_{imgui_}
+              box2d_adapter_{imgui_}
         {
             imgui_dirty_flags_.fill(true);
             update(0);
@@ -260,9 +258,7 @@ namespace d3d {
         //}
 
         void resize(int w, int h, gtl::d3d::command_queue& cqueue_)
-        { // needs dev cqueue etc
-            font_texture_
-                = gtl::d3d::srv{get_device_from(cqueue_), {texture_descriptor_heap_.get_handle(0)}, cqueue_, gtl::imgui_adapter::get_font_bitmap(std::make_pair(w, h))};
+        { // needs dev cqueue etc            
             viewport_.Width = static_cast<float>(w);
             viewport_.Height = static_cast<float>(h);
             scissor_ = gtl::d3d::raw::ScissorRect{0, 0, w, h};
@@ -270,7 +266,7 @@ namespace d3d {
 
         void update(unsigned idx) const
         {
-            if (imgui_adapter_.swap_out(local_imgui_data_))
+            if (box2d_adapter_.swap_out(local_imgui_data_))
             {
                 imgui_dirty_flags_.fill(true);
             }

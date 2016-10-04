@@ -48,8 +48,7 @@ public:
     {
     }
 
-    intrusive_ptr(intrusive_ptr&& other) noexcept
-        : Cleanup(std::move(static_cast<Cleanup&>(other))), ptr_{other.release()}
+    intrusive_ptr(intrusive_ptr&& other) noexcept : Cleanup(std::move(static_cast<Cleanup&>(other))), ptr_{other.release()}
     {
     }
 
@@ -61,8 +60,7 @@ public:
 
     ~intrusive_ptr()
     {
-        static_assert(noexcept(this->Cleanup::operator()(ptr_)),
-                      "intrusive_ptr<T,Cleanup>: Cleanup::operator()(T*) must be noexcept.");
+        static_assert(noexcept(this->Cleanup::operator()(ptr_)), "intrusive_ptr<T,Cleanup>: Cleanup::operator()(T*) must be noexcept.");
         this->reset();
     }
 

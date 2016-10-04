@@ -9,7 +9,7 @@ MIT license. See LICENSE.txt in project root for details.
 #define IRWFGHOSFF_GTL_d3d_helper_funcs_H_
 
 #include <gtl/d3d_types.h>
-#include <gtl/d3d_version.h>
+#include <gtl/d3d_common.h>
 #include <gtl/intrusive_ptr.h>
 #include <gtl/tags.h>
 #include <gtl/win_tools.h>
@@ -33,8 +33,8 @@ namespace d3d {
         void wait_for_gpu(device&, command_queue&);
         void wait_for_gpu(command_queue&);
 
-        void initialize_null_descriptor_srv(device&,raw::CpuDescriptorHandle);
-        void initialize_null_descriptor_uav(device&,raw::CpuDescriptorHandle);
+        void initialize_null_descriptor_srv(device&, raw::CpuDescriptorHandle);
+        void initialize_null_descriptor_uav(device&, raw::CpuDescriptorHandle);
 
         template <typename T>
         device get_device_from(T& t)

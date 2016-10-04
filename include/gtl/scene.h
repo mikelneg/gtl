@@ -40,8 +40,7 @@ class scene {
 
         virtual void dispatch(CommandVariant v) const final
         {
-            apply_visitor(obj,
-                          v); // adl call, should pick up boost::apply_visitor if using boost::variant CommandVariant
+            apply_visitor(obj, v); // adl call, should pick up boost::apply_visitor if using boost::variant CommandVariant
         }
     };
 

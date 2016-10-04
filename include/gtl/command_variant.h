@@ -30,8 +30,8 @@ namespace commands {
     };
 }
 
-using command_variant = boost::variant<commands::get_audio_adapter, commands::get_some_resource,
-                                       commands::get_swap_chain, commands::draw, commands::resize, commands::handle>;
+using command_variant
+    = boost::variant<commands::get_audio_adapter, commands::get_some_resource, commands::get_swap_chain, commands::draw, commands::resize, commands::handle>;
 
 } // namespace
 #endif

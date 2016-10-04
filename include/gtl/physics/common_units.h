@@ -5,10 +5,10 @@ MIT license. See LICENSE.txt in project root for details.
 
 ---------------------------------------------------------------*/
 
-#ifndef URUWOZOBBASFFW_GTL_PHYSICS_UNITS_H_
-#define URUWOZOBBASFFW_GTL_PHYSICS_UNITS_H_
+#ifndef URUWOZOBBASFFW_GTL_PHYSICS_COMMON_UNITS_H_
+#define URUWOZOBBASFFW_GTL_PHYSICS_COMMON_UNITS_H_
 
-#include <Eigen/Core>
+#include <utility>
 
 #include <boost/units/base_units/angle/radian.hpp>
 #include <boost/units/quantity.hpp>
@@ -19,10 +19,7 @@ MIT license. See LICENSE.txt in project root for details.
 
 namespace gtl {
 namespace physics {
-
-    // template <typename T>
-    // using area = boost::units::quantity<boost::units::si::area,T>;
-
+    
     template <typename T>
     using length = boost::units::quantity<boost::units::si::length, T>;
 
@@ -35,7 +32,6 @@ namespace physics {
     template <typename T>
     using angle = boost::units::quantity<boost::units::angle::radian_base_unit::unit_type, T>;
 
+}
 } // namespace
-} // namespace
-
 #endif

@@ -41,8 +41,7 @@ struct mesh_group { // HACK hackish..
         if (it != end(offset_data))
             return; // already contains key..
 
-        offset_data.emplace_back(
-            mesh_data{std::move(key), vertex_buffer.size(), index_buffer.size(), v.size(), i.size(), bone_count});
+        offset_data.emplace_back(mesh_data{std::move(key), vertex_buffer.size(), index_buffer.size(), v.size(), i.size(), bone_count});
         vertex_buffer.insert(end(vertex_buffer), begin(v), end(v));
         index_buffer.insert(end(index_buffer), begin(i), end(i));
     }

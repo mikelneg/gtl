@@ -57,10 +57,8 @@ namespace scenes {
             }
         };
 
-        static_assert(boost::has_nothrow_copy<empty_scene>::value,
-                      "empty_scene() must satisfy boost::has_nothrow_copy");
-        static_assert(boost::has_nothrow_constructor<empty_scene>::value,
-                      "empty_scene() must satisfy boost::has_nothrow_constructor");
+        static_assert(boost::has_nothrow_copy<empty_scene>::value, "empty_scene() must satisfy boost::has_nothrow_copy");
+        static_assert(boost::has_nothrow_constructor<empty_scene>::value, "empty_scene() must satisfy boost::has_nothrow_constructor");
 
         template <typename>
         class transition_scene;
@@ -71,9 +69,7 @@ namespace scenes {
 
     template <typename... Ts>
     using scene_variant =
-        typename boost::make_recursive_variant<detail::empty_scene, Ts...,
-                                               detail::transition_scene<boost::recursive_variant_>,
-                                               detail::inverse_transition_scene<boost::recursive_variant_>>::type;
+        typename boost::make_recursive_variant<detail::empty_scene, Ts..., detail::transition_scene<boost::recursive_variant_>, detail::inverse_transition_scene<boost::recursive_variant_>>::type;
 
     template <typename VariantType>
     bool has_same_type(VariantType const& lhs, VariantType const& rhs)
@@ -91,10 +87,7 @@ namespace scenes {
 
         public:
             transition_scene(T&& s1, T&& s2, std::chrono::milliseconds t)
-                : first_{std::move(s1)},
-                  second_{std::move(s2)},
-                  transition_duration_{t},
-                  begin_timepoint_{std::chrono::high_resolution_clock::now()}
+                : first_{std::move(s1)}, second_{std::move(s2)}, transition_duration_{t}, begin_timepoint_{std::chrono::high_resolution_clock::now()}
             {
                 assert(t.count() > 0);
             }
@@ -106,8 +99,7 @@ namespace scenes {
             template <typename YieldType>
             gtl::event handle_events(YieldType& yield) const
             {
-                std::chrono::high_resolution_clock::time_point const end_time_
-                    = begin_timepoint_ + transition_duration_;
+                std::chrono::high_resolution_clock::time_point const end_time_ = begin_timepoint_ + transition_duration_;
                 while ((current_timepoint_ = std::chrono::high_resolution_clock::now()) < end_time_)
                 {
                     if (same_type(yield.get(), gtl::event{gtl::events::exit_immediately{}}))
@@ -137,8 +129,7 @@ namespace scenes {
 
             std::vector<ID3D12CommandList*> draw(int idx, float, gtl::d3d::rtv_descriptor_heap& rtv) const
             {
-                float r = (current_timepoint_ - begin_timepoint_).count()
-                    / static_cast<float>(transition_duration_.count());
+                float r = (current_timepoint_ - begin_timepoint_).count() / static_cast<float>(transition_duration_.count());
                 if (r < 0.0f)
                 {
                     r = 0.0f;
@@ -185,10 +176,7 @@ namespace scenes {
 
         public:
             inverse_transition_scene(T&& s1, T&& s2, std::chrono::milliseconds t)
-                : first_{std::move(s1)},
-                  second_{std::move(s2)},
-                  transition_duration_{t},
-                  begin_timepoint_{std::chrono::high_resolution_clock::now()}
+                : first_{std::move(s1)}, second_{std::move(s2)}, transition_duration_{t}, begin_timepoint_{std::chrono::high_resolution_clock::now()}
             {
                 assert(t.count() > 0);
             }
@@ -200,8 +188,7 @@ namespace scenes {
             template <typename YieldType>
             gtl::event handle_events(YieldType& yield) const
             {
-                std::chrono::high_resolution_clock::time_point const end_time_
-                    = begin_timepoint_ + transition_duration_;
+                std::chrono::high_resolution_clock::time_point const end_time_ = begin_timepoint_ + transition_duration_;
                 while ((current_timepoint_ = std::chrono::high_resolution_clock::now()) < end_time_)
                 {
                     if (same_type(yield.get(), gtl::event{gtl::events::exit_immediately{}}))
@@ -231,8 +218,7 @@ namespace scenes {
 
             std::vector<ID3D12CommandList*> draw(int idx, float, gtl::d3d::rtv_descriptor_heap& rtv) const
             {
-                float r = (current_timepoint_ - begin_timepoint_).count()
-                    / static_cast<float>(transition_duration_.count());
+                float r = (current_timepoint_ - begin_timepoint_).count() / static_cast<float>(transition_duration_.count());
                 if (r < 0.0f)
                 {
                     r = 0.0f;

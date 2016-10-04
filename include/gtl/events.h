@@ -31,7 +31,7 @@ namespace events {
 
         struct exit_all {
         };
-        
+
         //
         struct dpad_pressed {
             float x, y;
@@ -55,19 +55,19 @@ namespace events {
         };
 
         struct mouse_lbutton_down {
-            int x,y;            
+            int x, y;
         };
 
         struct mouse_rbutton_down {
-            int x,y;
+            int x, y;
         };
 
         struct mouse_lbutton_up {
-            int x,y;
+            int x, y;
         };
 
         struct mouse_rbutton_up {
-            int x,y;
+            int x, y;
         };
 
         struct mouse_wheel_scroll {
@@ -82,7 +82,7 @@ namespace events {
         };
 
         struct mouse_moved {
-            int x,y;
+            int x, y;
         }; // TODO revisit: currently int64_t because windows uses hi and low bits to set both x and y coord..
 
         struct mousedown {
@@ -99,17 +99,14 @@ namespace events {
             int new_width, new_height;
         };
 
-
-
-        using mouse_event = boost::variant<mouse_lbutton_down, mouse_rbutton_down, mouse_lbutton_up, mouse_rbutton_up,
-                                           mouse_wheel_scroll, mouse_click, mouse_moved, mousedown>;
+        using mouse_event
+            = boost::variant<mouse_lbutton_down, mouse_rbutton_down, mouse_lbutton_up, mouse_rbutton_up, mouse_wheel_scroll, mouse_click, mouse_moved, mousedown>;
     }
 
     // TODO this variant needs to be broken into several different variantes (there is a limit of 16 types by default)
 
     using event_variant_base_
-        = boost::variant<done, dump_contents, focus_entity, exit_all, none, keep, revert, dpad_pressed, keydown, keyup,
-                         mouse_event, exit_immediately, exit_state, resize_swapchain>;
+        = boost::variant<done, dump_contents, focus_entity, exit_all, none, keep, revert, dpad_pressed, keydown, keyup, mouse_event, exit_immediately, exit_state, resize_swapchain>;
 
     // class event_variant : public event_variant_base_ {
     //
@@ -142,12 +139,12 @@ namespace events {
 
     using event_variant = event_variant_base_;
 
-    //class event_variant { // HACK replace this clunky .value() interface..
+    // class event_variant { // HACK replace this clunky .value() interface..
     //
     //    using variant = event_variant_base_;
     //    variant value_;
     //
-    //public:
+    // public:
     //    template <typename T>
     //    event_variant(T const& e) : value_{e}
     //    {
@@ -183,8 +180,8 @@ namespace events {
     //    // operator variant&() { return value_; }
     //};
 
-    //template <typename T> // currently unused..
-    //void dispatch_event(T& t, event_variant e)
+    // template <typename T> // currently unused..
+    // void dispatch_event(T& t, event_variant e)
     //{
     //    t.emplace_back(std::move(e));
     //}

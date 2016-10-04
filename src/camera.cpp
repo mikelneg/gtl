@@ -8,7 +8,7 @@ MIT license. See LICENSE.txt in project root for details.
 #include "gtl/camera.h"
 
 #include <Eigen/Geometry>
-#include <gtl/physics_units.h>
+#include <gtl/physics/common_units.h>
 
 namespace gtl {
 

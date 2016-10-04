@@ -37,8 +37,7 @@ namespace allocators {
 
         template <typename R>
         struct rebind {
-            using other
-                = no_trivial_value_initialization<R, typename std::allocator_traits<A>::template rebind_alloc<R>>;
+            using other = no_trivial_value_initialization<R, typename std::allocator_traits<A>::template rebind_alloc<R>>;
         };
 
         using A::A;

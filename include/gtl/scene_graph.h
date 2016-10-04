@@ -86,10 +86,9 @@ public:
         using transition_scene = scenes::detail::transition_scene<scene_type>;
         using inv_transition_scene = scenes::detail::inverse_transition_scene<scene_type>;
         auto handle_events_v = vn::make_lambda_visitor([&](auto& v) { return v.handle_events(yield); });
-        auto handle_events = [&](auto& x) {
-            return boost::apply_visitor(handle_events_v, x);
-        }; //[&](scene_type& s) { return boost::apply_visitor(handle_events_v,s); };
-           //
+        auto handle_events = [&](auto& x) { return boost::apply_visitor(handle_events_v, x); }; //[&](scene_type& s) { return
+                                                                                                //boost::apply_visitor(handle_events_v,s); };
+                                                                                                //
 
         scene_type& s = current_scene_;
 
@@ -103,8 +102,7 @@ public:
             s = scenes::transitions::twinkle_effect{dev, swapchain, cqueue};
         }
 
-        auto result_handler_v = vn::make_lambda_visitor([](auto const&) { return true; },
-                                                        [](gtl::events::exit_all const&) { return false; });
+        auto result_handler_v = vn::make_lambda_visitor([](auto const&) { return true; }, [](gtl::events::exit_all const&) { return false; });
 
         auto result_handler = [&](auto& x) { return boost::apply_visitor(result_handler_v, x); };
 
@@ -119,8 +117,7 @@ public:
             {
                 std::unique_lock<std::mutex> lock_{work_mutex_};
 
-                s = scene_type{transition_scene{std::move(s), scenes::transitions::swirl_effect{dev, swapchain, cqueue},
-                                                std::chrono::seconds(2)}};
+                s = scene_type{transition_scene{std::move(s), scenes::transitions::swirl_effect{dev, swapchain, cqueue}, std::chrono::seconds(2)}};
             }
             if (!result_handler(handle_events(s).value()))
             {
@@ -143,9 +140,7 @@ public:
             {
                 std::unique_lock<std::mutex> lock_{work_mutex_};
 
-                s = scene_type{inv_transition_scene{std::move(s),
-                                                    scenes::transitions::twinkle_effect{dev, swapchain, cqueue},
-                                                    std::chrono::seconds(2)}};
+                s = scene_type{inv_transition_scene{std::move(s), scenes::transitions::twinkle_effect{dev, swapchain, cqueue}, std::chrono::seconds(2)}};
             }
             if (!result_handler(handle_events(s).value()))
             {

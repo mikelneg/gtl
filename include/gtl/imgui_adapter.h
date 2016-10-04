@@ -55,16 +55,19 @@ public:
 
 private:
     // TODO implement copy-free buffer updating (instead of swap_object<vector> or whatever)
-    vn::swap_object<imgui_data> output_buffer_; 
+    vn::swap_object<imgui_data> output_buffer_;
 
     imgui_data local_data_;
 
     std::vector<char> text_box_a_;
     std::vector<char> text_box_b_;
-    
+
     ImVec2 dpadoffset{};
 
     bool mutable scene_dirty_ = true;
+
+    bool mutable debugger_enabled = false;
+    std::string debugger_button{"Enable###"};
 
 public:
     imgui_adapter()
@@ -108,15 +111,14 @@ public:
             assert(voffs < static_cast<int>(verts.size()));
             assert(ioffs < static_cast<int>(indices.size()));
 
-            std::copy(begin(cmd_list->VtxBuffer), end(cmd_list->VtxBuffer), begin(verts) + voffs);            
-            std::transform(begin(cmd_list->IdxBuffer), end(cmd_list->IdxBuffer), begin(indices) + ioffs, 
-                           [&](auto const& v) { return v + voffs; });            
+            std::copy(begin(cmd_list->VtxBuffer), end(cmd_list->VtxBuffer), begin(verts) + voffs);
+            std::transform(begin(cmd_list->IdxBuffer), end(cmd_list->IdxBuffer), begin(indices) + ioffs, [&](auto const& v) { return v + voffs; });
 
             voffs += cmd_list->VtxBuffer.size();
             ioffs += cmd_list->IdxBuffer.size();
 
             local_data_.vertex_count_ += cmd_list->VtxBuffer.size();
-            local_data_.index_count_ += cmd_list->IdxBuffer.size();            
+            local_data_.index_count_ += cmd_list->IdxBuffer.size();
         }
 
         output_buffer_.swap_in(local_data_);
@@ -127,9 +129,18 @@ public:
         return output_buffer_.swap_out(external);
     }
 
-    bool dirty() const { return scene_dirty_; }
-    void set_dirty() const { scene_dirty_ = true; }
-    void clear_dirty() const { scene_dirty_ = false; }
+    bool dirty() const
+    {
+        return scene_dirty_;
+    }
+    void set_dirty() const
+    {
+        scene_dirty_ = true;
+    }
+    void clear_dirty() const
+    {
+        scene_dirty_ = false;
+    }
 
     void render(float dt)
     {
@@ -137,7 +148,7 @@ public:
 
         io.DeltaTime = dt;
 
-    //if (dirty()) {
+        // if (dirty()) {
 
         ImGui::NewFrame();
 
@@ -163,53 +174,72 @@ public:
         ImGui::InputText("other:", text_box_b_.data(), text_box_b_.size());
         ImGui::End();
 
+        ImGui::SetNextWindowContentSize(ImVec2{100.0f, 100.0f});
+        ImGui::SetNextWindowSizeConstraints(ImVec2{100.0f, 100.0f}, ImVec2{160.0f, 160.0f});
 
-        ImGui::SetNextWindowContentSize(ImVec2{100.0f,100.0f});
-        ImGui::SetNextWindowSizeConstraints(ImVec2{100.0f,100.0f},ImVec2{160.0f,160.0f});
-        
-        if (ImGui::Begin("Controller Stick")) {        
-            ImGui::Text("SomeText..");                
+        if (ImGui::Begin("Controller Stick"))
+        {
+            ImGui::Text("SomeText..");                      
 
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
-            
-            ImU32 col32 = ImColor{1.0f,1.0f,1.0f,1.0f};
+
+            ImU32 col32 = ImColor{1.0f, 1.0f, 1.0f, 1.0f};
 
             auto winpos = ImGui::GetWindowPos();
             auto wincent = ImGui::GetWindowSize();
-            
+
             winpos.x += (wincent.x / 2.0f);
             winpos.y += (wincent.y / 2.0f);
 
-            draw_list->AddCircle(winpos, 21.21f, col32); 
+            draw_list->AddCircle(winpos, 21.21f, col32);
 
             winpos.x += dpadoffset.x;
             winpos.y += dpadoffset.y;
 
-            col32 = ImColor{1.0f,0.0f,0.4f,1.0f};
+            col32 = ImColor{1.0f, 0.0f, 0.4f, 1.0f};
 
             draw_list->AddCircle(winpos, 5.0f, col32, 4, 0.6f);
+            
 
-                //draw_list->AddCircle(ImVec2(x+sz*0.5f, y+sz*0.5f), sz*0.5f, col32, 20, thickness); x += sz+spacing;
-                //draw_list->AddRect(ImVec2(x, y), ImVec2(x+sz, y+sz), col32, 0.0f, ~0, thickness); x += sz+spacing;
-                //draw_list->AddRect(ImVec2(x, y), ImVec2(x+sz, y+sz), col32, 10.0f, ~0, thickness); x += sz+spacing;
-                //draw_list->AddTriangle(ImVec2(x+sz*0.5f, y), ImVec2(x+sz,y+sz-0.5f), ImVec2(x,y+sz-0.5f), col32, thickness); x += sz+spacing;
-                //draw_list->AddLine(ImVec2(x, y), ImVec2(x+sz, y   ), col32, thickness); x += sz+spacing;
-                //draw_list->AddLine(ImVec2(x, y), ImVec2(x+sz, y+sz), col32, thickness); x += sz+spacing;
-                //draw_list->AddLine(ImVec2(x, y), ImVec2(x,    y+sz), col32, thickness); x += spacing;
-                //draw_list->AddBezierCurve(ImVec2(x, y), ImVec2(x+sz*1.3f,y+sz*0.3f), ImVec2(x+sz-sz*1.3f,y+sz-sz*0.3f), ImVec2(x+sz, y+sz), col32, thickness);
-                //x = p.x + 4;
-                //y += sz+spacing;
-
+            // draw_list->AddCircle(ImVec2(x+sz*0.5f, y+sz*0.5f), sz*0.5f, col32, 20, thickness); x += sz+spacing;
+            // draw_list->AddRect(ImVec2(x, y), ImVec2(x+sz, y+sz), col32, 0.0f, ~0, thickness); x += sz+spacing;
+            // draw_list->AddRect(ImVec2(x, y), ImVec2(x+sz, y+sz), col32, 10.0f, ~0, thickness); x += sz+spacing;
+            // draw_list->AddTriangle(ImVec2(x+sz*0.5f, y), ImVec2(x+sz,y+sz-0.5f), ImVec2(x,y+sz-0.5f), col32, thickness); x += sz+spacing;
+            // draw_list->AddLine(ImVec2(x, y), ImVec2(x+sz, y   ), col32, thickness); x += sz+spacing;
+            // draw_list->AddLine(ImVec2(x, y), ImVec2(x+sz, y+sz), col32, thickness); x += sz+spacing;
+            // draw_list->AddLine(ImVec2(x, y), ImVec2(x,    y+sz), col32, thickness); x += spacing;
+            // draw_list->AddBezierCurve(ImVec2(x, y), ImVec2(x+sz*1.3f,y+sz*0.3f), ImVec2(x+sz-sz*1.3f,y+sz-sz*0.3f), ImVec2(x+sz, y+sz), col32, thickness);
+            // x = p.x + 4;
+            // y += sz+spacing;            
         }
-        
+
+        ImGui::End();
+
+        if (ImGui::Begin("Box2D Debugger")) {
+
+            ImGui::PushID(77);
+            if (ImGui::Button(debugger_button.c_str())) { 
+                debugger_enabled = !debugger_enabled; 
+                if (debugger_enabled) { debugger_button = "Disable###"; } else { debugger_button = "Enable###"; }
+            }
+            ImGui::PopID();            
+
+            auto func = [](void* p, int idx) -> float { return static_cast<float>(idx); };
+            auto func_wave = [](void* p, int idx) -> float { return static_cast<float>(idx % 4); };
+
+            ImGui::Text("Entity Count");
+            ImGui::PlotHistogram("hist",func,nullptr,5);
+            ImGui::PlotLines("lines",func_wave,nullptr,16);
+      
+        }
         ImGui::End();
 
         ImGui::Render();
 
         dump_data(*ImGui::GetDrawData());
 
-    //    clear_dirty();
-    // }
+        //    clear_dirty();
+        // }
     }
 
     static std::tuple<std::vector<uint32_t>,
@@ -243,39 +273,50 @@ public:
         return std::make_tuple(std::move(font_data), static_cast<unsigned>(width), static_cast<unsigned>(height));
     }
 
-    void dpad_offset(float x, float y) {
-        dpadoffset = ImVec2{x,y};
+    void dpad_offset(float x, float y)
+    {
+        dpadoffset = ImVec2{x, y};
     }
-    
-    void dispatch_event(gtl::event const& e) const {
+
+    void dispatch_event(gtl::event const& e) const
+    {
         using boost::apply_visitor;
-        apply_visitor(*this,e);
+        apply_visitor(*this, e);
     }
 
     template <typename T>
-    void operator()(T const&) const {}
+    void operator()(T const&) const
+    {
+    }
 
-    void operator()(gtl::events::mouse_event const& e) const {
+    void operator()(gtl::events::mouse_event const& e) const
+    {
         using namespace gtl::events;
-        
-        auto handler 
-        = vn::make_lambda_visitor(
-            [this](mouse_lbutton_up const& m) { set_dirty(); this->mouse_up(static_cast<float>(m.x),static_cast<float>(m.y)); },
-            [this](mouse_lbutton_down const& m) { set_dirty(); this->mouse_down(static_cast<float>(m.x),static_cast<float>(m.y)); },
-            [this](mouse_moved const& m) { set_dirty(); this->mouse_move(static_cast<float>(m.x),static_cast<float>(m.y)); },
-            [](auto const&) {}
-            );
+
+        auto handler = vn::make_lambda_visitor(
+            [this](mouse_lbutton_up const& m) {
+                set_dirty();
+                this->mouse_up(static_cast<float>(m.x), static_cast<float>(m.y));
+            },
+            [this](mouse_lbutton_down const& m) {
+                set_dirty();
+                this->mouse_down(static_cast<float>(m.x), static_cast<float>(m.y));
+            },
+            [this](mouse_moved const& m) {
+                set_dirty();
+                this->mouse_move(static_cast<float>(m.x), static_cast<float>(m.y));
+            },
+            [](auto const&) {});
 
         handler(e);
     }
-
 
     static void mouse_up(float x, float y)
     {
         auto& io = ImGui::GetIO();
         io.MousePos.x = x;
         io.MousePos.y = y;
-        io.MouseDown[0] = false;               
+        io.MouseDown[0] = false;
     }
 
     static void mouse_down(float x, float y)

@@ -7,9 +7,15 @@ MIT license. See LICENSE.txt in project root for details.
 
 #pragma warning(disable : 4503)
 
-#include "gtl/physics_simulation.h"
+#include "gtl/physics/simulation.h"
 
-#include <gtl/swap_vector.h>
+#include <gtl/physics/generator.h>
+
+//#include <gtl/swap_vector.h>
+#include <gtl/rate_limiter.h>
+
+#include <vn/single_consumer_queue.h>
+
 #include <vn/swap_object.h>
 
 #include <Box2D/Box2D.h>
@@ -37,6 +43,8 @@ MIT license. See LICENSE.txt in project root for details.
 #include <boost/variant.hpp>
 #include <vn/math_utilities.h>
 
+#include <gtl/box2d_adapter.h>
+
 namespace gtl {
 
 namespace {
@@ -46,8 +54,8 @@ namespace {
     };
 
     template <typename T, typename U>
-    static void simulation_thread(vn::swap_object<T>&, gtl::swap_vector<U>& physics_task_queue_,
-                                  std::atomic_flag& quit_);
+    static void simulation_thread(vn::swap_object<T>&, vn::single_consumer_queue<U>& physics_task_queue_,
+                                  std::atomic_flag& quit_, gtl::box2d_adapter&);
 
     template <typename T>
     struct query_callback_helper : b2QueryCallback, T {
@@ -92,6 +100,12 @@ namespace {
         b2Body* operator()(T const& t) const
         {
             assert(false);
+            return nullptr;
+        }
+
+        b2Body* operator()(gtl::physics::generators::polymorphic_generator const& o) const 
+        {
+            o.generator_->apply(world_);
             return nullptr;
         }
 
@@ -334,6 +348,8 @@ namespace {
             b2Body* main_body_ = (range.first)->second;
             main_body_->SetAwake(true);
 
+            //main_body_->Set
+
             main_body_->ApplyLinearImpulse(b2Vec2{100.0f * std::cos(-1.0f * main_body_->GetAngle()),
                                                   100.0f * std::sin(-1.0f * main_body_->GetAngle())},
                                            main_body_->GetWorldCenter(), true);
@@ -352,9 +368,11 @@ namespace {
 
             b2Body* main_body_ = (range.first)->second;
             main_body_->SetAwake(true);
-
-            main_body_->ApplyLinearImpulse(b2Vec2{o.x, o.y}, // o.x / 100.0f,o.y / 100.0f},
-                                           main_body_->GetWorldCenter(), true);
+            
+            //main_body_->ApplyForceToCenter(b2Vec2{o.x, o.y}, true);            
+            main_body_->ApplyForceToCenter(b2Vec2{o.x * 200.0f, o.y * 200.0f},true);
+            //main_body_->ApplyLinearImpulse(b2Vec2{o.x * 10.0f, o.y * 10.0f}, main_body_->GetWorldCenter(), true);
+            
             // main_body_->GetPosition(), true);
             return nullptr;
         }
@@ -381,24 +399,28 @@ namespace {
     };
 }
 
-physics_simulation::physics_simulation(
-    gtl::swap_vector<gtl::physics::generator>& tasks_) // boost::units::quantity<boost::units::si::area> area_,
+namespace physics {
+
+simulation::simulation(
+    vn::single_consumer_queue<gtl::physics::generator_variant>& tasks_, gtl::box2d_adapter& b2d_adapter_) // boost::units::quantity<boost::units::si::area> area_,
 // std::vector<Eigen::Vector4f> positions_)
 
 {
     quit_.test_and_set();
     // thread_ =
     // std::thread{&simulation_thread<render_data,gtl::physics::generator>,std::ref(entities_),std::ref(tasks_),std::ref(quit_)};
-    thread_ = std::thread{&simulation_thread<render_data, gtl::physics::generator>, std::ref(render_data_),
-                          std::ref(tasks_), std::ref(quit_)};
+    thread_ = std::thread{&simulation_thread<render_data, gtl::physics::generator_variant>, std::ref(render_data_),
+                          std::ref(tasks_), std::ref(quit_), std::ref(b2d_adapter_)};
+}
+
 }
 
 namespace {
 
     template <typename T, typename U>
-    static void simulation_thread(vn::swap_object<T>& rend_data_, gtl::swap_vector<U>& physics_task_queue_,
+    static void simulation_thread(vn::swap_object<T>& rend_data_, vn::single_consumer_queue<U>& physics_task_queue_, //gtl::swap_vector<U>& physics_task_queue_,
                                   // std::vector<physics::generator> generators_,
-                                  std::atomic_flag& quit_)
+                                  std::atomic_flag& quit_, gtl::box2d_adapter& b2d_adapter_)
     {
         // b2World world_{b2Vec2{0.0f,-9.8f}};
         b2World world_{b2Vec2{0.0f, 0.0f}};
@@ -408,19 +430,23 @@ namespace {
 
         box2d_generator_visitor visitor_{world_, map_};
 
-        auto task_local_ = physics_task_queue_.make_vector();
-        physics_task_queue_.swap_out(task_local_);
+        //auto task_local_ = physics_task_queue_.make_vector();
+        //physics_task_queue_.swap_out(task_local_);
 
-        for (auto&& e : task_local_)
-        {
-            apply_visitor(visitor_, e);
-        }
+        physics_task_queue_.consume([&](auto&& e){ boost::apply_visitor(visitor_, e); });
+
+        //for (auto&& e : task_local_)
+        //{
+        //    apply_visitor(visitor_, e);
+        //}
 
         float32 timeStep = 1.0f / 60.0f;
         int32 velocityIterations = 8;
         int32 positionIterations = 3;
 
         render_data local_rend_data_;
+
+        gtl::box2d_adapter::imgui_data local_b2d_data_;
 
         auto& positions_ = local_rend_data_.entities_;
         auto& bones_ = local_rend_data_.bones_;
@@ -491,6 +517,59 @@ namespace {
             return true;
         });
 
+        auto actually_dump_bodies = [&](b2Body& body_) {                        
+            auto *fixture_ = body_.GetFixtureList();
+            while (fixture_) {
+                auto type = fixture_->GetType();
+                switch(type) {
+                    case b2Shape::Type::e_polygon : 
+                    {
+                        auto *p = static_cast<b2PolygonShape*>(fixture_->GetShape()); 
+
+                        auto v_count = p->GetVertexCount();
+
+                        for (int i = 0; i < v_count; ++i) {                                             
+                            //auto v = p->GetVertex(i);
+                            auto v = body_.GetWorldPoint(p->GetVertex(i));                         
+                            local_b2d_data_.add_vertex(ImDrawVert{{v.x,-v.y},{0.0f,0.0f},ImColor{1.0f,1.0f,1.0f,1.0f}});                                               
+                        }
+
+                        for (int i = 0; i < v_count - 2; ++i) {
+                            local_b2d_data_.add_triangle(v_count-1,i,i+1);
+                        }
+
+                        local_b2d_data_.next_group();
+                    }
+                    default: break;
+                }                
+                fixture_ = fixture_->GetNext();
+            }            
+        };
+
+        auto dump_debug_fixtures = [&](b2Fixture& fixture_) {                        
+                auto type = fixture_.GetType();
+                switch(type) {
+                    case b2Shape::Type::e_polygon : 
+                    {
+                        auto *p = static_cast<b2PolygonShape*>(fixture_.GetShape()); 
+                        auto v_count = p->GetVertexCount();
+                        for (int i = 0; i < v_count; ++i) {                                                                         
+                            auto v = fixture_.GetBody()->GetWorldPoint(p->GetVertex(i));                         
+                            local_b2d_data_.add_vertex(ImDrawVert{{v.x,-v.y},{0.0f,0.0f},ImColor{1.0f,1.0f,1.0f,1.0f}});                                               
+                        }                        
+
+                        for (int i = 0; i < v_count - 2; ++i) {
+                            local_b2d_data_.add_triangle(v_count-1,i,i+1);
+                        }
+
+                        local_b2d_data_.next_group();                        
+                    }
+                    default: break;
+                }            
+        };
+
+
+
         auto dump_fixtures = [&](b2Body& body_) {
             InstanceInfo instance{reinterpret_cast<uintptr_t>(body_.GetUserData()),
                                   static_cast<uint16_t>(bones_.size())};
@@ -511,63 +590,53 @@ namespace {
                                         .matrix();
 
                 bones_.emplace_back(m.transpose());
-            }
+            }            
         };
 
         auto query_bodies_around_AABB = make_query_callback([&](b2Fixture* fixture_) {
             b2Body* const body_ptr_ = reinterpret_cast<b2Body*>(fixture_->GetUserData());
+            
             body_ptr_->SetAwake(true);
             selected_bodies_.emplace_back(body_ptr_);
+
+            dump_debug_fixtures(*fixture_);
+      
             return true; // continue the query
         });
+
 
         b2AABB aabb;
         aabb.lowerBound.Set(-60.0f, -60.0f);
         aabb.upperBound.Set(60.0f, 60.0f);
 
-        auto time_ = std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(15);
+        gtl::rate_limiter rate_limiter_{std::chrono::milliseconds(15)};                
 
         while (quit_.test_and_set(std::memory_order_acquire))
         {
+            rate_limiter_.sleepy_invoke([&](auto dt){
+                bones_.clear();
+                positions_.clear();
+                selected_bodies_.clear();
+                local_b2d_data_.clear();
 
-            bones_.clear();
-            positions_.clear();
-            selected_bodies_.clear();
+                world_.QueryAABB(&query_bodies_around_AABB, aabb);
 
-            world_.QueryAABB(&query_bodies_around_AABB, aabb);
+                std::sort(begin(selected_bodies_), end(selected_bodies_));
+                auto new_end_ = std::unique(begin(selected_bodies_), end(selected_bodies_));
+                selected_bodies_.erase(new_end_, end(selected_bodies_));
 
-            std::sort(begin(selected_bodies_), end(selected_bodies_));
-            auto new_end_ = std::unique(begin(selected_bodies_), end(selected_bodies_));
-            selected_bodies_.erase(new_end_, end(selected_bodies_));
+                for (auto&& e : selected_bodies_)
+                {
+                    dump_fixtures(*e);                    
+                } 
 
-            for (auto&& e : selected_bodies_)
-            {
-                dump_fixtures(*e);
-            }
+                rend_data_.swap_in(local_rend_data_);
+                b2d_adapter_.render(local_b2d_data_);
 
-            // all bodies as objects..
-            // world_.QueryAABB(&query_around_AABB, aabb);
+                physics_task_queue_.consume([&](auto&& e) { boost::apply_visitor(visitor_,e); });
 
-            // query_bodies();
-            // swapvec_.swap_in(positions_);
-
-            rend_data_.swap_in(local_rend_data_);
-
-            task_local_.clear();
-            physics_task_queue_.swap_out(task_local_);
-            for (auto&& e : task_local_)
-            {
-                apply_visitor(visitor_, e);
-            }
-
-            world_.Step(timeStep, velocityIterations, positionIterations);
-
-            auto now_ = std::chrono::high_resolution_clock::now();
-            if ((time_ - now_) > std::chrono::milliseconds(1))
-            {
-                std::this_thread::sleep_for(time_ - now_);
-            }
-            time_ = now_ + std::chrono::milliseconds(5); // TODO arbitrary values, revist..
+                world_.Step(std::chrono::duration<float>(dt).count(), velocityIterations, positionIterations);
+            });
         }
 
         std::cout << "physics thread exiting, max wait == " << max_wait_ << "\n";
@@ -575,3 +644,36 @@ namespace {
 
 } // namespace
 } // namespace
+
+/*
+class MyContactListener : public b2ContactListener
+  {
+    void BeginContact(b2Contact* contact) {
+  
+      //check if fixture A was a ball
+      void* bodyUserData = contact->GetFixtureA()->GetBody()->GetUserData();
+      if ( bodyUserData )
+        static_cast<Ball*>( bodyUserData )->startContact();
+  
+      //check if fixture B was a ball
+      bodyUserData = contact->GetFixtureB()->GetBody()->GetUserData();
+      if ( bodyUserData )
+        static_cast<Ball*>( bodyUserData )->startContact();
+  
+    }
+  
+    void EndContact(b2Contact* contact) {
+  
+      //check if fixture A was a ball
+      void* bodyUserData = contact->GetFixtureA()->GetBody()->GetUserData();
+      if ( bodyUserData )
+        static_cast<Ball*>( bodyUserData )->endContact();
+  
+      //check if fixture B was a ball
+      bodyUserData = contact->GetFixtureB()->GetBody()->GetUserData();
+      if ( bodyUserData )
+        static_cast<Ball*>( bodyUserData )->endContact();
+  
+    }
+  };
+*/

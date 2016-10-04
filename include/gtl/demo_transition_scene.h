@@ -63,13 +63,9 @@ namespace scenes {
                   vshader_{L"skybox_vs.cso"},
                   pshader_{L"skybox_ps.cso"},
                   root_sig_{dev_, vshader_},
-                  cbheap_{{{dev_, 1, gtl::d3d::tags::shader_visible{}},
-                           {dev_, 1, gtl::d3d::tags::shader_visible{}},
-                           {dev_, 1, gtl::d3d::tags::shader_visible{}}}},
+                  cbheap_{{{dev_, 1, gtl::d3d::tags::shader_visible{}}, {dev_, 1, gtl::d3d::tags::shader_visible{}}, {dev_, 1, gtl::d3d::tags::shader_visible{}}}},
                   cbuf_{960.0f / 540.0f},
-                  cbuffer_{{{dev_, cbheap_[0], sizeof(cbuf_)},
-                            {dev_, cbheap_[1], sizeof(cbuf_)},
-                            {dev_, cbheap_[2], sizeof(cbuf_)}}},
+                  cbuffer_{{{dev_, cbheap_[0], sizeof(cbuf_)}, {dev_, cbheap_[1], sizeof(cbuf_)}, {dev_, cbheap_[2], sizeof(cbuf_)}}},
                   pso_{dev_, root_sig_, vshader_, pshader_},
                   calloc_{{{dev_}, {dev_}, {dev_}}},
                   clist_{{{dev_, calloc_[0], pso_}, {dev_, calloc_[1], pso_}, {dev_, calloc_[2], pso_}}},
@@ -78,9 +74,7 @@ namespace scenes {
                   scissor_{0, 0, 960, 540},
                   text_viewport_{0.0f, 0.0f, 320.0f, 240.0f, 1.0f, 1.0f},
                   resource_heap_{dev_, 2, gtl::d3d::tags::shader_visible{}},
-                  texture_{dev_,
-                           {resource_heap_->GetCPUDescriptorHandleForHeapStart()},
-                           cqueue_,L"data\\images\\skyboxes\\Grimmnight.dds"},
+                  texture_{dev_, {resource_heap_->GetCPUDescriptorHandleForHeapStart()}, cqueue_, L"data\\images\\skyboxes\\Grimmnight.dds"},
                   sampler_heap_{dev_, 1},
                   sampler_{dev_, sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
                   font_{dev_, cqueue_, root_sig_, L"data\\images\\fonts\\depth-field-font72\\font.fnt", gtl::d3d::tags::xml_format{}},
@@ -152,8 +146,7 @@ namespace scenes {
                 return v;
             }
 
-            void draw(std::vector<ID3D12CommandList*>& v, int idx, float f,
-                      gtl::d3d::rtv_descriptor_heap& rtv_heap_) const
+            void draw(std::vector<ID3D12CommandList*>& v, int idx, float f, gtl::d3d::rtv_descriptor_heap& rtv_heap_) const
             {
                 update(cbuf_, viewport_.Width / viewport_.Height);
                 cbuffer_[idx].update(reinterpret_cast<const char*>(&cbuf_), sizeof(cbuf_));
@@ -216,8 +209,7 @@ namespace scenes {
                         switch (boost::get<ev::keydown>(yield.get().value()).key)
                         {
                             case k::Q:
-                                std::cout << "twinkle_effect(): q pressed, exiting A from route 0 (none == " << count
-                                          << ")\n";
+                                std::cout << "twinkle_effect(): q pressed, exiting A from route 0 (none == " << count << ")\n";
                                 return gtl::events::exit_state{0};
                                 break;
                             case k::K:

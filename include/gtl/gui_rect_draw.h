@@ -23,7 +23,7 @@ not used -- keeping for reference
 
 #include <array>
 #include <atomic>
-#include <gtl/physics_simulation.h>
+#include <gtl/physics/simulation.h>
 #include <vn/math_utilities.h>
 
 #include <gtl/camera.h>
@@ -59,7 +59,7 @@ namespace d3d {
         gtl::d3d::sampler_descriptor_heap sampler_heap_;
         gtl::d3d::sampler sampler_;
 
-        gtl::physics_simulation& physics_;
+        gtl::physics::simulation& physics_;
         render_data mutable render_data_;
         std::array<bool, 3> mutable position_flags_;
 
@@ -72,10 +72,8 @@ namespace d3d {
             //};
             return std::vector<D3D12_INPUT_ELEMENT_DESC>{
                 {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                {"COLOR_ANGLE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-                 D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                {"GUID", 0, DXGI_FORMAT_R32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT,
-                 D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
+                {"COLOR_ANGLE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                {"GUID", 0, DXGI_FORMAT_R32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
         }
 
         // auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs,
@@ -119,8 +117,7 @@ namespace d3d {
         //    return desc_;
         //}
         //
-        auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs,
-                      gtl::d3d::geometry_shader& gs, gtl::d3d::pixel_shader& ps)
+        auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::geometry_shader& gs, gtl::d3d::pixel_shader& ps)
         {
             D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_{};
             desc_.pRootSignature = rsig.get();
@@ -145,8 +142,7 @@ namespace d3d {
             blend_desc_.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_ONE;
             blend_desc_.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
             blend_desc_.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
-            
-            
+
             blend_desc_.RenderTarget[1].BlendEnable = false;
 
             desc_.BlendState = blend_desc_;
@@ -162,7 +158,7 @@ namespace d3d {
             desc_.SampleDesc.Count = 1;
             return desc_;
         }
-
+        
         auto sampler_desc()
         {
             D3D12_SAMPLER_DESC sampler_{};
@@ -183,22 +179,16 @@ namespace d3d {
         rect_draw(rect_draw&&) = default;
         rect_draw& operator=(rect_draw&&) = default;
 
-        rect_draw(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, gtl::d3d::root_signature& rsig,
-                  gtl::physics_simulation& physics_)
+        rect_draw(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, gtl::d3d::root_signature& rsig, gtl::physics::simulation& physics_)
             : layout_(vertex_layout()),
               vbuffer_descriptors_{dev, 3, gtl::d3d::tags::shader_visible{}},
               vbuffers_{{{dev, vbuffer_descriptors_.get_handle(0), MAX_RECTS * sizeof(EntityInfo)},
                          {dev, vbuffer_descriptors_.get_handle(1), MAX_RECTS * sizeof(EntityInfo)},
                          {dev, vbuffer_descriptors_.get_handle(2), MAX_RECTS * sizeof(EntityInfo)}}},
-              cbheap_{{{dev, 1, gtl::d3d::tags::shader_visible{}},
-                       {dev, 1, gtl::d3d::tags::shader_visible{}},
-                       {dev, 1, gtl::d3d::tags::shader_visible{}}}},
-              cbuffer_{{{dev, cbheap_[0], sizeof(gtl::camera)},
-                        {dev, cbheap_[1], sizeof(gtl::camera)},
-                        {dev, cbheap_[2], sizeof(gtl::camera)}}},
+              cbheap_{{{dev, 1, gtl::d3d::tags::shader_visible{}}, {dev, 1, gtl::d3d::tags::shader_visible{}}, {dev, 1, gtl::d3d::tags::shader_visible{}}}},
+              cbuffer_{{{dev, cbheap_[0], sizeof(gtl::camera)}, {dev, cbheap_[1], sizeof(gtl::camera)}, {dev, cbheap_[2], sizeof(gtl::camera)}}},
               texture_descriptor_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},
-              texture_{
-                  dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, L"data\\images\\palettes\\greenish_palette.dds"},
+              texture_{dev, {texture_descriptor_heap_.get_handle(0)}, cqueue, L"data\\images\\palettes\\greenish_palette.dds"},
               // vshader_{L"rect_draw_gui_vs.cso"},
               // pshader_{L"rect_draw_gui_ps.cso"},
               vshader_{L"gs_shader_demo_vs.cso"},
@@ -245,8 +235,7 @@ namespace d3d {
                     e = true; // set dirty
                 position_flags_[idx] = false;
                 // construct_vertices(positions_);
-                vbuffers_[idx].update(reinterpret_cast<char*>(positions_.data()),
-                                      positions_.size() * sizeof(EntityInfo));
+                vbuffers_[idx].update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(EntityInfo));
             }
             else
             {
@@ -254,15 +243,13 @@ namespace d3d {
                 {
                     position_flags_[idx] = false;
                     // construct_vertices(positions_);
-                    vbuffers_[idx].update(reinterpret_cast<char*>(positions_.data()),
-                                          positions_.size() * sizeof(EntityInfo));
+                    vbuffers_[idx].update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(EntityInfo));
                 }
             }
         }
 
-        void operator()(unsigned idx, float, gtl::d3d::graphics_command_list& cl,
-                        gtl::d3d::raw::Viewport const& viewport, gtl::d3d::raw::ScissorRect const& scissor,
-                        Eigen::Matrix4f const& camera, D3D12_CPU_DESCRIPTOR_HANDLE* rtv_handle) const
+        void operator()(unsigned idx, float, gtl::d3d::graphics_command_list& cl, gtl::d3d::raw::Viewport const& viewport,
+                        gtl::d3d::raw::ScissorRect const& scissor, Eigen::Matrix4f const& camera, D3D12_CPU_DESCRIPTOR_HANDLE* rtv_handle) const
         {
             // update_camera_buffers(camera);
             cbuffer_[idx].update(reinterpret_cast<const char*>(&camera), sizeof(gtl::camera));
@@ -281,8 +268,7 @@ namespace d3d {
 
             auto& positions_ = render_data_.entities_;
 
-            D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(),
-                                          static_cast<unsigned>(positions_.size() * sizeof(EntityInfo)),
+            D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(EntityInfo)),
                                           sizeof(EntityInfo)};
             cl->IASetVertexBuffers(0, 1, &cbv_);
 

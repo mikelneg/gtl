@@ -8,7 +8,7 @@ MIT license. See LICENSE.txt in project root for details.
 #ifndef BNOWOAIBOASLDFF_GTL_D3D_OSTREAM_H_
 #define BNOWOAIBOASLDFF_GTL_D3D_OSTREAM_H_
 
-#include <gtl/d3d_version.h>
+#include <gtl/d3d_common.h>
 #include <ostream>
 
 namespace gtl {
@@ -25,8 +25,7 @@ namespace d3d {
             << "DedicatedVideoMemory: " << obj.DedicatedVideoMemory << "\n"
             << "DedicatedSystemMemory: " << obj.DedicatedSystemMemory << "\n"
             << "SharedSystemMemory: " << obj.SharedSystemMemory << "\n"
-            << "AdapterLuid: {HighPart, LowPart} = " << obj.AdapterLuid.HighPart << "," << obj.AdapterLuid.LowPart
-            << "\n"
+            << "AdapterLuid: {HighPart, LowPart} = " << obj.AdapterLuid.HighPart << "," << obj.AdapterLuid.LowPart << "\n"
             << "Flags: " << obj.Flags << "\n";
         return str;
     }

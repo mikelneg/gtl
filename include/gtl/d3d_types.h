@@ -17,7 +17,7 @@ namespace gtl::d3d
 ---------------------------------------------------------------*/
 
 #include <gtl/d3d_tags.h>
-#include <gtl/d3d_version.h>
+#include <gtl/d3d_common.h>
 
 #include <gtl/intrusive_ptr.h>
 #include <gtl/tags.h>
@@ -130,8 +130,7 @@ namespace d3d {
 
             class resource_descriptor_heap : public release_ptr<raw::DescriptorHeap> {
                 unsigned increment_;
-                unsigned const
-                    size_; // TODO currently works with CBV_SRV_UAV types, not DSV (break into distinct types?)
+                unsigned const size_; // TODO currently works with CBV_SRV_UAV types, not DSV (break into distinct types?)
             public:
                 resource_descriptor_heap(device&, unsigned num_descriptors, d3d::tags::shader_visible);
                 resource_descriptor_heap(device&, unsigned num_descriptors, d3d::tags::depth_stencil_view);
@@ -320,8 +319,7 @@ namespace d3d {
                     return *this;
                 }
                 srv(device&, std::vector<raw::CpuDescriptorHandle>, command_queue&, std::wstring);
-                srv(device&, std::vector<raw::CpuDescriptorHandle>, command_queue&,
-                    std::tuple<std::vector<uint32_t>, unsigned, unsigned>);
+                srv(device&, std::vector<raw::CpuDescriptorHandle>, command_queue&, std::tuple<std::vector<uint32_t>, unsigned, unsigned>);
             };
 
             class sampler : public release_ptr<raw::Resource> {

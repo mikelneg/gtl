@@ -69,11 +69,13 @@ void stage::present(gtl::d3d::swap_chain& swchain_, DXGI_PRESENT_PARAMETERS dxgi
     using hrc = std::chrono::high_resolution_clock;
     thread_local auto local_time = hrc::now();        
 
-    frame_rate_limiter_([&swchain_, &dxgi_pp, this]() {
+    //frame_rate_limiter_.skip_or_invoke([&swchain_, &dxgi_pp, this](auto dt) { //todo sleepy?
         
         auto curr_time = hrc::now();
 
-        imgui_adapter_.render(std::chrono::duration<float>{curr_time - local_time}.count());
+        //imgui_adapter_.render(std::chrono::duration<float>{dt}.count());
+        imgui_adapter_.render(std::chrono::duration<float>(curr_time - local_time).count());
+        
 
         local_time = curr_time;
 
@@ -84,7 +86,7 @@ void stage::present(gtl::d3d::swap_chain& swchain_, DXGI_PRESENT_PARAMETERS dxgi
             },
             [] {});
 
-    });
+    //});
 }
 
 void stage::discard_frame_and_synchronize(gtl::d3d::swap_chain& swchain_)

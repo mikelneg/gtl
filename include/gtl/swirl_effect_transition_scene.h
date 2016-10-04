@@ -40,7 +40,7 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/command_variant.h>
 #include <gtl/stage.h>
 
-#include <gtl/physics_simulation.h>
+#include <gtl/physics/simulation.h>
 
 namespace gtl {
 namespace scenes {
@@ -71,8 +71,7 @@ namespace scenes {
             //  recommended that you graph this with your near/far values to examine
             //  the scale
 
-            matrix_ << s / aspect_ratio, 0.0f, 0.0f, 0.0f, 0.0f, s, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f / (z_far - z_near),
-                1.0f, 0.0f, 0.0f, -z_near / (z_far - z_near), 0.0f;
+            matrix_ << s / aspect_ratio, 0.0f, 0.0f, 0.0f, 0.0f, s, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f / (z_far - z_near), 1.0f, 0.0f, 0.0f, -z_near / (z_far - z_near), 0.0f;
             return matrix_;
         }
 
@@ -81,9 +80,7 @@ namespace scenes {
         {
             using namespace Eigen;
             static Quaternionf orientation_{Quaternionf::Identity().normalized()};
-            static Quaternionf rot_{
-                Quaternionf::FromTwoVectors(Vector3f{0.0f, 0.0f, 1.0f}, Vector3f{0.0001f, 0.0001f, 1.0f}.normalized())
-                    .normalized()};
+            static Quaternionf rot_{Quaternionf::FromTwoVectors(Vector3f{0.0f, 0.0f, 1.0f}, Vector3f{0.0001f, 0.0001f, 1.0f}.normalized()).normalized()};
 
             static auto const proj_mat = makeProjectionMatrix(to_radians(30.0f), wh_ratio, 0.0001f, 1.0f);
 
@@ -107,10 +104,6 @@ namespace scenes {
 
             constexpr static std::size_t frame_count = 3; // TODO place elsewhere..
 
-            gtl::d3d::device& dev_;
-            gtl::d3d::command_queue& cqueue_;
-            gtl::d3d::swap_chain& swchain_;
-
             gtl::d3d::vertex_shader vshader_;
             gtl::d3d::pixel_shader pshader_;
             gtl::d3d::root_signature root_sig_;
@@ -118,7 +111,9 @@ namespace scenes {
             gtl::d3d::resource_descriptor_heap cbheap_;
 
             cbuffer mutable cbuf_;
-            std::array<gtl::d3d::constant_buffer, frame_count> mutable cbuffer_;
+            // std::array<gtl::d3d::constant_buffer, frame_count> mutable cbuffer_;
+            gtl::d3d::constant_buffer mutable cbuffer_;
+
             gtl::d3d::depth_stencil_buffer depth_buffers_;
 
             gtl::d3d::pipeline_state_object pso_;
@@ -149,8 +144,7 @@ namespace scenes {
 
             gtl::copyable_atomic<int64_t> mutable mouse_coord_;
 
-            auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs,
-                          gtl::d3d::pixel_shader& ps)
+            auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps)
             {
                 D3D12_GRAPHICS_PIPELINE_STATE_DESC desc_{};
                 desc_.pRootSignature = rsig.get();
@@ -158,35 +152,13 @@ namespace scenes {
                 desc_.PS = {reinterpret_cast<UINT8*>(ps->GetBufferPointer()), ps->GetBufferSize()};
                 desc_.RasterizerState = CD3DX12_RASTERIZER_DESC(D3D12_DEFAULT);
 
-                // typedef struct D3D12_INPUT_ELEMENT_DESC
-                //{
-                // LPCSTR SemanticName;
-                // UINT SemanticIndex;
-                // DXGI_FORMAT Format;
-                // UINT InputSlot;
-                // UINT AlignedByteOffset;
-                // D3D12_INPUT_CLASSIFICATION InputSlotClass;
-                // UINT InstanceDataStepRate;
-
-                // D3D11_RASTERIZER_DESC desc_{};
-                // desc_.CullMode = D3D11_CULL_NONE; // BACK
-                // desc_.FillMode = D3D11_FILL_SOLID;
-                // desc_.FrontCounterClockwise = true;
-                // desc_.DepthBias = 0;
-                // desc_.DepthBiasClamp = 0;
-                // desc_.SlopeScaledDepthBias = 0;
-                // desc_.DepthClipEnable = false;
-                // desc_.ScissorEnable = false;
-                // desc_.MultisampleEnable = true;
-                // desc_.AntialiasedLineEnable = true;
-
                 desc_.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
                 desc_.RasterizerState.FrontCounterClockwise = false;
                 desc_.RasterizerState.DepthClipEnable = true;
                 desc_.RasterizerState.AntialiasedLineEnable = true;
 
                 D3D12_BLEND_DESC blend_desc_ = {}; // CD3DX12_BLEND_DESC(D3D12_DEFAULT);
-                //blend_desc_.RenderTarget[0].BlendEnable = true; // HACK testing..
+                // blend_desc_.RenderTarget[0].BlendEnable = true; // HACK testing..
                 blend_desc_.RenderTarget[0].BlendEnable = false;
                 blend_desc_.RenderTarget[0].SrcBlend = D3D12_BLEND_BLEND_FACTOR;
                 blend_desc_.RenderTarget[0].DestBlend = D3D12_BLEND_INV_BLEND_FACTOR;
@@ -194,7 +166,7 @@ namespace scenes {
                 blend_desc_.RenderTarget[0].SrcBlendAlpha = D3D12_BLEND_BLEND_FACTOR;
                 blend_desc_.RenderTarget[0].DestBlendAlpha = D3D12_BLEND_INV_BLEND_FACTOR;
                 blend_desc_.RenderTarget[0].BlendOpAlpha = D3D12_BLEND_OP_ADD;
-                blend_desc_.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;                
+                blend_desc_.RenderTarget[0].RenderTargetWriteMask = D3D12_COLOR_WRITE_ENABLE_ALL;
 
                 blend_desc_.RenderTarget[1].BlendEnable = false;
 
@@ -218,23 +190,15 @@ namespace scenes {
             }
 
         public:
-            swirl_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_,
-                         gtl::physics_simulation& physics_)
-                //   gtl::stage& stage_) // TODO temporary effect..
-                : // stage_{stage_},
-
-                  dev_{dev_},
-                  cqueue_{cqueue_},
-                  swchain_{swchain_},
-                  vshader_{L"skybox_vs.cso"},
+            swirl_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, gtl::physics::simulation& physics_)
+                : vshader_{L"skybox_vs.cso"},
                   pshader_{L"skybox_ps.cso"},
                   root_sig_{dev_, vshader_},
-                  // cbheap_{{{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}},{dev_,1,gtl::d3d::tags::shader_visible{}}}},
                   cbheap_{dev_, frame_count, gtl::d3d::tags::shader_visible{}},
                   cbuf_{960.0f / 540.0f},
-                  cbuffer_{{{dev_, cbheap_.get_handle(0), sizeof(cbuf_)},
-                            {dev_, cbheap_.get_handle(1), sizeof(cbuf_)},
-                            {dev_, cbheap_.get_handle(2), sizeof(cbuf_)}}},
+                  cbuffer_{dev_, cbheap_.get_handle(0), sizeof(cbuf_)},
+                  //          {dev_, cbheap_.get_handle(1), sizeof(cbuf_)},
+                  //          {dev_, cbheap_.get_handle(2), sizeof(cbuf_)}}},
                   depth_buffers_{swchain_},
                   pso_{dev_, pso_desc(dev_, root_sig_, vshader_, pshader_)},
                   calloc_{{{dev_}, {dev_}, {dev_}}},
@@ -246,10 +210,7 @@ namespace scenes {
                   viewport_{swchain_.viewport()}, // {0.0f,0.0f,960.0f,540.0f,0.0f,1.0f},
                   scissor_{0, 0, 960, 540},       // HACK fixed values..
                   resource_heap_{dev_, 3, gtl::d3d::tags::shader_visible{}},
-                  texture_{dev_,
-                           {resource_heap_->GetCPUDescriptorHandleForHeapStart()},
-                           cqueue_,
-                           L"data\\images\\skyboxes\\Nightsky.dds"},
+                  texture_{dev_, {resource_heap_->GetCPUDescriptorHandleForHeapStart()}, cqueue_, L"data\\images\\skyboxes\\Nightsky.dds"},
                   id_layer_{swchain_, DXGI_FORMAT_R32_UINT, 3, gtl::d3d::tags::shader_visible{}},
                   sampler_heap_{dev_, 1},
                   sampler_{dev_, sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
@@ -258,21 +219,19 @@ namespace scenes {
             // imgui_{dev_, swchain_, cqueue_}
             {
                 //
-                dev_->CreateCommittedResource(
-                    &CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK), // TODO add d3d readback type
-                    D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(256), D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
-                    __uuidof(gtl::d3d::resource::type), expose_as_void_pp(id_readback_));
+                dev_->CreateCommittedResource(&CD3DX12_HEAP_PROPERTIES(D3D12_HEAP_TYPE_READBACK), // TODO add d3d readback type
+                                              D3D12_HEAP_FLAG_NONE, &CD3DX12_RESOURCE_DESC::Buffer(256), D3D12_RESOURCE_STATE_COPY_DEST, nullptr,
+                                              __uuidof(gtl::d3d::resource::type), expose_as_void_pp(id_readback_));
                 // cbuffer_[idx].update() --
                 std::cout << "swirl_effect()\n";
 
                 initialize_null_descriptor_srv(dev_, resource_heap_.get_handle(1));
                 initialize_null_descriptor_uav(dev_, resource_heap_.get_handle(2));
-
             }
 
             void set_mouse_coords(int x, int y) const
-            {                
-                mouse_coord_.set( MAKELPARAM(x,y) );
+            {
+                mouse_coord_.set(MAKELPARAM(x, y));
             }
 
             swirl_effect& operator=(swirl_effect&&)
@@ -297,12 +256,13 @@ namespace scenes {
                 depth_buffers_.resize(w, h);
             }
 
-            void draw(std::vector<ID3D12CommandList*>& v, int idx, float f, D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle,
-                      std::atomic<uint32_t>& id_, Eigen::Matrix4f const& camera) const
+            void draw(std::vector<ID3D12CommandList*>& v, int idx, float f, D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle, std::atomic<uint32_t>& id_,
+                      Eigen::Matrix4f const& camera) const
             {
 
                 update(cbuf_, viewport_.Width / viewport_.Height);
-                cbuffer_[idx].update(reinterpret_cast<const char*>(&cbuf_), sizeof(cbuf_));
+                // cbuffer_[idx].update(reinterpret_cast<const char*>(&cbuf_), sizeof(cbuf_));
+                cbuffer_.update(reinterpret_cast<const char*>(&cbuf_), sizeof(cbuf_));
 
                 // copy id layer into id_readback
 
@@ -324,7 +284,8 @@ namespace scenes {
                 cl->SetGraphicsRootSignature(root_sig_.get());
                 auto heaps = {sampler_heap_.get(), resource_heap_.get()};
                 cl->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());
-                cl->SetGraphicsRootConstantBufferView(0, (cbuffer_[idx].resource())->GetGPUVirtualAddress());
+                // cl->SetGraphicsRootConstantBufferView(0, (cbuffer_[idx].resource())->GetGPUVirtualAddress());
+                cl->SetGraphicsRootConstantBufferView(0, (cbuffer_.resource())->GetGPUVirtualAddress());
                 cl->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
                 cl->SetGraphicsRootDescriptorTable(2, resource_heap_->GetGPUDescriptorHandleForHeapStart());
 
@@ -352,18 +313,15 @@ namespace scenes {
                 cl->DrawInstanced(14, 1, 0, 0);
                 clist_[idx]->Close();
 
-                gui_rect_clist_[idx]->Reset(calloc_[idx].get(), nullptr);
+                gui_rect_clist_[idx]->Reset(calloc_[idx].get(), nullptr); // nullptr or pso_.get() -- advantages?
                 gui_rect_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());
 
                 // gui_rect_(idx,f,gui_rect_clist_[idx],viewport_,scissor_,camera,handles);
-                object_effect_(idx, f, gui_rect_clist_[idx], viewport_, scissor_, camera, handles,
-                               std::addressof(dbview_));
+                object_effect_(idx, f, gui_rect_clist_[idx], viewport_, scissor_, camera, handles, std::addressof(dbview_));
 
                 D3D12_TEXTURE_COPY_LOCATION src{id_layer_, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX};
-                D3D12_TEXTURE_COPY_LOCATION dst{
-                    id_readback_, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
-                    D3D12_PLACED_SUBRESOURCE_FOOTPRINT{
-                        0, CD3DX12_SUBRESOURCE_FOOTPRINT{DXGI_FORMAT_R32_UINT, 1, 1, 1, 256}}};
+                D3D12_TEXTURE_COPY_LOCATION dst{id_readback_, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,
+                                                D3D12_PLACED_SUBRESOURCE_FOOTPRINT{0, CD3DX12_SUBRESOURCE_FOOTPRINT{DXGI_FORMAT_R32_UINT, 1, 1, 1, 256}}};
 
                 src.SubresourceIndex = idx;
                 // dst.PlacedFootprint =
@@ -371,8 +329,7 @@ namespace scenes {
 
                 // id layer texture copy..
                 gui_rect_clist_[idx]->ResourceBarrier(
-                    1, &CD3DX12_RESOURCE_BARRIER::Transition(id_layer_, D3D12_RESOURCE_STATE_RENDER_TARGET,
-                                                             D3D12_RESOURCE_STATE_COPY_SOURCE, idx));
+                    1, &CD3DX12_RESOURCE_BARRIER::Transition(id_layer_, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_COPY_SOURCE, idx));
 
                 // gui_rect_clist_[idx]->CopyBufferRegion(id_readback_,0,id_layer_,0,4);
 
@@ -381,7 +338,7 @@ namespace scenes {
                 int my = GET_Y_LPARAM(coord_);
 
                 static int i = 0; // HACK logging.
-                if (++i > 50)
+                if (++i > 500)
                 {
                     i = 0;
                     std::cout << "mouse @ " << mx << "," << my << " :: id == " << id_value_ << "\n";
@@ -394,8 +351,7 @@ namespace scenes {
                 }
 
                 gui_rect_clist_[idx]->ResourceBarrier(
-                    1, &CD3DX12_RESOURCE_BARRIER::Transition(id_layer_, D3D12_RESOURCE_STATE_COPY_SOURCE,
-                                                             D3D12_RESOURCE_STATE_RENDER_TARGET, idx));
+                    1, &CD3DX12_RESOURCE_BARRIER::Transition(id_layer_, D3D12_RESOURCE_STATE_COPY_SOURCE, D3D12_RESOURCE_STATE_RENDER_TARGET, idx));
 
                 gui_rect_clist_[idx]->Close();
 
