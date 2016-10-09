@@ -19,14 +19,17 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/d3d_box2d_adapter.h>
 #include <gtl/box2d_adapter.h>
 
-#include <gtl/physics/simulation.h>
+#include <gtl/physics/bullet/simulation_impl.h>
 #include <gtl/physics/generators/simple_boundary.h>
-
-#include <gtl/physics/generator.h>
-
+#include <gtl/physics/common_types.h>
+#include <gtl/physics/units.h>
+#include <gtl/physics/command_variant.h>
 #include <gtl/swap_vector.h>
+
 #include <vn/swap_object.h>
 #include <vn/boost_variant_utilities.h>
+
+#include <gtl/camera.h>
 
 //#include <gtl/event_listener.h>
 
@@ -41,8 +44,6 @@ MIT license. See LICENSE.txt in project root for details.
 #include <functional>
 #include <vector>
 
-#include <gtl/camera.h>
-
 #include <GamePad.h>
 
 //#define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
@@ -52,31 +53,17 @@ namespace gtl {
 namespace scenes {
 
     class main_scene {        
-
-        //struct render_box2d : gtl::physics::generator {
-        //    gtl::box2d_adapter& m;
-        //    render_box2d(gtl::box2d_adapter& r) : m{r} {}
-        //    void apply(b2World& b) const override {
-        //        m.render(b);
-        //    }
-        //};
-
-        //gtl::swap_vector<gtl::physics::generator_variant> mutable physics_task_queue_;
-        vn::single_consumer_queue<gtl::physics::generator_variant> mutable physics_task_queue_;
+        vn::single_consumer_queue<gtl::physics::command_variant> mutable physics_task_queue_;
 
         gtl::box2d_adapter mutable box2d_adapter_;
         gtl::d3d::box2d_adapter box2d_;         
 
-        gtl::physics::simulation physics_;
+        std::unique_ptr<gtl::physics::simulation> physics_;
         gtl::camera physics_camera_;
 
         gtl::physics::length<float> mutable camera_height_;
 
-        gtl::scenes::transitions::swirl_effect swirl_effect_;
-
-        // gtl::imgui_adapter mutable imgui_adapter_;
-        // gtl::d3d::imgui_adapter imgui_;
-
+        gtl::scenes::transitions::swirl_effect swirl_effect_;        
         std::atomic<uint32_t> mutable current_id_{};
 
         std::atomic<int> mutable focus_id_{};
@@ -85,14 +72,16 @@ namespace scenes {
         
         auto default_generator()
         {
-            using namespace gtl::physics::generators;
+            using namespace gtl::physics::commands;
             using namespace boost::units;
-            std::vector<gtl::physics::generator_variant> generators_;
+            std::vector<gtl::physics::command_variant> generators_;
 
-            generators_.emplace_back(polymorphic_generator{std::make_unique<gtl::physics::generators::simple_boundary>(
-                gtl::physics::position<float>{0.0f * si::meters, 0.0f * si::meters}, 
-                gtl::physics::dimensions<float>{160.0f * si::meters, 160.0f * si::meters}
-                )});
+            generators_.emplace_back(
+                polymorphic_generator{
+                    std::make_unique<gtl::physics::generators::simple_boundary>(gtl::physics::position<float>{0.0f * si::meters, 0.0f * si::meters}, 
+                                                                                gtl::physics::dimensions<float>{160.0f * si::meters, 160.0f * si::meters})
+                 }
+            );
 
             //generators_.emplace_back(static_box{{0.0f * si::meters, -100.0f * si::meters}, {200.0f * si::meters, 5.0f * si::meters}, 0.0f * si::radians, {}});
             //generators_.emplace_back(static_box{{0.0f * si::meters, 100.0f * si::meters}, {200.0f * si::meters, 5.0f * si::meters}, 0.0f * si::radians, {}});
@@ -101,29 +90,30 @@ namespace scenes {
 
             for (unsigned j = 0; j < 80; ++j)
             {
-                std::vector<dynamic_box> jointed_boxes_;
+                std::vector<gtl::physics::commands::dynamic_box> jointed_boxes_;
                 auto x = vn::math::rand_neg_one_one() * 45.0f * si::meter;
                 auto y = vn::math::rand_neg_one_one() * 45.0f * si::meter;
                 auto angle = 0.0f * si::radians; // vn::math::rand_neg_one_one() * si::radians;
 
                 for (unsigned i = 0; i < 4; ++i)
                 {
-                    jointed_boxes_.emplace_back(dynamic_box{
-                        {x, y - ((i * 1.0f) * si::meter)}, {1.0f * si::meter, 1.0f * si::meter}, angle, InstanceInfo{}.pack_entity_id(j + 600).pack_mesh_id(0)});
+                    jointed_boxes_.emplace_back(gtl::physics::commands::dynamic_box{{x, y - ((i * 1.0f) * si::meter)}, 
+                                                {1.0f * si::meter, 1.0f * si::meter}, 
+                                                angle, gtl::physics::entity_render_data{}.pack_entity_id(j + 600).pack_mesh_id(0)});
                 }
-                generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});
+                generators_.emplace_back(gtl::physics::commands::dynamic_jointed_boxes{std::move(jointed_boxes_)});
             }
 
             for (unsigned j = 80; j < 160; ++j)
             {
-                std::vector<dynamic_box> jointed_boxes_;
+                std::vector<gtl::physics::commands::dynamic_box> jointed_boxes_;
                 auto x = vn::math::rand_neg_one_one() * 45.0f * si::meter;
                 auto y = vn::math::rand_neg_one_one() * 45.0f * si::meter;
                 auto angle = 0.0f * si::radians; // vn::math::rand_neg_one_one() * si::radians;
 
                 // for (unsigned i = 0; i < 4; ++i) {
                 //  jointed_boxes_.emplace_back(
-                generators_.emplace_back(dynamic_box{{x, y}, {1.0f * si::meter, 1.0f * si::meter}, angle, InstanceInfo{}.pack_entity_id(j + 600).pack_mesh_id(1)});
+                generators_.emplace_back(gtl::physics::commands::dynamic_box{{x, y}, {1.0f * si::meter, 1.0f * si::meter}, angle, gtl::physics::entity_render_data{}.pack_entity_id(j + 600).pack_mesh_id(1)});
                 //}
                 // generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});
             }
@@ -133,9 +123,9 @@ namespace scenes {
 
         auto test_generator()
         {
-            using namespace gtl::physics::generators;
+            using namespace gtl::physics::commands;
             using namespace boost::units;
-            std::vector<gtl::physics::generator_variant> generators_;
+            std::vector<gtl::physics::command_variant> generators_;
 
             generators_.emplace_back(polymorphic_generator{std::make_unique<gtl::physics::generators::simple_boundary>(
                 gtl::physics::position<float>{0.0f * si::meters, 0.0f * si::meters}, 
@@ -158,7 +148,7 @@ namespace scenes {
                 for (unsigned i = 0; i < 4; ++i)
                 {
                     jointed_boxes_.emplace_back(dynamic_box{
-                        {x, y - ((i * 1.0f) * si::meter)}, {1.0f * si::meter, 1.0f * si::meter}, angle, InstanceInfo{}.pack_entity_id(j + 600).pack_mesh_id(0)});
+                        {x, y - ((i * 1.0f) * si::meter)}, {1.0f * si::meter, 1.0f * si::meter}, angle, gtl::physics::entity_render_data{}.pack_entity_id(j + 600).pack_mesh_id(0)});
                 }
                 generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});
             }
@@ -172,7 +162,7 @@ namespace scenes {
 
                 // for (unsigned i = 0; i < 4; ++i) {
                 //  jointed_boxes_.emplace_back(
-                generators_.emplace_back(dynamic_box{{x, y}, {1.0f * si::meter, 1.0f * si::meter}, angle, InstanceInfo{}.pack_entity_id(j + 600).pack_mesh_id(1)});
+                generators_.emplace_back(dynamic_box{{x, y}, {1.0f * si::meter, 1.0f * si::meter}, angle, gtl::physics::entity_render_data{}.pack_entity_id(j + 600).pack_mesh_id(1)});
                 //}
                 // generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});
             }
@@ -189,8 +179,8 @@ namespace scenes {
                               {0.001f * boost::units::si::meters},
                               {100.0f * boost::units::si::meters}},
               camera_height_{10.0f * boost::units::si::meters},
-              physics_{physics_task_queue_, box2d_adapter_},
-              swirl_effect_{dev, swchain, cqueue, physics_},
+              physics_{std::make_unique<gtl::physics::bullet_simulation>(physics_task_queue_, box2d_adapter_)},
+              swirl_effect_{dev, swchain, cqueue, *physics_},
               box2d_adapter_{},
               box2d_{dev, swchain, cqueue, box2d_adapter_}
         // imgui_adapter_{},
@@ -206,12 +196,13 @@ namespace scenes {
         {
             func([&](auto&&... ps) {
                 Eigen::Matrix4f cam_transform_
-                    = Eigen::Affine3f{Eigen::Scaling(1.0f / (camera_height_ / boost::units::si::meter)) //}.matrix();
-                                      * Eigen::AngleAxisf{0.2f, Eigen::Vector3f{0.0f, 0.0f, -1.0f}} * Eigen::AngleAxisf{0.2f, Eigen::Vector3f{-1.0f, 0.0f, 0.0f}}}
-                          .matrix();
-                
+                    = Eigen::Affine3f{  Eigen::Scaling(1.0f / (camera_height_ / boost::units::si::meter))                                      
+                                      * Eigen::AngleAxisf{vn::math::deg_to_rad( -45.0f), Eigen::Vector3f{0.0f, 1.0f, 0.0f}} 
+                                      * Eigen::AngleAxisf{vn::math::deg_to_rad( 30.0f), Eigen::Vector3f{1.0f, 0.0f, 0.0f}}
+                                      }.matrix();                                               
+
                 draw_task_queue_.consume([](auto&& f) { f(); }); // execute our waiting tasks..
-                swirl_effect_.draw(ps..., current_id_, cam_transform_ * physics_camera_.matrix());
+                swirl_effect_.draw(ps..., current_id_, cam_transform_ * physics_camera_.matrix());                
                 
                 box2d_.draw(ps...);
 
@@ -262,11 +253,11 @@ namespace scenes {
             namespace ev = gtl::events;
             using k = gtl::keyboard;
             using namespace boost::units;
-            using namespace gtl::physics::generators;
+            using namespace gtl::physics::commands;
 
             int count{};
 
-            //std::vector<gtl::physics::generator_variant> task_local_;
+            //std::vector<gtl::physics::command_variant> task_local_;
 
             uint16_t selected_id{};
             bool shift_down_{};
@@ -352,7 +343,7 @@ namespace scenes {
                             std::cout << "swirl_effect(): A pressed, generating new object.. \n";
                             //physics_task_queue_.insert();
                             physics_task_queue_.insert(dynamic_box{
-                                {0.0f * si::meter, 0.0f * si::meter}, {0.5f * si::meter, 0.5f * si::meter}, 0.0f * si::radians, InstanceInfo{}.pack_entity_id(888)});
+                                {0.0f * si::meter, 0.0f * si::meter}, {0.5f * si::meter, 0.5f * si::meter}, 0.0f * si::radians, gtl::physics::entity_render_data{}.pack_entity_id(888)});
                         }
                         break;
                         case k::K:

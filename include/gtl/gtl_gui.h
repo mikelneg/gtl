@@ -29,8 +29,8 @@ not used -- keeping for reference
 #include <vn/boost_variant_utilities.h>
 #include <vn/boost_visitors.h>
 
-#include <boost/coroutine/asymmetric_coroutine.hpp>
-#include <boost/coroutine/symmetric_coroutine.hpp>
+//#include <boost/coroutine/asymmetric_coroutine.hpp>
+//#include <boost/coroutine/symmetric_coroutine.hpp>
 
 #include <gtl/events.h>
 #include <gtl/gtl_render_properties.h>

@@ -17,8 +17,8 @@ MIT license. See LICENSE.txt in project root for details.
 
 ---------------------------------------------------------------*/
 
-#include <gtl/physics/generator.h>
-#include <gtl/physics/common_units.h>
+#include <gtl/physics/generator_interface.h>
+#include <gtl/physics/units.h>
 
 namespace gtl {
 namespace physics {       
@@ -34,9 +34,9 @@ namespace generators {
               center_(center)
         {}
 
-        void apply(b2World&) const override;
+        void apply(b2World&) const final;
 
-        ~simple_boundary() {}
+        ~simple_boundary() final {}
     };
 
 }}} // namespaces

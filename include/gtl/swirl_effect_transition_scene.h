@@ -40,7 +40,7 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/command_variant.h>
 #include <gtl/stage.h>
 
-#include <gtl/physics/simulation.h>
+#include <gtl/physics/simulation_interface.h>
 
 namespace gtl {
 namespace scenes {

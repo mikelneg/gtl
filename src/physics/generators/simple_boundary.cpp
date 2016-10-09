@@ -7,8 +7,8 @@ MIT license. See LICENSE.txt in project root for details.
 
 #include "gtl/physics/generators/simple_boundary.h"
 
-#include <gtl/physics/simulation.h>
-#include <gtl/physics/common_units.h>
+//#include <gtl/physics/simulation_interface.h>
+#include <gtl/physics/common_types.h>
 
 #include <Box2D/Box2D.h>
 #include <gtl/physics/common_categories.h>
@@ -16,7 +16,6 @@ MIT license. See LICENSE.txt in project root for details.
 namespace gtl {
 namespace physics {
 namespace generators {
-
 
     static void add_static_rect(b2World& world, float x, float y, float w, float h)
     {

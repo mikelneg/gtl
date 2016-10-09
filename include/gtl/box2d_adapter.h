@@ -29,7 +29,7 @@ MIT license. See LICENSE.txt in project root for details.
 
 namespace gtl {
 
-class box2d_adapter {
+class box2d_adapter {   // HACK rename to something like debug_draw ..
 
 public:
     struct imgui_data {

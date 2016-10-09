@@ -14,7 +14,7 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/d3d_types.h>
 #include <gtl/gtl_window.h>
 
-#include <boost/coroutine/asymmetric_coroutine.hpp>
+//#include <boost/coroutine/asymmetric_coroutine.hpp>
 
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/get.hpp>

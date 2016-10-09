@@ -5,10 +5,10 @@ MIT license. See LICENSE.txt in project root for details.
 
 ---------------------------------------------------------------*/
 
-#ifndef URUWOZOBBASFFW_GTL_PHYSICS_COMMON_UNITS_H_
-#define URUWOZOBBASFFW_GTL_PHYSICS_COMMON_UNITS_H_
+#ifndef WOAIGJOJAOWFIJ_GTL_PHYSICS_UNITS_H_
+#define WOAIGJOJAOWFIJ_GTL_PHYSICS_UNITS_H_
 
-#include <utility>
+#include <utility>  // std::pair<>
 
 #include <boost/units/base_units/angle/radian.hpp>
 #include <boost/units/quantity.hpp>
@@ -17,9 +17,10 @@ MIT license. See LICENSE.txt in project root for details.
 #include <boost/units/systems/si/length.hpp>
 #include <boost/units/systems/si/plane_angle.hpp>
 
-namespace gtl {
-namespace physics {
-    
+
+namespace gtl {    
+namespace physics {       
+
     template <typename T>
     using length = boost::units::quantity<boost::units::si::length, T>;
 

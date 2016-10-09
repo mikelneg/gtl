@@ -5,24 +5,25 @@ MIT license. See LICENSE.txt in project root for details.
 
 ---------------------------------------------------------------*/
 
-#ifndef UHGIWUAHBASFEF_GTL_PHYSICS_GENERATOR_H_
-#define UHGIWUAHBASFEF_GTL_PHYSICS_GENERATOR_H_
+#ifndef WUWOOBOAFEF_GTL_ENTITY_ENTITY_ID_H_
+#define WUWOOBOAFEF_GTL_ENTITY_ENTITY_ID_H_
 
 /*-------------------------------------------------------------
+    
+    gtl::common::entity_id    
 
+    -   The id type used to bridge the various components of the 
+        engine
+    
 ---------------------------------------------------------------*/
 
-// forward
-class b2World; 
+#include <cstdint>
 
 namespace gtl {
-namespace physics {        
+namespace common {
+        
+    using entity_id = uint16_t;
 
-    class generator {
-    public:
-        virtual void apply(b2World&) const = 0;
-        virtual ~generator() {}
-    };
-
-}} // namespaces
+}
+} // namespaces
 #endif

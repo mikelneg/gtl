@@ -15,7 +15,9 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/camera.h>
 #include <gtl/mesh_group.h>
 #include <gtl/mesh_loader.h>
-#include <gtl/physics/simulation.h>
+
+#include <gtl/physics/simulation_interface.h>
+#include <gtl/physics/common_types.h>
 
 #include <Eigen/Core>
 
@@ -48,7 +50,7 @@ namespace d3d {
         gtl::d3d::vertex_buffer vbuffer_;
         gtl::d3d::index_buffer index_buffer_;
         gtl::d3d::resource_descriptor_heap ibuffer_descriptors_;
-        aligned_vector<InstanceInfo> instance_data_;
+        aligned_vector<gtl::physics::entity_render_data> instance_data_;
         
         gtl::d3d::constant_buffer mutable instance_buffers_;
         gtl::d3d::resource_descriptor_heap cbheap_;
@@ -68,7 +70,7 @@ namespace d3d {
         gtl::d3d::sampler_descriptor_heap sampler_heap_;
         gtl::d3d::sampler sampler_;
         gtl::physics::simulation& physics_;
-        render_data mutable render_data_;        
+        gtl::physics::simulation_render_data mutable render_data_;        
 
         auto vertex_layout()
         {
@@ -216,7 +218,7 @@ namespace d3d {
               vbuffer_{dev, cqueue, static_cast<void*>(mesh_group_.vertex_data()), mesh_group_.vertex_count() * sizeof(vertex_type_bone)},
               index_buffer_{dev, cqueue, static_cast<void*>(mesh_group_.index_data()), mesh_group_.index_count() * sizeof(uint32_t)},
               ibuffer_descriptors_{dev, 3, gtl::d3d::tags::shader_visible{}},
-              instance_buffers_{dev, ibuffer_descriptors_.get_handle(0), MAX_ENTITIES * sizeof(EntityInfo)},
+              instance_buffers_{dev, ibuffer_descriptors_.get_handle(0), MAX_ENTITIES * sizeof(gtl::physics::entity_render_data)},
               cbheap_{dev, 3, gtl::d3d::tags::shader_visible{}},
               cbuffer_{dev, cbheap_.get_handle(0), sizeof(gtl::camera)},
               bone_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},
@@ -234,7 +236,7 @@ namespace d3d {
 
             auto& positions_ = render_data_.entities_;
 
-            instance_buffers_.update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(EntityInfo));
+            instance_buffers_.update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(gtl::physics::entity_render_data));
      
             initialize_null_descriptor_srv(dev, texture_descriptor_heap_.get_handle(1));
             initialize_null_descriptor_uav(dev, texture_descriptor_heap_.get_handle(2));
@@ -245,9 +247,9 @@ namespace d3d {
             if (physics_.extract_render_data(render_data_))
             {            
                 auto& positions_ = render_data_.entities_;
-                instance_buffers_.update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(EntityInfo));
-                auto& bones_ = render_data_.bones_;
-                bone_buffer_.update(reinterpret_cast<char*>(bones_.data()), bones_.size() * sizeof(Eigen::Matrix4f));
+                instance_buffers_.update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(gtl::physics::entity_render_data));
+                auto& control_points_ = render_data_.control_points_;
+                bone_buffer_.update(reinterpret_cast<char*>(control_points_.data()), control_points_.size() * sizeof(Eigen::Matrix4f));
             }       
         }
 
@@ -298,7 +300,7 @@ namespace d3d {
 
             D3D12_VERTEX_BUFFER_VIEW iaviews_[]
                 = {{vbuffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_group_.vertex_count() * sizeof(vertex_type_bone)), sizeof(vertex_type_bone)},
-                   {instance_buffers_.resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(EntityInfo)), sizeof(EntityInfo)}};
+                   {instance_buffers_.resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(gtl::physics::entity_render_data)), sizeof(gtl::physics::entity_render_data)}};
 
             D3D12_INDEX_BUFFER_VIEW ibv{index_buffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_group_.index_count()) * sizeof(uint32_t), DXGI_FORMAT_R32_UINT};
 

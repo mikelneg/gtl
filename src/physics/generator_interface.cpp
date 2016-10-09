@@ -5,16 +5,8 @@ MIT license. See LICENSE.txt in project root for details.
 
 ---------------------------------------------------------------*/
 
-#include "gtl/physics/generator.h"
+#include "gtl/physics/generator_interface.h"
 
-#include <Box2D/Box2D.h>
+// not currently used..
 
-namespace gtl {
-namespace physics {
 
-    void generator::apply(b2World&) const
-    {
-        // empty
-    }
-
-}} // namespace

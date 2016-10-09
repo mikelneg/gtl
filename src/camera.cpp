@@ -8,7 +8,7 @@ MIT license. See LICENSE.txt in project root for details.
 #include "gtl/camera.h"
 
 #include <Eigen/Geometry>
-#include <gtl/physics/common_units.h>
+#include <gtl/physics/common_types.h>
 
 namespace gtl {
 
@@ -40,8 +40,15 @@ namespace {
         //   0    0    zn/(zn-zf)  1
 
         Eigen::Matrix4f matrix_;
-        matrix_ << 2.0f / (r - l), 0.0f, 0.0f, 0.0f, 0.0f, 2.0f / (t - b), 0.0f, 0.0f, 0.0f, 0.0f, 1.0f / (f - n), 0.0f,
-            0.0f, 0.0f, n / (n - f), 1.0f;
+        
+        // clang-format off
+        
+        matrix_ << 2.0f / (r - l), 0.0f, 0.0f, 0.0f, 
+                   0.0f, 2.0f / (t - b), 0.0f, 0.0f, 
+                   0.0f, 0.0f, 1.0f / (f - n), 0.0f,
+                   0.0f, 0.0f, -n / (f - n), 1.0f;
+        
+        // clang-format on
 
         // matrix_ << 2.0f/(r-l), 0.0f, 0.0f, 0.0f,
         //           0.0f, 2.0f/(t-b), 0.0f, 0.0f,

@@ -8,7 +8,7 @@ MIT license. See LICENSE.txt in project root for details.
 #ifndef OWOBOAXZZZSDFWWER_GTL_EVENT_HANDLER_H_
 #define OWOBOAXZZZSDFWWER_GTL_EVENT_HANDLER_H_
 
-#include <boost/coroutine/asymmetric_coroutine.hpp>
+//#include <boost/coroutine2/coroutine.hpp>
 #include <gtl/events.h>
 #include <vector>
 #include <vn/boost_coroutine_utilities.h>
@@ -18,7 +18,7 @@ namespace gtl {
 namespace coroutine {
 
     class event_handler {
-        using coro = boost::coroutines::asymmetric_coroutine<gtl::event>;
+        using coro = boost::coroutines2::coroutine<gtl::event>;
 
         class scoped_replacement {
             // TODO swaps coroutines; on scope exit swaps back..

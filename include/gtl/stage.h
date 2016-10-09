@@ -11,7 +11,7 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/d3d_types.h>
 #include <gtl/synchronization_object.h>
 
-#include <boost/coroutine/asymmetric_coroutine.hpp>
+//#include <boost/coroutine2/coroutine.hpp>
 //#include <gtl/events.h>
 
 #include <gtl/event_handler.h>
@@ -45,6 +45,8 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/d3d_imgui_adapter.h>
 #include <gtl/imgui_adapter.h>
 #include <imgui.h>
+
+#include <boost/container/flat_map.hpp>
 
 namespace gtl {
 
