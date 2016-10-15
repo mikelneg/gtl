@@ -15,6 +15,8 @@ MIT license. See LICENSE.txt in project root for details.
 #include <ostream>
 
 #include <Eigen/Core>
+// #include <Eigen/StdVector>
+
 #include <gtl/tags.h>
 
 namespace gtl {
@@ -28,6 +30,7 @@ struct vertex_type_bone {
     Eigen::Vector4f normal; // HACK find a better way to organize this layout + direct3d input layout + etc..
     Eigen::Vector4i bone_ids;
     Eigen::Vector4f bone_weights;
+    Eigen::Vector2f uv;
 
     friend std::ostream& operator<<(std::ostream& str, vertex_type_bone const& b)
     {
@@ -51,7 +54,8 @@ public:
     aligned_vector<vertex_type_bone> bone_vertices() const;
     aligned_vector<Eigen::Vector4f> vertices() const;
     std::vector<uint32_t> indices() const;
-    std::vector<Eigen::Matrix4f> links() const;
+    aligned_vector<Eigen::Vector2f> uvs() const; 
+    aligned_vector<Eigen::Matrix4f> links() const;
     Eigen::Matrix4f mesh_transform() const;
     size_t bone_count() const;
 };

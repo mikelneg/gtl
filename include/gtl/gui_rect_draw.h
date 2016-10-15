@@ -42,7 +42,7 @@ namespace d3d {
         std::vector<D3D12_INPUT_ELEMENT_DESC> layout_;
 
         gtl::d3d::resource_descriptor_heap vbuffer_descriptors_;
-        aligned_vector<gtl::physics::entity_render_data> mutable mesh_;
+        aligned_vector<gtl::entity::render_data> mutable mesh_;
         std::array<gtl::d3d::constant_buffer, 3> mutable vbuffers_;
 
         std::array<gtl::d3d::resource_descriptor_heap, 3> cbheap_;
@@ -183,9 +183,9 @@ namespace d3d {
         rect_draw(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, gtl::d3d::root_signature& rsig, gtl::physics::simulation& physics_)
             : layout_(vertex_layout()),
               vbuffer_descriptors_{dev, 3, gtl::d3d::tags::shader_visible{}},
-              vbuffers_{{{dev, vbuffer_descriptors_.get_handle(0), MAX_RECTS * sizeof(gtl::physics::entity_render_data)},
-                         {dev, vbuffer_descriptors_.get_handle(1), MAX_RECTS * sizeof(gtl::physics::entity_render_data)},
-                         {dev, vbuffer_descriptors_.get_handle(2), MAX_RECTS * sizeof(gtl::physics::entity_render_data)}}},
+              vbuffers_{{{dev, vbuffer_descriptors_.get_handle(0), MAX_RECTS * sizeof(gtl::entity::render_data)},
+                         {dev, vbuffer_descriptors_.get_handle(1), MAX_RECTS * sizeof(gtl::entity::render_data)},
+                         {dev, vbuffer_descriptors_.get_handle(2), MAX_RECTS * sizeof(gtl::entity::render_data)}}},
               cbheap_{{{dev, 1, gtl::d3d::tags::shader_visible{}}, {dev, 1, gtl::d3d::tags::shader_visible{}}, {dev, 1, gtl::d3d::tags::shader_visible{}}}},
               cbuffer_{{{dev, cbheap_[0], sizeof(gtl::camera)}, {dev, cbheap_[1], sizeof(gtl::camera)}, {dev, cbheap_[2], sizeof(gtl::camera)}}},
               texture_descriptor_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},
@@ -211,15 +211,15 @@ namespace d3d {
             //}
 
             // construct_vertices(positions_);
-            // vbuffers_[0].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(gtl::physics::entity_render_data));
-            // vbuffers_[1].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(gtl::physics::entity_render_data));
-            // vbuffers_[2].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(gtl::physics::entity_render_data));
+            // vbuffers_[0].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(gtl::entity::render_data));
+            // vbuffers_[1].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(gtl::entity::render_data));
+            // vbuffers_[2].update(reinterpret_cast<char*>(mesh_.data()),mesh_.size() * sizeof(gtl::entity::render_data));
 
             auto& positions_ = render_data_.entities_;
 
-            vbuffers_[0].update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(gtl::physics::entity_render_data));
-            vbuffers_[1].update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(gtl::physics::entity_render_data));
-            vbuffers_[2].update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(gtl::physics::entity_render_data));
+            vbuffers_[0].update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(gtl::entity::render_data));
+            vbuffers_[1].update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(gtl::entity::render_data));
+            vbuffers_[2].update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(gtl::entity::render_data));
 
             position_flags_[0] = false; // dirty flags.. fix these..
             position_flags_[1] = false;
@@ -236,7 +236,7 @@ namespace d3d {
                     e = true; // set dirty
                 position_flags_[idx] = false;
                 // construct_vertices(positions_);
-                vbuffers_[idx].update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(gtl::physics::entity_render_data));
+                vbuffers_[idx].update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(gtl::entity::render_data));
             }
             else
             {
@@ -244,7 +244,7 @@ namespace d3d {
                 {
                     position_flags_[idx] = false;
                     // construct_vertices(positions_);
-                    vbuffers_[idx].update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(gtl::physics::entity_render_data));
+                    vbuffers_[idx].update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(gtl::entity::render_data));
                 }
             }
         }
@@ -269,8 +269,8 @@ namespace d3d {
 
             auto& positions_ = render_data_.entities_;
 
-            D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(gtl::physics::entity_render_data)),
-                                          sizeof(gtl::physics::entity_render_data)};
+            D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(gtl::entity::render_data)),
+                                          sizeof(gtl::entity::render_data)};
             cl->IASetVertexBuffers(0, 1, &cbv_);
 
             auto viewports = {std::addressof(viewport)};

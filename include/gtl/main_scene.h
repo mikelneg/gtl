@@ -16,8 +16,8 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/d3d_imgui_adapter.h>
 #include <gtl/swirl_effect_transition_scene.h>
 
-#include <gtl/d3d_box2d_adapter.h>
-#include <gtl/box2d_adapter.h>
+#include <gtl/d3d_draw_kit.h>
+#include <gtl/draw_kit.h>
 
 #include <gtl/physics/bullet/simulation_impl.h>
 #include <gtl/physics/generators/simple_boundary.h>
@@ -55,8 +55,8 @@ namespace scenes {
     class main_scene {        
         vn::single_consumer_queue<gtl::physics::command_variant> mutable physics_task_queue_;
 
-        gtl::box2d_adapter mutable box2d_adapter_;
-        gtl::d3d::box2d_adapter box2d_;         
+        gtl::draw_kit mutable draw_kit_;
+        gtl::d3d::draw_kit box2d_;         
 
         std::unique_ptr<gtl::physics::simulation> physics_;
         gtl::camera physics_camera_;
@@ -70,6 +70,46 @@ namespace scenes {
 
         vn::single_consumer_queue<std::function<void()>> mutable draw_task_queue_;
         
+        auto box_generator() {
+            using namespace gtl::physics::commands;
+            using namespace boost::units;
+
+            std::vector<gtl::physics::command_variant> generators_;
+
+            for (int i = 0; i < 100; ++i) {
+                generators_.emplace_back(dynamic_box{ {vn::math::rand_neg_one_one() * 10.0f,
+                                                       vn::math::rand_zero_one()    * 20.0f,
+                                                       vn::math::rand_zero_one()    * 200.0f}, 
+                                                       {1.0f,1.0f,1.0f},
+                                                       Eigen::Quaternionf::Identity(),
+                                                       gtl::entity::render_data{}.pack_entity_id(i).pack_mesh_id(1),
+                                                       gtl::entity::id(i),
+                                                       10.0f * si::kilograms });
+            }   
+
+            for (unsigned i = 0; i < 80; ++i) {
+                std::vector<dynamic_box> jointed_boxes_;
+                auto head_x = vn::math::rand_neg_one_one() * 45.0f;
+                auto head_y = vn::math::rand_zero_one()    * 25.0f + 25.0f;
+                auto head_z = vn::math::rand_zero_one()    * 45.0f;
+                //auto head_angle = 0.0f * si::radians; 
+
+                for (unsigned j = 0; j < 4; ++j) {
+                    jointed_boxes_.emplace_back(dynamic_box{ {head_x, head_y - (j * 1.0f), head_z}, 
+                                                             {1.0f,1.0f,1.0f},
+                                                             Eigen::Quaternionf::Identity(),                                                             
+                                                             gtl::entity::render_data{},//.pack_entity_id(i+100).pack_mesh_id(0),
+                                                             gtl::entity::id(i+100),
+                                                             10.0f * si::kilograms});
+                }
+                generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_),
+                                                               gtl::entity::render_data{}.pack_entity_id(i+100).pack_mesh_id(0),
+                                                               gtl::entity::id(i+100)});
+            }
+
+            return generators_;
+        }
+
         auto default_generator()
         {
             using namespace gtl::physics::commands;
@@ -83,39 +123,39 @@ namespace scenes {
                  }
             );
 
-            //generators_.emplace_back(static_box{{0.0f * si::meters, -100.0f * si::meters}, {200.0f * si::meters, 5.0f * si::meters}, 0.0f * si::radians, {}});
-            //generators_.emplace_back(static_box{{0.0f * si::meters, 100.0f * si::meters}, {200.0f * si::meters, 5.0f * si::meters}, 0.0f * si::radians, {}});
-            //generators_.emplace_back(static_box{{-100.0f * si::meters, 0.0f * si::meters}, {5.0f * si::meters, 200.0f * si::meters}, 0.0f * si::radians, {}});
-            //generators_.emplace_back(static_box{{100.0f * si::meters, 0.0f * si::meters}, {5.0f * si::meters, 200.0f * si::meters}, 0.0f * si::radians, {}});
+            //generators_.emplace_back(static_rectangle{{0.0f * si::meters, -100.0f * si::meters}, {200.0f * si::meters, 5.0f * si::meters}, 0.0f * si::radians, {}});
+            //generators_.emplace_back(static_rectangle{{0.0f * si::meters, 100.0f * si::meters}, {200.0f * si::meters, 5.0f * si::meters}, 0.0f * si::radians, {}});
+            //generators_.emplace_back(static_rectangle{{-100.0f * si::meters, 0.0f * si::meters}, {5.0f * si::meters, 200.0f * si::meters}, 0.0f * si::radians, {}});
+            //generators_.emplace_back(static_rectangle{{100.0f * si::meters, 0.0f * si::meters}, {5.0f * si::meters, 200.0f * si::meters}, 0.0f * si::radians, {}});
 
             for (unsigned j = 0; j < 80; ++j)
             {
-                std::vector<gtl::physics::commands::dynamic_box> jointed_boxes_;
+                std::vector<gtl::physics::commands::dynamic_rectangle> jointed_boxes_;
                 auto x = vn::math::rand_neg_one_one() * 45.0f * si::meter;
                 auto y = vn::math::rand_neg_one_one() * 45.0f * si::meter;
                 auto angle = 0.0f * si::radians; // vn::math::rand_neg_one_one() * si::radians;
 
                 for (unsigned i = 0; i < 4; ++i)
                 {
-                    jointed_boxes_.emplace_back(gtl::physics::commands::dynamic_box{{x, y - ((i * 1.0f) * si::meter)}, 
+                    jointed_boxes_.emplace_back(gtl::physics::commands::dynamic_rectangle{{x, y - ((i * 1.0f) * si::meter)}, 
                                                 {1.0f * si::meter, 1.0f * si::meter}, 
-                                                angle, gtl::physics::entity_render_data{}.pack_entity_id(j + 600).pack_mesh_id(0)});
+                                                angle, gtl::entity::render_data{}.pack_entity_id(j + 600).pack_mesh_id(0)});
                 }
-                generators_.emplace_back(gtl::physics::commands::dynamic_jointed_boxes{std::move(jointed_boxes_)});
+                generators_.emplace_back(gtl::physics::commands::dynamic_jointed_rectangles{std::move(jointed_boxes_)});
             }
 
             for (unsigned j = 80; j < 160; ++j)
             {
-                std::vector<gtl::physics::commands::dynamic_box> jointed_boxes_;
+                std::vector<gtl::physics::commands::dynamic_rectangle> jointed_boxes_;
                 auto x = vn::math::rand_neg_one_one() * 45.0f * si::meter;
                 auto y = vn::math::rand_neg_one_one() * 45.0f * si::meter;
                 auto angle = 0.0f * si::radians; // vn::math::rand_neg_one_one() * si::radians;
 
                 // for (unsigned i = 0; i < 4; ++i) {
                 //  jointed_boxes_.emplace_back(
-                generators_.emplace_back(gtl::physics::commands::dynamic_box{{x, y}, {1.0f * si::meter, 1.0f * si::meter}, angle, gtl::physics::entity_render_data{}.pack_entity_id(j + 600).pack_mesh_id(1)});
+                generators_.emplace_back(gtl::physics::commands::dynamic_rectangle{{x, y}, {1.0f * si::meter, 1.0f * si::meter}, angle, gtl::entity::render_data{}.pack_entity_id(j + 600).pack_mesh_id(1)});
                 //}
-                // generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});
+                // generators_.emplace_back(dynamic_jointed_rectangles{std::move(jointed_boxes_)});
             }
 
             return generators_;
@@ -133,38 +173,38 @@ namespace scenes {
                 )});
 
 
-//            generators_.emplace_back(static_box{{0.0f * si::meters, -100.0f * si::meters}, {200.0f * si::meters, 5.0f * si::meters}, 0.0f * si::radians, {}});
-//            generators_.emplace_back(static_box{{0.0f * si::meters, 100.0f * si::meters}, {200.0f * si::meters, 5.0f * si::meters}, 0.0f * si::radians, {}});
-//            generators_.emplace_back(static_box{{-100.0f * si::meters, 0.0f * si::meters}, {5.0f * si::meters, 200.0f * si::meters}, 0.0f * si::radians, {}});
-//            generators_.emplace_back(static_box{{100.0f * si::meters, 0.0f * si::meters}, {5.0f * si::meters, 200.0f * si::meters}, 0.0f * si::radians, {}});
+//            generators_.emplace_back(static_rectangle{{0.0f * si::meters, -100.0f * si::meters}, {200.0f * si::meters, 5.0f * si::meters}, 0.0f * si::radians, {}});
+//            generators_.emplace_back(static_rectangle{{0.0f * si::meters, 100.0f * si::meters}, {200.0f * si::meters, 5.0f * si::meters}, 0.0f * si::radians, {}});
+//            generators_.emplace_back(static_rectangle{{-100.0f * si::meters, 0.0f * si::meters}, {5.0f * si::meters, 200.0f * si::meters}, 0.0f * si::radians, {}});
+//            generators_.emplace_back(static_rectangle{{100.0f * si::meters, 0.0f * si::meters}, {5.0f * si::meters, 200.0f * si::meters}, 0.0f * si::radians, {}});
 
             for (unsigned j = 0; j < 50; ++j)
             {
-                std::vector<dynamic_box> jointed_boxes_;
+                std::vector<dynamic_rectangle> jointed_boxes_;
                 auto x = vn::math::rand_neg_one_one() * 15.0f * si::meter;
                 auto y = vn::math::rand_neg_one_one() * 15.0f * si::meter;
                 auto angle = 0.0f * si::radians; // vn::math::rand_neg_one_one() * si::radians;
 
                 for (unsigned i = 0; i < 4; ++i)
                 {
-                    jointed_boxes_.emplace_back(dynamic_box{
-                        {x, y - ((i * 1.0f) * si::meter)}, {1.0f * si::meter, 1.0f * si::meter}, angle, gtl::physics::entity_render_data{}.pack_entity_id(j + 600).pack_mesh_id(0)});
+                    jointed_boxes_.emplace_back(dynamic_rectangle{
+                        {x, y - ((i * 1.0f) * si::meter)}, {1.0f * si::meter, 1.0f * si::meter}, angle, gtl::entity::render_data{}.pack_entity_id(j + 600).pack_mesh_id(0)});
                 }
-                generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});
+                generators_.emplace_back(dynamic_jointed_rectangles{std::move(jointed_boxes_)});
             }
 
             for (unsigned j = 50; j < 100; ++j)
             {
-                std::vector<dynamic_box> jointed_boxes_;
+                std::vector<dynamic_rectangle> jointed_boxes_;
                 auto x = vn::math::rand_neg_one_one() * 15.0f * si::meter;
                 auto y = vn::math::rand_neg_one_one() * 15.0f * si::meter;
                 auto angle = 0.0f * si::radians; // vn::math::rand_neg_one_one() * si::radians;
 
                 // for (unsigned i = 0; i < 4; ++i) {
                 //  jointed_boxes_.emplace_back(
-                generators_.emplace_back(dynamic_box{{x, y}, {1.0f * si::meter, 1.0f * si::meter}, angle, gtl::physics::entity_render_data{}.pack_entity_id(j + 600).pack_mesh_id(1)});
+                generators_.emplace_back(dynamic_rectangle{{x, y}, {1.0f * si::meter, 1.0f * si::meter}, angle, gtl::entity::render_data{}.pack_entity_id(j + 600).pack_mesh_id(1)});
                 //}
-                // generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_)});
+                // generators_.emplace_back(dynamic_jointed_rectangles{std::move(jointed_boxes_)});
             }
 
             return generators_;
@@ -172,17 +212,16 @@ namespace scenes {
 
     public:
         main_scene(gtl::d3d::device& dev, gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue)
-            : physics_task_queue_{test_generator()},
-              physics_camera_{{0.0f * boost::units::si::meters, 0.0f * boost::units::si::meters},
-                              {1.0f * boost::units::si::meters, 1.0f * boost::units::si::meters},
+            : physics_task_queue_{box_generator()},
+              physics_camera_{{1.0f * boost::units::si::meters, 1.0f * boost::units::si::meters},
                               gtl::physics::angle<float>{45.0f * boost::units::degree::degree},
-                              {0.001f * boost::units::si::meters},
-                              {100.0f * boost::units::si::meters}},
+                              {0.01f * boost::units::si::meters},
+                              {200.0f * boost::units::si::meters}},
               camera_height_{10.0f * boost::units::si::meters},
-              physics_{std::make_unique<gtl::physics::bullet_simulation>(physics_task_queue_, box2d_adapter_)},
+              physics_{std::make_unique<gtl::physics::bullet_simulation>(physics_task_queue_, draw_kit_)},
               swirl_effect_{dev, swchain, cqueue, *physics_},
-              box2d_adapter_{},
-              box2d_{dev, swchain, cqueue, box2d_adapter_}
+              draw_kit_{},
+              box2d_{dev, swchain, cqueue, draw_kit_}
         // imgui_adapter_{},
         // imgui_{dev, swchain, cqueue, imgui_adapter_}
         {
@@ -196,17 +235,22 @@ namespace scenes {
         {
             func([&](auto&&... ps) {
                 Eigen::Matrix4f cam_transform_
-                    = Eigen::Affine3f{  Eigen::Scaling(1.0f / (camera_height_ / boost::units::si::meter))                                      
-                                      * Eigen::AngleAxisf{vn::math::deg_to_rad( -45.0f), Eigen::Vector3f{0.0f, 1.0f, 0.0f}} 
-                                      * Eigen::AngleAxisf{vn::math::deg_to_rad( 30.0f), Eigen::Vector3f{1.0f, 0.0f, 0.0f}}
+                    = Eigen::Affine3f{  Eigen::Translation3f{0.0f,-(camera_height_ / boost::units::si::meter),50.0f} 
+                                     //* Eigen::Scaling(1.0f / (camera_height_ / boost::units::si::meter))                                      
+                                      * Eigen::AngleAxisf{vn::math::deg_to_rad( -10.0f), Eigen::Vector3f{1.0f, 0.0f, 0.0f}} 
+                                      * Eigen::AngleAxisf{vn::math::deg_to_rad(   0.0f), Eigen::Vector3f{0.0f, 1.0f, 0.0f}}
                                       }.matrix();                                               
 
-                draw_task_queue_.consume([](auto&& f) { f(); }); // execute our waiting tasks..
-                swirl_effect_.draw(ps..., current_id_, cam_transform_ * physics_camera_.matrix());                
-                
-                box2d_.draw(ps...);
+                //Eigen::Matrix4f rot = Eigen::Affine3f{ Eigen::AngleAxisf{vn::math::deg_to_rad( -25.0f), Eigen::Vector3f{1.0f, 0.0f, 0.0f}} }.matrix();
 
-                //physics_task_queue_.insert(gtl::physics::generators::polymorphic_generator{std::make_unique<render_box2d>(box2d_adapter_)});                            
+                Eigen::Matrix4f m = (physics_camera_.matrix() * cam_transform_).transpose();
+
+                draw_task_queue_.consume([](auto&& f) { f(); }); // execute our waiting tasks..
+
+                swirl_effect_.draw(ps..., current_id_, m);                                
+                box2d_.draw(ps..., m);
+
+                //physics_task_queue_.insert(gtl::physics::generators::polymorphic_generator{std::make_unique<render_box2d>(draw_kit_)});                            
             });
         }
 
@@ -342,8 +386,8 @@ namespace scenes {
                         {
                             std::cout << "swirl_effect(): A pressed, generating new object.. \n";
                             //physics_task_queue_.insert();
-                            physics_task_queue_.insert(dynamic_box{
-                                {0.0f * si::meter, 0.0f * si::meter}, {0.5f * si::meter, 0.5f * si::meter}, 0.0f * si::radians, gtl::physics::entity_render_data{}.pack_entity_id(888)});
+                            physics_task_queue_.insert(dynamic_rectangle{
+                                {0.0f * si::meter, 0.0f * si::meter}, {0.5f * si::meter, 0.5f * si::meter}, 0.0f * si::radians, gtl::entity::render_data{}.pack_entity_id(888)});
                         }
                         break;
                         case k::K:

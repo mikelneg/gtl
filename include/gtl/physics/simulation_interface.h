@@ -12,7 +12,7 @@ MIT license. See LICENSE.txt in project root for details.
 
 ---------------------------------------------------------------*/
 
-#include <gtl/physics/common_types.h>
+#include <gtl/physics/simulation_render_data.h>
 
 namespace gtl {
 namespace physics {        

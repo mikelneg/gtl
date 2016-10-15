@@ -20,9 +20,10 @@ MIT license. See LICENSE.txt in project root for details.
 #include <cstdint>
 
 namespace gtl {
-namespace common {
+namespace entity {
         
-    using entity_id = uint16_t;
+    using id_type = uint16_t;        
+    using id = id_type;
 
 }
 } // namespaces

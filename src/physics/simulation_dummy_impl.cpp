@@ -42,7 +42,7 @@ MIT license. See LICENSE.txt in project root for details.
 
 #include <boost/variant.hpp>
 #include <vn/math_utilities.h>
-#include <gtl/box2d_adapter.h>
+#include <gtl/draw_kit.h>
 
 
 // Bullet physics
@@ -73,12 +73,12 @@ namespace {
         vn::swap_object<T>& rend_data_, 
         vn::single_consumer_queue<U>& physics_task_queue_,        
         std::atomic_flag& quit_, 
-        gtl::box2d_adapter& b2d_adapter_);
+        gtl::draw_kit& b2d_adapter_);
     
 
     template <typename T, typename U>
     static void simulation_thread(vn::swap_object<T>&, vn::single_consumer_queue<U>& physics_task_queue_,
-                                  std::atomic_flag& quit_, gtl::box2d_adapter&);
+                                  std::atomic_flag& quit_, gtl::draw_kit&);
 
     template <typename T>
     struct query_callback_helper : b2QueryCallback, T {
@@ -132,7 +132,7 @@ namespace {
             return nullptr;
         }
 
-        b2Body* operator()(gtl::physics::commands::static_box const& o) const
+        b2Body* operator()(gtl::physics::commands::static_rectangle const& o) const
         {
 
             using namespace boost::units;
@@ -172,7 +172,7 @@ namespace {
             return ptr;
         }
 
-        b2Body* operator()(gtl::physics::commands::dynamic_jointed_boxes const& o) const
+        b2Body* operator()(gtl::physics::commands::dynamic_jointed_rectangles const& o) const
         {
 
             using namespace boost::units;
@@ -266,7 +266,7 @@ namespace {
             return body_ptrs_[0];
         }
 
-        b2Body* operator()(gtl::physics::commands::dynamic_box const& o) const
+        b2Body* operator()(gtl::physics::commands::dynamic_rectangle const& o) const
         {
 
             using namespace boost::units;
@@ -427,7 +427,7 @@ namespace {
 namespace physics {
 
 simulation_dummy_impl::simulation_dummy_impl(
-    vn::single_consumer_queue<gtl::physics::command_variant>& tasks_, gtl::box2d_adapter& b2d_adapter_) // boost::units::quantity<boost::units::si::area> area_,
+    vn::single_consumer_queue<gtl::physics::command_variant>& tasks_, gtl::draw_kit& b2d_adapter_) // boost::units::quantity<boost::units::si::area> area_,
 // std::vector<Eigen::Vector4f> positions_)
 
 {
@@ -486,10 +486,10 @@ namespace {
         btSphereShape shape_;                
         
         Eigen::Matrix4f my_transform_;
-        gtl::physics::entity_render_data entity_data_;
+        gtl::entity::render_data entity_data_;
         
         gtl::physics::simulation_render_data& render_data_;
-        //std::vector<gtl::physics::gtl::physics::entity_render_data>& entity_vector_;
+        //std::vector<gtl::physics::gtl::entity::render_data>& entity_vector_;
         //std::vector<Eigen::Matrix4f>& render_vector_;
 
     public:        
@@ -497,7 +497,7 @@ namespace {
                      btScalar mass, 
                      btVector3 fall_inertia,
                      btScalar shaperadius,
-                     gtl::physics::entity_render_data entity_render_data,
+                     gtl::entity::render_data entity_render_data,
                      gtl::physics::simulation_render_data& rdata) 
             : def_transform_{transform},
               mass_{mass},
@@ -548,26 +548,26 @@ namespace {
         vn::swap_object<T>& rend_data_, 
         vn::single_consumer_queue<U>& physics_task_queue_,        
         std::atomic_flag& quit_, 
-        gtl::box2d_adapter& b2d_adapter_)
+        gtl::draw_kit& b2d_adapter_)
     {
-        gtl::box2d_adapter::imgui_data local_debug_render_data_; 
+        gtl::draw_data local_debug_render_data_; 
         gtl::physics::simulation_render_data local_render_data_;        
         
 
         auto add_rect_at = 
             [&](auto x, auto y, auto h){                 
 
-                std::pair<float,float> coords[]={{x-h,y-h},{x+h,y-h},{x+h,y+h},{x-h,y+h}};
-                
-                for (auto&& e : coords) {
-                    local_debug_render_data_.add_vertex(ImDrawVert{{e.first,e.second},{0.0f,0.0f},ImColor{1.0f,1.0f,1.0f,1.0f}});
-                }
-
-                local_debug_render_data_.add_triangle(3,0,1);
-                local_debug_render_data_.add_triangle(3,1,2);
-
-                local_debug_render_data_.next_group();
-
+//                std::pair<float,float> coords[]={{x-h,y-h},{x+h,y-h},{x+h,y+h},{x-h,y+h}};
+//                
+//                for (auto&& e : coords) {
+//                    local_debug_render_data_.add_vertex(ImDrawVert{{e.first,e.second},{0.0f,0.0f},ImColor{1.0f,1.0f,1.0f,1.0f}});
+//                }
+//
+//                local_debug_render_data_.add_triangle(3,0,1);
+//                local_debug_render_data_.add_triangle(3,1,2);
+//
+//                local_debug_render_data_.next_group();
+//
             };
 
         btDbvtBroadphase broadphase{};
@@ -621,7 +621,7 @@ namespace {
                                     1.0f, 
                                     btVector3{0.0f,vn::math::rand_zero_one() * 1.0f,0.0f}, 
                                     1.0f, 
-                                    gtl::physics::entity_render_data{}.pack_entity_id(i + 55).pack_mesh_id(1).pack_bone_offset(static_cast<uint16_t>(i)), 
+                                    gtl::entity::render_data{}.pack_entity_id(i + 55).pack_mesh_id(1).pack_bone_offset(static_cast<uint16_t>(i)), 
                                     local_render_data_);
         }
         //#############################
@@ -673,7 +673,7 @@ namespace {
     template <typename T, typename U>
     static void simulation_thread(vn::swap_object<T>& rend_data_, vn::single_consumer_queue<U>& physics_task_queue_, //gtl::swap_vector<U>& physics_task_queue_,
                                   // std::vector<physics::generator> generators_,
-                                  std::atomic_flag& quit_, gtl::box2d_adapter& b2d_adapter_)
+                                  std::atomic_flag& quit_, gtl::draw_kit& b2d_adapter_)
     {
         // b2World world_{b2Vec2{0.0f,-9.8f}};
         b2World world_{b2Vec2{0.0f, 0.0f}};
@@ -699,7 +699,7 @@ namespace {
 
         render_data local_rend_data_;
 
-        gtl::box2d_adapter::imgui_data local_b2d_data_;
+        gtl::draw_data local_b2d_data_;
 
         auto& positions_ = local_rend_data_.entities_;
         auto& bones_ = local_rend_data_.bones_;
@@ -720,7 +720,7 @@ namespace {
                 // uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(b->GetUserData()));
                 // temporar
 
-                // positions_.emplace_back(gtl::physics::entity_render_data{{position.x,
+                // positions_.emplace_back(gtl::entity::render_data{{position.x,
                 //                           position.y,
                 //                           1.0f,1.0f},
                 //                           0, // MESH_ID
@@ -737,7 +737,7 @@ namespace {
             //
             ////b2AABB aabb_ = fixture_->GetAABB(0);
             //
-            // positions_.emplace_back(gtl::physics::entity_render_data{{position.x,
+            // positions_.emplace_back(gtl::entity::render_data{{position.x,
             //                           position.y,
             //                           1.0f,1.0f},
             //                           {1.0f, 1.0f, 1.0f, b->GetAngle()},index_});
@@ -753,7 +753,7 @@ namespace {
             // uint32_t index_ = static_cast<uint32_t>(reinterpret_cast<uintptr_t>(body_.GetUserData()));
             b2Vec2 const& p = body_.GetPosition();
 
-            // positions_.emplace_back(gtl::physics::entity_render_data{{p.x, p.y, 1.0f, 1.0f},
+            // positions_.emplace_back(gtl::entity::render_data{{p.x, p.y, 1.0f, 1.0f},
             //                                   //{1.0f, 1.0f, 1.0f, body_.GetAngle()},
             //                                   0, // MESH_ID
             //                                   static_cast<uint32_t>(bones_.size()),
@@ -824,7 +824,7 @@ namespace {
 
 
         auto dump_fixtures = [&](b2Body& body_) {
-            gtl::physics::entity_render_data instance{reinterpret_cast<uintptr_t>(body_.GetUserData()),
+            gtl::entity::render_data instance{reinterpret_cast<uintptr_t>(body_.GetUserData()),
                                   static_cast<uint16_t>(bones_.size())};
 
             b2Vec2 const& p = body_.GetPosition();

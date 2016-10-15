@@ -10,6 +10,8 @@ MIT license. See LICENSE.txt in project root for details.
 
 /*-------------------------------------------------------------
 
+    NOT USING .. currently in simulation_impl.cpp
+
     class gtl::physics::bullet::command_visitor
 
     -   visitor that handles gtl::physics::command_variant types
@@ -34,15 +36,15 @@ namespace detail {
         template <typename T>
         bool operator()(T const&) const { assert(false); return true; } // shouldn't be called
           
-        bool operator()(commands::static_box const& o)
+        bool operator()(commands::static_rectangle const& o)
            { 
                return true;  
            }
-        bool operator()(commands::dynamic_jointed_boxes const& o) const
+        bool operator()(commands::dynamic_jointed_rectangles const& o) const
            { 
                return true;  
            }
-        bool operator()(commands::dynamic_box const& o) const           
+        bool operator()(commands::dynamic_rectangle const& o) const           
            {   
                return true;  
            }

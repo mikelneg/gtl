@@ -20,19 +20,20 @@ MIT license. See LICENSE.txt in project root for details.
 
 #include <boost/variant.hpp>
 
+#include <gtl/entity/render_data.h>
 #include <gtl/physics/units.h>
 #include <gtl/physics/common_types.h>
 #include <gtl/physics/command_variant.h>
 
 #include <gtl/physics/simulation_interface.h>
 
-#include <gtl/box2d_adapter.h>
+#include <gtl/draw_kit.h>
 
 namespace gtl {
 namespace physics {
 
     class simulation_dummy_impl : public simulation {
-        using entity_type = entity_render_data;
+        using entity_type = entity::render_data;
     
         vn::swap_object<simulation_render_data> render_data_;
     
@@ -42,7 +43,7 @@ namespace physics {
     public:
 
         simulation_dummy_impl(vn::single_consumer_queue<gtl::physics::command_variant>&, 
-                              gtl::box2d_adapter&);
+                              gtl::draw_kit&);
     
         bool extract_render_data(simulation_render_data& c) final 
         {
