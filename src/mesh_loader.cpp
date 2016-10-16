@@ -86,16 +86,16 @@ namespace gtl {
             
             void push_bone(unsigned id, float weight)
             {
-                if (current_bone > 3) { return; } // TODO handle too many/too few bones..                
-                bone_indexes_[current_bone] = id;
-                bone_weights_[current_bone] = weight;    
-                current_bone++;
+                if (id > 3) { return; } // TODO handle too many/too few bones..                
+                //bone_indexes_[current_bone] = id;
+                bone_weights_[id] = weight;    
+                //current_bone++;
             }
     
             control_point_bone() = default;    
-            Eigen::Vector4i bone_indexes_{0,0,0,0};
-            Eigen::Vector4f bone_weights_{1.0f,0.0f,0.0f,0.0f};            
-            unsigned current_bone{0};
+            //Eigen::Vector4i bone_indexes_{0,0,0,0};
+            Eigen::Vector4f bone_weights_{0.0f,0.0f,0.0f,0.0f};            
+            //unsigned current_bone{0};
         };
             
         aligned_vector<Eigen::Vector4f> v_positions;
@@ -223,8 +223,8 @@ namespace gtl {
                             v_normals.emplace_back(0.0f,0.0f,0.0f,0.0f); 
                         }                        
 
-                        indices.emplace_back(j + (i * sz)); // control_point_index );   // ignoring actual index for now..                           
-                        v_bones.emplace_back(control_bones[control_point_index].bone_indexes_, 
+                        indices.emplace_back(j + (i * sz)); // control_point_index );   // ignoring actual index for now..                                                                                                   
+                        v_bones.emplace_back(//control_bones[control_point_index].bone_indexes_, 
                                              control_bones[control_point_index].bone_weights_);                      
                     }
                 }                                      
@@ -268,10 +268,10 @@ static T replace_vertex_origins_with_bones(T const& v_positions, U& v_bones, V c
         
         Eigen::Vector4f tmp{0.0f,0.0f,0.0f,0.0f},con{0.0f,0.0f,0.0f,1.0f};                
 
-        tmp += (bone_transforms[ v_bones[i].first[0] ] * con) * v_bones[i].second[ 0 ];
-        tmp += (bone_transforms[ v_bones[i].first[1] ] * con) * v_bones[i].second[ 1 ];
-        tmp += (bone_transforms[ v_bones[i].first[2] ] * con) * v_bones[i].second[ 2 ];
-        tmp += (bone_transforms[ v_bones[i].first[3] ] * con) * v_bones[i].second[ 3 ];             
+        tmp += (bone_transforms[0] * con) * v_bones[i][0];
+        tmp += (bone_transforms[1] * con) * v_bones[i][1];
+        tmp += (bone_transforms[2] * con) * v_bones[i][2];
+        tmp += (bone_transforms[3] * con) * v_bones[i][3];             
                 
         tmp = tmp - v_positions[i];
         tmp.w() = 1.0f;
@@ -290,7 +290,7 @@ mesh_loader::aligned_vector<vertex_type_bone> mesh_loader::bone_vertices() const
            impl_->v_positions.size() == impl_->v_uvs.size() && 
            impl_->v_positions.size() == impl_->v_bones.size());
     
-    for (auto&& e : impl_->v_bones) { e.second.normalize(); }
+    for (auto&& e : impl_->v_bones) { if (e.norm() < 1.0f) { e.x() = 1.0f; } e.normalize(); }
     impl_->v_positions = replace_vertex_origins_with_bones(impl_->v_positions,impl_->v_bones, impl_->bone_transforms);
 
     auto v_beg = begin(impl_->v_positions);
@@ -299,7 +299,7 @@ mesh_loader::aligned_vector<vertex_type_bone> mesh_loader::bone_vertices() const
 
     for (unsigned i = 0, j = static_cast<unsigned>(impl_->v_positions.size()); i < j; ++i, ++v_beg, ++n_beg, ++uv_beg)
     {
-        ret.emplace_back(vertex_type_bone{*v_beg, *n_beg, impl_->v_bones[i].first, impl_->v_bones[i].second, *uv_beg});
+        ret.emplace_back(vertex_type_bone{*v_beg, *n_beg, impl_->v_bones[i], *uv_beg});
     }
     return ret;
 }

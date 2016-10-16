@@ -27,14 +27,14 @@ namespace entity {
                     static_assert(sizeof(uintptr_t) == sizeof(uint64_t), 
                                   "render_data will not be sized properly; must be 64 bits.");
     
-        explicit render_data(uintptr_t i, uint16_t p) noexcept : data{i}
+        render_data(uintptr_t i, uint16_t p) noexcept : data{i}
         {
             pack<0>(p);
         }
-        constexpr explicit render_data(uintptr_t v) noexcept : data{v}
+        explicit render_data(uintptr_t v) noexcept : data{v}
         {
         }
-        constexpr explicit render_data(uint16_t a, uint16_t b, uint16_t c, uint16_t d) noexcept : arr{a, b, c, d}
+        explicit render_data(uint16_t a, uint16_t b, uint16_t c, uint16_t d) noexcept : arr{a, b, c, d}
         {
         }
     

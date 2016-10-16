@@ -79,7 +79,7 @@ namespace d3d {
             return std::vector<D3D12_INPUT_ELEMENT_DESC>{
                 {"VERTEX_POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                 {"VERTEX_NORMAL", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                {"VERTEX_BONE_IDS", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},                
+                //{"VERTEX_BONE_IDS", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},                
                 {"VERTEX_BONE_WEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                 {"VERTEX_UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                 {"INSTANCE_INFO", 0, DXGI_FORMAT_R16G16B16A16_UINT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1}
@@ -114,7 +114,7 @@ namespace d3d {
             desc_.RasterizerState.CullMode = D3D12_CULL_MODE_BACK;
             desc_.RasterizerState.FrontCounterClockwise = false;
             desc_.RasterizerState.DepthClipEnable = true;
-            desc_.RasterizerState.AntialiasedLineEnable = false;
+            desc_.RasterizerState.AntialiasedLineEnable = true;
 
             desc_.InputLayout.pInputElementDescs = &layout_[0];
             desc_.InputLayout.NumElements = static_cast<unsigned>(layout_.size());

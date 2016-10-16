@@ -264,10 +264,10 @@ namespace scenes {
         {
             func([&](auto&&... ps) {
                 Eigen::Matrix4f cam_transform_
-                    = Eigen::Affine3f{  Eigen::Translation3f{0.0f,-20.0f,50.0f + (camera_height_ / boost::units::si::meter)} 
+                    = Eigen::Affine3f{  Eigen::Translation3f{0.0f,-(camera_height_ / boost::units::si::meter),60.0f} 
                                      //* Eigen::Scaling(1.0f / (camera_height_ / boost::units::si::meter))                                      
-                                      * Eigen::AngleAxisf{vn::math::deg_to_rad( -30.0f), Eigen::Vector3f{1.0f, 0.0f, 0.0f}} 
-                                      * Eigen::AngleAxisf{vn::math::deg_to_rad( -30.0f), Eigen::Vector3f{0.0f, 1.0f, 0.0f}}
+                                      * Eigen::AngleAxisf{vn::math::deg_to_rad( -20.0f), Eigen::Vector3f{1.0f, 0.0f, 0.0f}} 
+                                      * Eigen::AngleAxisf{vn::math::deg_to_rad( 20.0f), Eigen::Vector3f{0.0f, 1.0f, 0.0f}}
                                       }.matrix();                                               
 
                 //Eigen::Matrix4f rot = Eigen::Affine3f{ Eigen::AngleAxisf{vn::math::deg_to_rad( -25.0f), Eigen::Vector3f{1.0f, 0.0f, 0.0f}} }.matrix();

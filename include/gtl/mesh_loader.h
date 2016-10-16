@@ -29,7 +29,7 @@ namespace tags {
 struct vertex_type_bone {
     Eigen::Vector4f pos;
     Eigen::Vector4f normal; // HACK find a better way to organize this layout + direct3d input layout + etc..
-    Eigen::Vector4i bone_ids;
+    //Eigen::Vector4i bone_ids;
     Eigen::Vector4f bone_weights;
     Eigen::Vector2f uv;
 
@@ -46,7 +46,7 @@ public:
     template <typename T>
     using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;
 
-    using bone = std::pair<Eigen::Vector4i, Eigen::Vector4f>; 
+    using bone = Eigen::Vector4f;//;std::pair<Eigen::Vector4i, Eigen::Vector4f>; 
 
 private:
     struct priv_impl;
