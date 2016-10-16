@@ -11,6 +11,7 @@ MIT license. See LICENSE.txt in project root for details.
 #include <memory>
 #include <string>
 #include <vector>
+#include <tuple>
 
 #include <ostream>
 
@@ -41,9 +42,13 @@ struct vertex_type_bone {
 };
 
 class mesh_loader { // HACK hackish..
+public:
     template <typename T>
     using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;
 
+    using bone = std::pair<Eigen::Vector4i, Eigen::Vector4f>; 
+
+private:
     struct priv_impl;
     std::unique_ptr<priv_impl> impl_;
 
@@ -52,10 +57,11 @@ public:
     ~mesh_loader();
 
     aligned_vector<vertex_type_bone> bone_vertices() const;
-    aligned_vector<Eigen::Vector4f> vertices() const;
+    aligned_vector<Eigen::Vector4f> vertex_positions() const;    
+    aligned_vector<Eigen::Vector2f> vertex_uvs() const; 
+    aligned_vector<Eigen::Matrix4f> links() const;        
+    aligned_vector<bone> bones() const; 
     std::vector<uint32_t> indices() const;
-    aligned_vector<Eigen::Vector2f> uvs() const; 
-    aligned_vector<Eigen::Matrix4f> links() const;
     Eigen::Matrix4f mesh_transform() const;
     size_t bone_count() const;
 };

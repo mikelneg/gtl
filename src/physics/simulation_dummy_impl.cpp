@@ -316,7 +316,7 @@ namespace {
         b2Body* operator()(gtl::physics::commands::destroy_object_implode const& o) const
         {
 
-            auto range = entity_map_.equal_range(o.id);
+            auto range = entity_map_.equal_range(o.id_);
             if (range.first == range.second)
             {
                 return nullptr;
@@ -352,7 +352,7 @@ namespace {
                 world_.DestroyBody(it->second);
             }
 
-            entity_map_.erase(o.id);
+            entity_map_.erase(o.id_);
 
             world_.QueryAABB(&implode_around_AABB, body_aabb_);
 
@@ -362,7 +362,7 @@ namespace {
         b2Body* operator()(gtl::physics::commands::boost_object const& o) const
         {
 
-            auto range = entity_map_.equal_range(o.id);
+            auto range = entity_map_.equal_range(o.id_);
             if (range.first == range.second)
             {
                 return nullptr;

@@ -21,6 +21,7 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/physics/common_types.h>
 #include <gtl/physics/command_variant.h>
 #include <gtl/draw_kit.h>               // HACK change this..
+#include <Eigen/StdVector>
 
 namespace gtl {
 namespace physics {
@@ -34,7 +35,7 @@ namespace physics {
     
     public:
 
-        bullet_simulation(vn::single_consumer_queue<gtl::physics::command_variant>&, 
+        bullet_simulation(vn::single_consumer_queue<gtl::physics::command_variant, Eigen::aligned_allocator<gtl::physics::command_variant>>&, 
                           gtl::draw_kit&);
     
         bool extract_render_data(simulation_render_data& c) final 

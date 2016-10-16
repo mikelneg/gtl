@@ -45,8 +45,8 @@ namespace {
         Eigen::Matrix4f matrix_;
 
         //aspect_ratio = 1.0f;
-        zn = 0.01f;
-        zf = 200.0f;
+        //zn = 0.01f;
+        //zf = 200.0f;
 
         //zn = zn / zf;
         //zf = 1.0f;

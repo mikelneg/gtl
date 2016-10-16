@@ -19,6 +19,8 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/physics/simulation_interface.h>
 #include <gtl/physics/common_types.h>
 
+#include <boost/container/flat_map.hpp>
+
 #include <Eigen/Core>
 
 #include <fstream>
@@ -43,7 +45,7 @@ namespace d3d {
 
         // gtl::mesh_loader mesh_object_;
 
-        gtl::mesh_group<aligned_vector<vertex_type_bone>, std::vector<unsigned>, std::string> mesh_group_;
+        gtl::mesh_group<aligned_vector<vertex_type_bone>, std::vector<uint32_t>, std::string> mesh_group_;
 
         std::vector<D3D12_INPUT_ELEMENT_DESC> layout_;
 
@@ -207,11 +209,14 @@ namespace d3d {
               mesh_group_{[]()
                 {
                   decltype(mesh_group_) ret;
-                  { gtl::mesh_loader m{"data\\meshes\\correct_armature.fbx", gtl::tags::fbx_format{}};
-                    ret.add_mesh("deformed_armature", m.bone_vertices(), m.indices(), m.bone_count()); 
+                  { gtl::mesh_loader m{"data\\meshes\\cone.fbx", gtl::tags::fbx_format{}};
+                    ret.add_mesh("cone_armature", m.bone_vertices(), m.indices(), m.bone_count());
                   }                  
-                  { gtl::mesh_loader m{"data\\meshes\\textured_cube_zflip.fbx", gtl::tags::fbx_format{}};
-                    ret.add_mesh("monkey_armature", m.bone_vertices(), m.indices(), m.bone_count());
+                  { gtl::mesh_loader m{"data\\meshes\\textured_cube.fbx", gtl::tags::fbx_format{}};
+                    ret.add_mesh("tex_armature", m.bone_vertices(), m.indices(), m.bone_count());
+                  }                                    
+                  { gtl::mesh_loader m{"data\\meshes\\correct_armature.fbx", gtl::tags::fbx_format{}};
+                    ret.add_mesh("correct_armature", m.bone_vertices(), m.indices(), m.bone_count());
                   }                  
                   return ret;
                 }()},
@@ -247,6 +252,9 @@ namespace d3d {
             if (physics_.extract_render_data(render_data_))
             {            
                 auto& positions_ = render_data_.entities_;                
+
+                std::sort(begin(positions_), end(positions_), [](gtl::entity::render_data const& a, gtl::entity::render_data const& b) { return a.mesh_id() < b.mesh_id(); });
+
                 instance_buffers_.update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(gtl::entity::render_data));
                 auto& control_points_ = render_data_.control_points_;
                 //control_points_.emplace_back();
@@ -262,6 +270,8 @@ namespace d3d {
         {
             cbuffer_.update(reinterpret_cast<const char*>(&camera), sizeof(gtl::camera));
 
+            auto& positions_ = render_data_.entities_;            
+            
             update_instance_buffer();
 
             cl->SetPipelineState(pso_.get());
@@ -291,9 +301,8 @@ namespace d3d {
             cl->RSSetScissorRects(1, &scissor);
             cl->OMSetRenderTargets(2, rtv_handle, false, dbv_handle);
 
-            std::array<uint16_t, 2> counts{};            
-
-            auto& positions_ = render_data_.entities_;
+            boost::container::flat_map<uint16_t,UINT> counts;
+            
             for (auto&& e : positions_)
             {
                 counts[e.mesh_id()]++;

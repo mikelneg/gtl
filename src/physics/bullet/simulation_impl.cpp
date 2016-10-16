@@ -70,13 +70,13 @@ namespace gtl {
 namespace {    
     template <typename T, typename U>
     static void bullet_simulation_thread(vn::swap_object<T>& rend_data_, 
-                                         vn::single_consumer_queue<U>& physics_task_queue_,        
+                                         vn::single_consumer_queue<U,Eigen::aligned_allocator<U>>& physics_task_queue_,        
                                          std::atomic_flag& quit_, 
                                          gtl::draw_kit& b2d_adapter_);    
 }
 
 namespace physics {
-    bullet_simulation::bullet_simulation(vn::single_consumer_queue<gtl::physics::command_variant>& tasks_, 
+    bullet_simulation::bullet_simulation(vn::single_consumer_queue<gtl::physics::command_variant, Eigen::aligned_allocator<gtl::physics::command_variant>>& tasks_, 
                                          gtl::draw_kit& b2d_adapter_)
     {
         quit_.test_and_set();        
@@ -130,6 +130,7 @@ namespace {
                    [](auto& b){
                        b.setRestitution(0.4f);
                        b.setDamping(0.1f,0.1f);
+                       b.activate();
                    });  
 
                shapes.emplace(shape_enum::BOX, std::move(my_shape));
@@ -164,6 +165,7 @@ namespace {
                    [](auto& b){
                        b.setRestitution(0.4f);
                        b.setDamping(0.1f,0.1f);
+                       b.activate();
                    });  
 
                shapes.emplace(shape_enum::BOX, std::move(my_shape));
@@ -171,11 +173,18 @@ namespace {
            }                                                
         ,[&](commands::destroy_object_implode const& o)
            { 
+               if (entities.count(o.id_) > 0)
+                    entities.erase(o.id_);
                return true;  
            }
         ,[&](commands::boost_object const& o)
-           { 
-               std::cout << "impl dudes!\n"; 
+           {                
+               std::cout << "boosting..\n"; 
+               if (entities.count(o.id_) > 0) {
+                   btRigidBody& b = entities.at(o.id_).head().get_body();
+                   b.activate();
+                   b.applyImpulse(btVector3{ 0.0f,1000.0f,0.0f }, btVector3{ 0.0f,0.0f,0.0f });
+               }
                return true;  
            }
         ,[&](commands::boost_object_vec const& o)
@@ -215,8 +224,8 @@ namespace {
     };
     
     class bullet_entity {
-        boost::container::static_vector<bullet_body, 8> participating_bodies_;
-        boost::container::static_vector<btConeTwistConstraint, 7> constraints_;
+        boost::container::static_vector<bullet_body, 4> participating_bodies_;
+        boost::container::static_vector<btConeTwistConstraint, 3> constraints_;
         entity::render_data render_data_;
         btDynamicsWorld& world_;
     
@@ -238,8 +247,8 @@ namespace {
             for (int i = 0, sz = static_cast<int>(participating_bodies_.size()); i < sz-1; ++i) {                
                 btConeTwistConstraint constraint_{participating_bodies_[i].get_body(), 
                                                   participating_bodies_[i+1].get_body(), 
-                                                  btTransform{btQuaternion::getIdentity(),btVector3{0.0f,1.0f,0.0f}}, 
-                                                  btTransform{btQuaternion::getIdentity(),btVector3{0.0f,-1.0f,0.0f}}};
+                                                  btTransform{btQuaternion::getIdentity(),btVector3{0.0f,0.0f,-1.0f}}, 
+                                                  btTransform{btQuaternion::getIdentity(),btVector3{0.0f,0.0f,1.0f}}};
                 
                 constraint_.setLimit(vn::math::pi() * 0.15f, vn::math::pi() * 0.15f, 0.0f);
 
@@ -258,18 +267,24 @@ namespace {
             load();
         }
 
-        bullet_entity(bullet_entity&&) = delete;    
+        bullet_entity(bullet_entity const&) = delete;    
     
         ~bullet_entity() { unload(); }
 
         template <typename F>
         void visit(F func) { for (auto& e : participating_bodies_) { func(e.get_body()); } };
+        bullet_body& head() { return participating_bodies_[0]; }
         
-        void render(std::vector<entity::render_data>& render_queue, std::vector<Eigen::Matrix4f>& transform_queue) {        
+        void render(std::vector<entity::render_data>& render_queue, std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>& transform_queue) {        
             render_queue.emplace_back(render_data_.pack_bone_offset(static_cast<uint16_t>(transform_queue.size())));                                    
             Eigen::Matrix4f tmp = Eigen::Matrix4f::Identity();
+                        
+//            auto& h = participating_bodies_[0].get_body();
+            
             for (auto&& e : participating_bodies_) {                                              
+              //e.get_body().getWorldTransform().getOpenGLMatrix(tmp.data());
               e.get_transform().getOpenGLMatrix(tmp.data());             
+              //h.getWorldTransform().getOpenGLMatrix(tmp.data());
               transform_queue.emplace_back(tmp.transpose());                    
             }              
         }
@@ -313,7 +328,7 @@ namespace {
     template <typename T, typename U>
     static void bullet_simulation_thread(
         vn::swap_object<T>& rend_data_, 
-        vn::single_consumer_queue<U>& physics_task_queue_,        
+        vn::single_consumer_queue<U,Eigen::aligned_allocator<U>>& physics_task_queue_,        
         std::atomic_flag& quit_, 
         gtl::draw_kit& b2d_adapter_)
     {        
@@ -353,10 +368,13 @@ namespace {
             [&](auto const& a, auto const& b, auto const& color) { 
                 local_debug_render_data_.draw_line({a.x(),a.y(),a.z()},{b.x(),b.y(),b.z()},{color.x(),color.y(),color.z()});
             });         
-        dynamicsWorld.setDebugDrawer(&debug_draw);                
-      
+        
+        //dynamicsWorld.setDebugDrawer(&debug_draw);                      
 
         gtl::rate_limiter rate_limiter_{std::chrono::milliseconds(15)};                     
+
+        int counter{};
+
         while (quit_.test_and_set(std::memory_order_acq_rel))
         {
             rate_limiter_.sleepy_invoke([&](auto dt){
@@ -364,14 +382,21 @@ namespace {
                 local_debug_render_data_.clear();
                 local_render_data_.clear();
   
-                      debug_draw.clear();
+                debug_draw.clear();
                 
-                dynamicsWorld.stepSimulation(std::chrono::duration<float>(dt).count(), 8);                                
+                physics_task_queue_.consume([&](auto&& e){ my_command_visitor(e); });                
+                
+                counter++;
+                if (counter > 100) {
+                    std::cout << std::chrono::duration<float>(dt).count() << " seconds for dt..\n";
+                    counter = 0;
+                }
+
+                dynamicsWorld.stepSimulation(std::chrono::duration<float>(dt).count(), 5);                                
                 local_debug_render_data_.draw_axes();
-                local_debug_render_data_.draw_triangle({0.0f,0.0f,0.0f,1.0f},{0.0f,1.0f,0.0f,1.0f},{1.0f,0.0f,0.0f,1.0f});
-                //local_debug_render_data_.draw_plane({},{});
+                local_debug_render_data_.draw_triangle({0.0f,0.0f,0.0f,1.0f},{0.0f,1.0f,0.0f,1.0f},{1.0f,0.0f,0.0f,1.0f});                
           
-                    dynamicsWorld.debugDrawWorld();
+                //dynamicsWorld.debugDrawWorld();
 
                 b2d_adapter_.render(local_debug_render_data_);                
 

@@ -53,7 +53,11 @@ namespace gtl {
 namespace scenes {
 
     class main_scene {        
-        vn::single_consumer_queue<gtl::physics::command_variant> mutable physics_task_queue_;
+        
+        template <typename T>
+        using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;
+
+        vn::single_consumer_queue<gtl::physics::command_variant, Eigen::aligned_allocator<gtl::physics::command_variant>> mutable physics_task_queue_;
 
         gtl::draw_kit mutable draw_kit_;
         gtl::d3d::draw_kit box2d_;         
@@ -74,37 +78,62 @@ namespace scenes {
             using namespace gtl::physics::commands;
             using namespace boost::units;
 
-            std::vector<gtl::physics::command_variant> generators_;
+            std::vector<std::pair<float, float>> grid; 
+            for (int x = -20; x < 20; x++)
+                for (int y = 0; y < 40; y++)
+                    grid.emplace_back(x * 3.0f, y * 3.0f);
 
-            for (int i = 0; i < 100; ++i) {
+            aligned_vector<gtl::physics::command_variant> generators_;
+
+            for (int i = 1; i < 100; ++i) {
                 generators_.emplace_back(dynamic_box{ {vn::math::rand_neg_one_one() * 10.0f,
-                                                       vn::math::rand_zero_one()    * 20.0f,
-                                                       vn::math::rand_zero_one()    * 200.0f}, 
+                                                       vn::math::rand_zero_one() * 10.0f,
+                                                       vn::math::rand_zero_one() * 10.0f + 10.f}, 
                                                        {1.0f,1.0f,1.0f},
                                                        Eigen::Quaternionf::Identity(),
                                                        gtl::entity::render_data{}.pack_entity_id(i).pack_mesh_id(1),
                                                        gtl::entity::id(i),
                                                        10.0f * si::kilograms });
             }   
-
-            for (unsigned i = 0; i < 80; ++i) {
-                std::vector<dynamic_box> jointed_boxes_;
-                auto head_x = vn::math::rand_neg_one_one() * 45.0f;
-                auto head_y = vn::math::rand_zero_one()    * 25.0f + 25.0f;
-                auto head_z = vn::math::rand_zero_one()    * 45.0f;
+            
+            for (unsigned i = 1; i < 200; ++i) {
+                aligned_vector<dynamic_box> jointed_boxes_;
+                auto head_x = vn::math::rand_neg_one_one() * 3.0f;
+                auto head_y = vn::math::rand_zero_one() * 15.0f;
+                auto head_z = vn::math::rand_zero_one() * 15.0f + 10.0f;
                 //auto head_angle = 0.0f * si::radians; 
-
+            
                 for (unsigned j = 0; j < 4; ++j) {
-                    jointed_boxes_.emplace_back(dynamic_box{ {head_x, head_y - (j * 1.0f), head_z}, 
+                    jointed_boxes_.emplace_back(dynamic_box{ {head_x, head_y, head_z - (j * 1.0f)}, 
                                                              {1.0f,1.0f,1.0f},
                                                              Eigen::Quaternionf::Identity(),                                                             
-                                                             gtl::entity::render_data{},//.pack_entity_id(i+100).pack_mesh_id(0),
-                                                             gtl::entity::id(i+100),
+                                                             gtl::entity::render_data{}.pack_entity_id(i+200).pack_mesh_id(0),
+                                                             gtl::entity::id(i+200),
                                                              10.0f * si::kilograms});
                 }
                 generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_),
-                                                               gtl::entity::render_data{}.pack_entity_id(i+100).pack_mesh_id(0),
-                                                               gtl::entity::id(i+100)});
+                                                               gtl::entity::render_data{}.pack_entity_id(i+200).pack_mesh_id(0),
+                                                               gtl::entity::id(i+200)});
+            }
+
+            for (unsigned i = 1; i < 200; ++i) {
+                aligned_vector<dynamic_box> jointed_boxes_;
+                auto head_x = vn::math::rand_neg_one_one() * 3.0f;
+                auto head_y = vn::math::rand_zero_one() * 15.0f;
+                auto head_z = vn::math::rand_zero_one() * 15.0f + 10.0f;
+                //auto head_angle = 0.0f * si::radians; 
+            
+                for (unsigned j = 0; j < 4; ++j) {
+                    jointed_boxes_.emplace_back(dynamic_box{ {head_x, head_y, head_z - (j * 1.0f)}, 
+                                                             {1.0f,1.0f,1.0f},
+                                                             Eigen::Quaternionf::Identity(),                                                             
+                                                             gtl::entity::render_data{}.pack_entity_id(i+600).pack_mesh_id(2),
+                                                             gtl::entity::id(i+600),
+                                                             10.0f * si::kilograms});
+                }
+                generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_),
+                                                               gtl::entity::render_data{}.pack_entity_id(i+600).pack_mesh_id(2),
+                                                               gtl::entity::id(i+600)});
             }
 
             return generators_;
@@ -216,7 +245,7 @@ namespace scenes {
               physics_camera_{{1.0f * boost::units::si::meters, 1.0f * boost::units::si::meters},
                               gtl::physics::angle<float>{45.0f * boost::units::degree::degree},
                               {0.01f * boost::units::si::meters},
-                              {200.0f * boost::units::si::meters}},
+                              {2000.0f * boost::units::si::meters}},
               camera_height_{10.0f * boost::units::si::meters},
               physics_{std::make_unique<gtl::physics::bullet_simulation>(physics_task_queue_, draw_kit_)},
               swirl_effect_{dev, swchain, cqueue, *physics_},
@@ -235,10 +264,10 @@ namespace scenes {
         {
             func([&](auto&&... ps) {
                 Eigen::Matrix4f cam_transform_
-                    = Eigen::Affine3f{  Eigen::Translation3f{0.0f,-(camera_height_ / boost::units::si::meter),50.0f} 
+                    = Eigen::Affine3f{  Eigen::Translation3f{0.0f,-20.0f,50.0f + (camera_height_ / boost::units::si::meter)} 
                                      //* Eigen::Scaling(1.0f / (camera_height_ / boost::units::si::meter))                                      
-                                      * Eigen::AngleAxisf{vn::math::deg_to_rad( -10.0f), Eigen::Vector3f{1.0f, 0.0f, 0.0f}} 
-                                      * Eigen::AngleAxisf{vn::math::deg_to_rad(   0.0f), Eigen::Vector3f{0.0f, 1.0f, 0.0f}}
+                                      * Eigen::AngleAxisf{vn::math::deg_to_rad( -30.0f), Eigen::Vector3f{1.0f, 0.0f, 0.0f}} 
+                                      * Eigen::AngleAxisf{vn::math::deg_to_rad( -30.0f), Eigen::Vector3f{0.0f, 1.0f, 0.0f}}
                                       }.matrix();                                               
 
                 //Eigen::Matrix4f rot = Eigen::Affine3f{ Eigen::AngleAxisf{vn::math::deg_to_rad( -25.0f), Eigen::Vector3f{1.0f, 0.0f, 0.0f}} }.matrix();

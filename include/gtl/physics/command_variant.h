@@ -46,7 +46,7 @@ namespace commands {
     };
 
     struct dynamic_jointed_boxes {
-        std::vector<dynamic_box> boxes_;
+        std::vector<dynamic_box,Eigen::aligned_allocator<dynamic_box>> boxes_;
         entity::render_data render_data_;
         entity::id id_;
     };
@@ -78,11 +78,13 @@ namespace commands {
     };
 
     struct destroy_object_implode {
-        uint16_t id;
+        entity::id id_;
+        //uint16_t id;
     };
 
     struct boost_object {
-        uint16_t id;
+        //uint16_t id;
+        entity::id id_;
     };
 
     struct boost_object_vec {
