@@ -33,8 +33,8 @@ namespace d3d {
 
     class object_rendering_scene {
 
-        static constexpr unsigned MAX_ENTITIES = 400;
-        static constexpr unsigned MAX_BONES = MAX_ENTITIES * 10; // TODO arbitrary number..
+        static constexpr unsigned MAX_ENTITIES = 2000;
+        static constexpr unsigned MAX_BONES = MAX_ENTITIES * 4; // TODO arbitrary number..
 
         using vertex_type = Eigen::Vector4f;
 
@@ -256,11 +256,7 @@ namespace d3d {
                 std::sort(begin(positions_), end(positions_), [](gtl::entity::render_data const& a, gtl::entity::render_data const& b) { return a.mesh_id() < b.mesh_id(); });
 
                 instance_buffers_.update(reinterpret_cast<char*>(positions_.data()), positions_.size() * sizeof(gtl::entity::render_data));
-                auto& control_points_ = render_data_.control_points_;
-                //control_points_.emplace_back();
-                //control_points_.emplace_back();
-                //control_points_.emplace_back();
-                //control_points_.emplace_back();
+                auto& control_points_ = render_data_.control_points_;              
                 bone_buffer_.update(reinterpret_cast<char*>(control_points_.data()), control_points_.size() * sizeof(Eigen::Matrix4f));
             }       
         }
