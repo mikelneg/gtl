@@ -85,7 +85,7 @@ namespace scenes {
 
             aligned_vector<gtl::physics::command_variant> generators_;
 
-            for (int i = 1; i < 100; ++i) {
+            for (int i = 1; i < 200; ++i) {
                 generators_.emplace_back(dynamic_box{ {vn::math::rand_neg_one_one() * 10.0f,
                                                        vn::math::rand_zero_one() * 10.0f,
                                                        vn::math::rand_zero_one() * 10.0f + 10.f}, 
@@ -96,7 +96,7 @@ namespace scenes {
                                                        10.0f * si::kilograms });
             }   
             
-            for (unsigned i = 1; i < 200; ++i) {
+            for (unsigned i = 1; i < 100; ++i) {
                 aligned_vector<dynamic_box> jointed_boxes_;
                 auto head_x = vn::math::rand_neg_one_one() * 3.0f;
                 auto head_y = vn::math::rand_zero_one() * 15.0f;
