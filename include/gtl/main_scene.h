@@ -36,6 +36,8 @@ MIT license. See LICENSE.txt in project root for details.
 #include <vn/math_utilities.h>
 #include <vn/single_consumer_queue.h>
 
+#include <boost/functional/hash.hpp>
+
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <atomic>

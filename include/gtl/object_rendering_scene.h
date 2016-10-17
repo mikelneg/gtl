@@ -41,9 +41,7 @@ namespace d3d {
         using matrix_type = Eigen::Matrix4f;
 
         template <typename T>
-        using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;
-
-        // gtl::mesh_loader mesh_object_;
+        using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;        
 
         gtl::mesh_group<aligned_vector<vertex_type_bone>, std::vector<uint32_t>, std::string> mesh_group_;
 
@@ -82,24 +80,7 @@ namespace d3d {
                 {"VERTEX_BONE_IDS", 0, DXGI_FORMAT_R32G32B32A32_UINT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},                
                 {"VERTEX_BONE_WEIGHTS", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
                 {"VERTEX_UV", 0, DXGI_FORMAT_R32G32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
-                {"INSTANCE_INFO", 0, DXGI_FORMAT_R16G16B16A16_UINT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1}
-                //       {"BONE_ARRAY_OFFSET", 0, DXGI_FORMAT_R32_UINT, 1, 0,
-                //       D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-                //       {"BONE_COUNT", 0, DXGI_FORMAT_R32_UINT, 1,
-                //       D3D12_APPEND_ALIGNED_ELEMENT,
-                //       D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-                //       {"OBJECT_ID", 0, DXGI_FORMAT_R32G32_UINT, 1,
-                //       D3D12_APPEND_ALIGNED_ELEMENT,
-                //       D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1}
-                //  //   {"OBJECT_POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT,
-                //  1, 0,
-                //  D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-                //  //   {"MESH_ID", 0, DXGI_FORMAT_R32_UINT, 1,
-                //  D3D12_APPEND_ALIGNED_ELEMENT,
-                //  D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
-                //  //   {"COLOR_ANGLE", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1,
-                //  D3D12_APPEND_ALIGNED_ELEMENT,
-                //  D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1},
+                {"INSTANCE_INFO", 0, DXGI_FORMAT_R16G16B16A16_UINT, 1, 0, D3D12_INPUT_CLASSIFICATION_PER_INSTANCE_DATA, 1}          
             };
         }
 
@@ -180,24 +161,7 @@ namespace d3d {
 
             return vector_;
         }
-
-        auto raw_mesh(std::wstring filename)
-        {
-            aligned_vector<vertex_type> vector_;
-            std::ifstream file_{filename};
-            std::string line_;
-            while (std::getline(file_, line_))
-            {
-                std::istringstream input_{line_};
-                float x, y, z;
-                while (input_ >> x >> y >> z)
-                {
-                    vector_.emplace_back(x, y, z, 1.0f);
-                }
-            }
-
-            return vector_;
-        }
+    
 
     public:
         object_rendering_scene() = default;
@@ -210,13 +174,13 @@ namespace d3d {
                 {
                   decltype(mesh_group_) ret;
                   { gtl::mesh_loader m{"data\\meshes\\cone.fbx", gtl::tags::fbx_format{}};
-                    ret.add_mesh("cone_armature", m.bone_vertices(), m.indices(), m.bone_count());
+                    ret.add_mesh("cone", m.bone_vertices(), m.indices(), m.bone_count());
                   }                  
                   { gtl::mesh_loader m{"data\\meshes\\eyeball.fbx", gtl::tags::fbx_format{}};
-                    ret.add_mesh("tex_armature", m.bone_vertices(), m.indices(), m.bone_count());
+                    ret.add_mesh("eyeball", m.bone_vertices(), m.indices(), m.bone_count());
                   }                                    
                   { gtl::mesh_loader m{"data\\meshes\\correct_armature.fbx", gtl::tags::fbx_format{}};
-                    ret.add_mesh("correct_armature", m.bone_vertices(), m.indices(), m.bone_count());
+                    ret.add_mesh("rectangle", m.bone_vertices(), m.indices(), m.bone_count());
                   }                  
                   return ret;
                 }()},
@@ -316,16 +280,17 @@ namespace d3d {
             cl->IASetIndexBuffer(&ibv);
             cl->IASetVertexBuffers(0, 2, iaviews_);
 
-            mesh_group_.apply([&](auto const& key, auto const& voff, auto const& ioff, auto const& vcount, auto const& icount, auto const& bcount) {
-                auto& positions_ = render_data_.entities_;
+            mesh_group_.apply([&](auto const& mesh) {
+                //auto& positions_ = render_data_.entities_;
 
-                uint32_t bone_count = static_cast<uint32_t>(bcount);
-                cl->SetGraphicsRoot32BitConstants(5, 1, std::addressof(bone_count), 0);
+                //auto bone_count = static_cast<uint32_t>(mesh.bone_count);
+                //cl->SetGraphicsRoot32BitConstants(5, 1, std::addressof(bone_count), 0);
+                cl->SetGraphicsRoot32BitConstant(5, static_cast<uint32_t>(mesh.bone_count), 0);
 
-                cl->DrawIndexedInstanced(static_cast<unsigned>(icount), // indexcountperinstance
+                cl->DrawIndexedInstanced(static_cast<unsigned>(mesh.index_count), // indexcountperinstance
                                          counts[counter],
-                                         static_cast<unsigned>(ioff), // start index location
-                                         static_cast<unsigned>(voff), // base vertex location
+                                         static_cast<unsigned>(mesh.index_offset), // start index location
+                                         static_cast<unsigned>(mesh.vertex_offset), // base vertex location
                                          starter);                    // start instance location
 
                 starter += counts[counter];
