@@ -73,7 +73,7 @@ namespace fbx {
 
     class fbx_loader {
             
-        boost::container::flat_map<std::string,fbx_bone> skeleton_;    
+        boost::container::flat_map<std::string,fbx_bone> armature_;    
         
         boost::optional<boost::container::flat_map<std::string,mesh::bone::id_type>> bone_names_;   
         boost::optional<boost::container::flat_map<mesh::bone::id_type,fbx_vertex_bone_data>> vertex_bone_data_;
@@ -88,7 +88,7 @@ namespace fbx {
         boost::optional<std::vector<Eigen::Vector2f>> uvs_;  
 
         void load_mesh(FbxMesh*);
-        void load_skeleton(FbxNode*);
+        void load_armature(FbxNode*);
 
     public:
         fbx_loader(std::string filename);
@@ -98,7 +98,7 @@ namespace fbx {
         auto indices() const { return indices_; }
         auto bones() const { return bones_; }
         
-        gtl::mesh::skeleton convert_skeleton() const;
+        gtl::mesh::armature convert_armature() const;
 
         std::vector<Eigen::Vector2f> uvs() const { if (uvs_) return *uvs_; else return {}; }
         std::vector<Eigen::Vector4f> colors() const { if (colors_) return *colors_; else return {}; }

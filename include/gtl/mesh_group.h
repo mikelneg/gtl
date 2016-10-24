@@ -9,81 +9,101 @@ MIT license. See LICENSE.txt in project root for details.
 #define YYRWIAIFZVVBASDFASDF_GTL_MESH_GROUP_H_
 
 #include <algorithm>
-#include <iterator>
 #include <vector>
-#include <iostream>
+#include <iterator>
+//#include <iostream>
 #include <exception>
 #include <utility>
 
+#include <gtl/common_mesh.h>
+
+
 namespace gtl {
     
-
-template <typename VertexBufferType, typename IndexBufferType, typename KeyType = std::size_t>
+template <typename V, typename I, typename K = std::size_t>
 class mesh_group { 
     
-    struct mesh_group_entry {
-        std::size_t vertex_offset, index_offset, vertex_count, index_count, bone_count;
+    struct entry {
+        unsigned vertex_offset, index_offset, 
+                 vertex_count, index_count, 
+                 weights_per_vertex;
     };
 
-    VertexBufferType vertex_buffer;
-    IndexBufferType  index_buffer;
-    
-    std::vector<std::pair<KeyType,mesh_group_entry>> offset_data;   // needs to be stable
+    std::vector<V> vertex_buffer;
+    std::vector<I> index_buffer;    
+    std::vector<std::pair<K,entry>> offset_data;    // we use vector<> here rather than something like flat_map<> for offset_data because we need to preserve insertion order 
+    std::vector<std::pair<K,mesh::armature>> armature_data;     
 
 public:
 
     mesh_group() = default;
     mesh_group(mesh_group&&) = default;           //  movable..
-    mesh_group& operator=(mesh_group&&) = delete; //  but not assignable..
-    
-    mesh_group(KeyType key, VertexBufferType v, IndexBufferType i) 
+    mesh_group& operator=(mesh_group&&) = delete; //  not assignable..
+           
+    template <typename VBuffer, typename IBuffer>
+    void add_mesh(K key, VBuffer const& v, IBuffer const& i, unsigned weights_per_vertex) 
     {
-        add_mesh(std::move(key), std::move(v), std::move(i));
-    }
-
-    void add_mesh(KeyType key, VertexBufferType v, IndexBufferType i, std::size_t bone_count) 
-    {
-        auto it = std::find_if(begin(offset_data), end(offset_data),[&](auto const& entry) { return entry.first == key; });
-        if (it != end(offset_data)) throw std::runtime_error{"mesh_group key already inserted..\n"}; 
-
-        offset_data.emplace_back(std::move(key), 
-                                 mesh_group_entry{ vertex_buffer.size(), index_buffer.size(), v.size(), i.size(), bone_count });
+        auto it = find_if(begin(offset_data),end(offset_data),[&](auto const& e) { return e.first == key; });
+        if (it != end(offset_data)) throw std::runtime_error{"mesh_group::add_mesh() key already inserted..\n"}; 
         
+        offset_data.emplace_back(std::move(key), entry{static_cast<unsigned>(vertex_buffer.size()), 
+                                                       static_cast<unsigned>(index_buffer.size()), 
+                                                       static_cast<unsigned>(v.size()), 
+                                                       static_cast<unsigned>(i.size()), 
+                                                       weights_per_vertex});        
+        using std::begin; using std::end;
         vertex_buffer.insert(end(vertex_buffer), begin(v), end(v));
         index_buffer.insert(end(index_buffer), begin(i), end(i));
     }
 
-    template <typename F>
-    inline void apply(KeyType key, F func) const
+    void add_armature(K key, mesh::armature armature_) 
     {
-        auto it = find_if(begin(offset_data), end(offset_data), [&](auto const& entry) { return entry.first == key; });
-        if (it == end(offset_data)) throw std::runtime_error{"mesh_group key not found..\n"};         
-        auto const& e = *it;        
-        func(e.second);
+        auto it = find_if(begin(armature_data),end(armature_data),[&](auto const& e) { return e.first == key; });
+        if (it != end(armature_data)) throw std::runtime_error{"mesh_group::add_armature() key already inserted..\n"};         
+        armature_data.emplace_back(std::move(key), std::move(armature_));        
     }
 
     template <typename F>
-    inline void apply(F func) const
+    void apply(K const& key, F func) const
+    {        
+        auto it = find_if(begin(offset_data), end(offset_data), [&](auto const& e) { return e.first == key; });
+        if (it == end(offset_data)) throw std::runtime_error{"mesh_group::apply() key not found..\n"};         
+        auto const& entry_ = *it;        
+        func(entry_.second);
+    }
+
+    template <typename F>
+    void apply(F func) const
     {
         for (auto&& e : offset_data) {        
             func(e.second);
         }
     }
 
-    auto mesh_index_for(KeyType key) const { 
-        auto it = find_if(begin(offset_data), end(offset_data), [&](auto const& entry) { return entry.first == key; });
-        if (it == end(offset_data)) throw std::runtime_error{"mesh_group key not found..\n"}; 
-        return std::distance(begin(offset_data),it);
+    unsigned index_of_mesh(K const& key) const { 
+        auto it = find_if(begin(offset_data), end(offset_data), [&](auto const& e) { return e.first == key; });
+        if (it == end(offset_data)) throw std::runtime_error{"mesh_group key not found..\n"};        
+        return static_cast<unsigned>(std::distance(begin(offset_data),it));
     }
 
-    auto vertex_data()
+    auto vertex_data() const noexcept
     {
-        return vertex_buffer.data();
-    }
+        return reinterpret_cast<char const*>(vertex_buffer.data());
+    }    
     
-    auto index_data()
+    auto vertex_data_size() const noexcept 
     {
-        return index_buffer.data();
+        return vertex_buffer.size() * sizeof(V);
+    }
+
+    auto index_data_size() const noexcept 
+    {
+        return index_buffer.size() * sizeof(I);
+    }
+
+    auto index_data() const noexcept 
+    {
+        return reinterpret_cast<char const*>(index_buffer.data());        
     }
     
     size_t vertex_count() const

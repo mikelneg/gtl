@@ -265,7 +265,7 @@ namespace mesh {
             //s->GetMappingMode();
             //child->EvaluateGlobalBoundingBoxMinMaxCenter(vec4boxmin,vec4boxmax,vec4boxcent)
             // if it is a mesh we should spin off a mesh loader at this point.. 
-            // if it is a skeleton we should spin off a skeleton loader.. etc
+            // if it is a armature we should spin off a armature loader.. etc
             
         }
     };
@@ -320,7 +320,7 @@ mesh_loader::assembled_vertices() const {
     auto bones = impl_->loader_.bones();    
     auto uvs = impl_->loader_.uvs();
 
-    auto skeleton = impl_->loader_.convert_skeleton();
+    auto armature = impl_->loader_.convert_armature();
 
     assert(positions.size() == normals.size() &&
            positions.size() == uvs.size() && 
@@ -329,7 +329,7 @@ mesh_loader::assembled_vertices() const {
     // normalize vertex weights..
     for (auto&& e : bones) { e.second.normalize(); }        
 
-    positions = replace_vertex_origins_with_bones(positions,bones,skeleton);    
+    positions = replace_vertex_origins_with_bones(positions,bones,armature);    
 
     auto v_beg = begin(positions);
     auto n_beg = begin(normals);
@@ -350,8 +350,8 @@ std::vector<uint32_t> mesh_loader::indices() const
 }
 
 boost::container::flat_map<bone::id_type,bone> 
-mesh_loader::skeleton() const {
-    return impl_->loader_.convert_skeleton();
+mesh_loader::armature() const {
+    return impl_->loader_.convert_armature();
 }
 
 mesh_loader::~mesh_loader() {}  // needed for PIMPL

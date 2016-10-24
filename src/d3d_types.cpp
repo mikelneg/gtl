@@ -518,7 +518,7 @@ namespace d3d {
             win::throw_on_fail(D3DReadFileToBlob(path.c_str(), &expose_ptr()), __func__);
         }
 
-        vertex_buffer::vertex_buffer(device& dev, command_queue& cqueue_, void* begin_, size_t size_)
+        vertex_buffer::vertex_buffer(device& dev, command_queue& cqueue_, char const* begin_, size_t size_)
         {
             release_ptr<raw::Resource> upload_vbuffer_;
 
@@ -565,7 +565,7 @@ namespace d3d {
             set_debug_name(*get(), L"vbuffer");
         }
 
-        index_buffer::index_buffer(device& dev, command_queue& cqueue_, void* begin_, size_t size_)
+        index_buffer::index_buffer(device& dev, command_queue& cqueue_, char const* begin_, size_t size_)
         {
             resource upload_ibuffer_;
 

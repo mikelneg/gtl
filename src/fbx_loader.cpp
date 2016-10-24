@@ -236,12 +236,12 @@ namespace fbx {
         get_vertex_data(node);
     }
 
-    void fbx_loader::load_skeleton(FbxNode* p) {
+    void fbx_loader::load_armature(FbxNode* p) {
 
         std::vector<FbxNode*> children_;
         
         auto add_entry = [&](auto* node, auto const& parent_id) {
-            skeleton_.try_emplace(node->GetName(),node->EvaluateGlobalTransform(),node->EvaluateLocalTransform(),node->GetSkeleton()->LimbLength.Get(),parent_id);                          
+            armature_.try_emplace(node->GetName(),node->EvaluateGlobalTransform(),node->EvaluateLocalTransform(),node->GetSkeleton()->LimbLength.Get(),parent_id);                          
         };
 
         auto add_children = [&](auto* parent) {                
@@ -269,7 +269,7 @@ namespace fbx {
             }
         };
 
-        build_children(skeleton_);          
+        build_children(armature_);          
     }
 
     fbx_loader::fbx_loader(std::string filename) {                    
@@ -303,7 +303,7 @@ namespace fbx {
             switch(m_type) {
             case FbxNodeAttribute::EType::eSkeleton : 
                 {
-                    load_skeleton(back);
+                    load_armature(back);
                 }   break;                
             case FbxNodeAttribute::EType::eMesh :
                 {
@@ -317,10 +317,10 @@ namespace fbx {
         }            
     }                
 
-    gtl::mesh::skeleton 
-    fbx_loader::convert_skeleton() const {        
+    gtl::mesh::armature 
+    fbx_loader::convert_armature() const {        
 
-        if (!bone_names_) throw std::runtime_error{"fbx_loader::skeleton() requires bone_names_"};
+        if (!bone_names_) throw std::runtime_error{"fbx_loader::armature() requires bone_names_"};
         auto const& names_ = *bone_names_;        
 
         auto convert_bone = 
@@ -335,9 +335,9 @@ namespace fbx {
                 return return_bone;
             };
 
-        gtl::mesh::skeleton ret;
+        gtl::mesh::armature ret;
         
-        for (auto&& e : skeleton_) {
+        for (auto&& e : armature_) {
             if (names_.count(e.first) > 0)
                 ret.try_emplace(names_.at(e.first),convert_bone(e.second)); 
         }

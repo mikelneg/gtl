@@ -43,7 +43,7 @@ namespace d3d {
         template <typename T>
         using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;        
 
-        gtl::mesh_group<std::vector<renderer_vertex_type>, std::vector<uint32_t>, std::string> mesh_group_;
+        gtl::mesh_group<renderer_vertex_type, uint32_t, std::string> mesh_group_;
 
         std::vector<D3D12_INPUT_ELEMENT_DESC> layout_;
 
@@ -184,8 +184,8 @@ namespace d3d {
                   }                  
                   return ret;
                 }()},
-              vbuffer_{dev, cqueue, static_cast<void*>(mesh_group_.vertex_data()), mesh_group_.vertex_count() * sizeof(renderer_vertex_type)},
-              index_buffer_{dev, cqueue, static_cast<void*>(mesh_group_.index_data()), mesh_group_.index_count() * sizeof(uint32_t)},
+              vbuffer_{dev, cqueue, mesh_group_.vertex_data(), mesh_group_.vertex_data_size()},
+              index_buffer_{dev, cqueue, mesh_group_.index_data(), mesh_group_.index_data_size()},
               ibuffer_descriptors_{dev, 3, gtl::d3d::tags::shader_visible{}},
               instance_buffers_{dev, ibuffer_descriptors_.get_handle(0), MAX_ENTITIES * sizeof(gtl::entity::render_data)},
               cbheap_{dev, 3, gtl::d3d::tags::shader_visible{}},
@@ -272,10 +272,10 @@ namespace d3d {
             unsigned starter{};
 
             D3D12_VERTEX_BUFFER_VIEW iaviews_[]
-                = {{vbuffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_group_.vertex_count() * sizeof(renderer_vertex_type)), sizeof(renderer_vertex_type)},
+                = {{vbuffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_group_.vertex_data_size()), sizeof(renderer_vertex_type)},
                    {instance_buffers_.resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(gtl::entity::render_data)), sizeof(gtl::entity::render_data)}};
 
-            D3D12_INDEX_BUFFER_VIEW ibv{index_buffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_group_.index_count()) * sizeof(uint32_t), DXGI_FORMAT_R32_UINT};
+            D3D12_INDEX_BUFFER_VIEW ibv{index_buffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_group_.index_data_size()), DXGI_FORMAT_R32_UINT};
 
             cl->IASetIndexBuffer(&ibv);
             cl->IASetVertexBuffers(0, 2, iaviews_);
@@ -283,9 +283,9 @@ namespace d3d {
             mesh_group_.apply([&](auto const& mesh) {
                 //auto& positions_ = render_data_.entities_;
 
-                //auto bone_count = static_cast<uint32_t>(mesh.bone_count);
-                //cl->SetGraphicsRoot32BitConstants(5, 1, std::addressof(bone_count), 0);
-                cl->SetGraphicsRoot32BitConstant(5, static_cast<uint32_t>(mesh.bone_count), 0);
+                //auto weights_per_vertex = static_cast<uint32_t>(mesh.weights_per_vertex);
+                //cl->SetGraphicsRoot32BitConstants(5, 1, std::addressof(weights_per_vertex), 0);
+                cl->SetGraphicsRoot32BitConstant(5, static_cast<uint32_t>(mesh.weights_per_vertex), 0);
 
                 cl->DrawIndexedInstanced(static_cast<unsigned>(mesh.index_count), // indexcountperinstance
                                          counts[counter],

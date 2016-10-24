@@ -36,11 +36,9 @@ namespace gtl {
     }
 
 namespace mesh {    
-
-    //using bone_id = uint32_t;
+    
     using vertex_id = uint32_t;
-    using vertex_bone_data = std::pair<Eigen::Vector4i, Eigen::Vector4f>;
-        
+    using vertex_bone_data = std::pair<Eigen::Vector4i, Eigen::Vector4f>;        
     
     struct bone {
         static constexpr int max_number_of_children = 5; 
@@ -65,7 +63,7 @@ namespace mesh {
         friend std::ostream& operator<<(std::ostream& str, bone const& b) { return str << b.parent_id_ << ","; }
     };            
 
-    using skeleton = boost::container::flat_map<int,bone>; 
+    using armature = boost::container::flat_map<int,bone>; 
 
     class mesh_loader {
         struct priv_impl;
@@ -77,7 +75,7 @@ namespace mesh {
         mesh_loader(std::string filename, tags::mesh_format_fbx);
         ~mesh_loader();
     
-        boost::container::flat_map<bone::id_type,bone> skeleton() const;        
+        boost::container::flat_map<bone::id_type,bone> armature() const;        
         std::vector<renderer_vertex_type> assembled_vertices() const;
         std::vector<uint32_t> indices() const;   
         static constexpr int bone_count() { return 4; }

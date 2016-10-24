@@ -289,13 +289,13 @@ namespace d3d {
 
             class vertex_buffer : public release_ptr<raw::Resource> {
             public:
-                vertex_buffer(device&, command_queue&, void* begin, size_t size);
+                vertex_buffer(device&, command_queue&, char const* begin, size_t size);
                 void update(char const*, std::size_t);
             };
 
             class index_buffer : public release_ptr<raw::Resource> {
             public:
-                index_buffer(device&, command_queue&, void* begin, size_t size);
+                index_buffer(device&, command_queue&, char const* begin, size_t size);
                 void update(char const*, std::size_t);
             };
 

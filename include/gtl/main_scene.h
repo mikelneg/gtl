@@ -84,7 +84,7 @@ namespace scenes {
             //
             // g.add(m);
             // 
-            // use(m.skeleton(),g.id(m)); 
+            // use(m.armature(),g.id(m)); 
             //
             // g.add(m);
             //
