@@ -35,7 +35,7 @@ namespace physics {
     
     public:
 
-        bullet_simulation(vn::single_consumer_queue<gtl::physics::command_variant, Eigen::aligned_allocator<gtl::physics::command_variant>>&, 
+        bullet_simulation(vn::single_consumer_queue<gtl::physics::command_variant>&, 
                           gtl::draw_kit&);
     
         bool extract_render_data(simulation_render_data& c) final 

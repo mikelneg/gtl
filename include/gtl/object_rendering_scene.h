@@ -14,7 +14,7 @@ MIT license. See LICENSE.txt in project root for details.
 
 #include <gtl/camera.h>
 #include <gtl/mesh_group.h>
-#include <gtl/mesh_loader.h>
+#include <gtl/common_mesh.h>
 
 #include <gtl/physics/simulation_interface.h>
 #include <gtl/physics/common_types.h>
@@ -43,14 +43,14 @@ namespace d3d {
         template <typename T>
         using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;        
 
-        gtl::mesh_group<aligned_vector<vertex_type_bone>, std::vector<uint32_t>, std::string> mesh_group_;
+        gtl::mesh_group<std::vector<renderer_vertex_type>, std::vector<uint32_t>, std::string> mesh_group_;
 
         std::vector<D3D12_INPUT_ELEMENT_DESC> layout_;
 
         gtl::d3d::vertex_buffer vbuffer_;
         gtl::d3d::index_buffer index_buffer_;
         gtl::d3d::resource_descriptor_heap ibuffer_descriptors_;
-        aligned_vector<gtl::entity::render_data> instance_data_;
+        std::vector<gtl::entity::render_data> instance_data_;
         
         gtl::d3d::constant_buffer mutable instance_buffers_;
         gtl::d3d::resource_descriptor_heap cbheap_;
@@ -152,7 +152,7 @@ namespace d3d {
 
         auto dummy_mesh()
         {
-            aligned_vector<vertex_type> vector_;
+            std::vector<vertex_type> vector_;
 
             vector_.emplace_back(-1.0f, 1.0f, 1.0f, 1.0f);
             vector_.emplace_back(1.0f, 1.0f, 1.0f, 1.0f);
@@ -173,18 +173,18 @@ namespace d3d {
               mesh_group_{[]()
                 {
                   decltype(mesh_group_) ret;
-                  { gtl::mesh_loader m{"data\\meshes\\cone.fbx", gtl::tags::fbx_format{}};
-                    ret.add_mesh("cone", m.bone_vertices(), m.indices(), m.bone_count());
+                  { gtl::mesh::mesh_loader m{"data\\meshes\\cone.fbx", gtl::tags::mesh_format_fbx{}};
+                    ret.add_mesh("cone", m.assembled_vertices(), m.indices(), m.bone_count());
                   }                  
-                  { gtl::mesh_loader m{"data\\meshes\\eyeball.fbx", gtl::tags::fbx_format{}};
-                    ret.add_mesh("eyeball", m.bone_vertices(), m.indices(), m.bone_count());
+                  { gtl::mesh::mesh_loader m{"data\\meshes\\eyeball.fbx", gtl::tags::mesh_format_fbx{}};
+                    ret.add_mesh("eyeball", m.assembled_vertices(), m.indices(), m.bone_count());
                   }                                    
-                  { gtl::mesh_loader m{"data\\meshes\\correct_armature.fbx", gtl::tags::fbx_format{}};
-                    ret.add_mesh("rectangle", m.bone_vertices(), m.indices(), m.bone_count());
+                  { gtl::mesh::mesh_loader m{"data\\meshes\\correct_armature.fbx", gtl::tags::mesh_format_fbx{}};
+                    ret.add_mesh("rectangle", m.assembled_vertices(), m.indices(), m.bone_count());
                   }                  
                   return ret;
                 }()},
-              vbuffer_{dev, cqueue, static_cast<void*>(mesh_group_.vertex_data()), mesh_group_.vertex_count() * sizeof(vertex_type_bone)},
+              vbuffer_{dev, cqueue, static_cast<void*>(mesh_group_.vertex_data()), mesh_group_.vertex_count() * sizeof(renderer_vertex_type)},
               index_buffer_{dev, cqueue, static_cast<void*>(mesh_group_.index_data()), mesh_group_.index_count() * sizeof(uint32_t)},
               ibuffer_descriptors_{dev, 3, gtl::d3d::tags::shader_visible{}},
               instance_buffers_{dev, ibuffer_descriptors_.get_handle(0), MAX_ENTITIES * sizeof(gtl::entity::render_data)},
@@ -272,7 +272,7 @@ namespace d3d {
             unsigned starter{};
 
             D3D12_VERTEX_BUFFER_VIEW iaviews_[]
-                = {{vbuffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_group_.vertex_count() * sizeof(vertex_type_bone)), sizeof(vertex_type_bone)},
+                = {{vbuffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_group_.vertex_count() * sizeof(renderer_vertex_type)), sizeof(renderer_vertex_type)},
                    {instance_buffers_.resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(gtl::entity::render_data)), sizeof(gtl::entity::render_data)}};
 
             D3D12_INDEX_BUFFER_VIEW ibv{index_buffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_group_.index_count()) * sizeof(uint32_t), DXGI_FORMAT_R32_UINT};

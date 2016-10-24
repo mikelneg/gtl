@@ -5,38 +5,41 @@ MIT license. See LICENSE.txt in project root for details.
 
 ---------------------------------------------------------------*/
 
-#include "gtl/mesh_loader.h"
+#include "gtl/common_mesh.h"
 
 #include <cassert>
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <vector>
+#include <string>
 #include <algorithm>
 
 #include <Eigen/Core>
 
-#include <fbxsdk.h>
+#include <boost/container/flat_map.hpp>
+#include <boost/container/static_vector.hpp>
+#include <boost/optional.hpp>
+
+#include <gtl/fbx_loader.h>
 
 namespace gtl {
+namespace mesh {
 
     namespace {
-        
-    
-        struct destroy_deleter {
-            template <typename T>
-            void operator()(T* t) { if (t) t->Destroy(); }
-        };
-    
-        template <typename T>
-        using fbx_ptr = std::unique_ptr<T, destroy_deleter>;
-                
-        inline Eigen::Matrix4f convert_matrix(fbxsdk::FbxAMatrix const& in) {   
-                static_assert(sizeof(decltype(in)) == sizeof(double)*16, "fbxsdk::FbxAMatrix (a 4x4 matrix of doubles) is not contiguous..");                
-            Eigen::Matrix4f out;                        
-            //auto* in_data = in.Buffer()->Buffer();                  
-            //std::transform(in_data, in_data+16, out.data(), [](auto const& v){ return static_cast<float>(v); }); 
 
-            // right-to-left handed conversion
+        inline 
+        Eigen::Matrix4f convert_matrix_handedness(fbxsdk::FbxAMatrix const& in) {                                                   
+            //  { rx, ry, rz, 0 }  
+            //  { ux, uy, uz, 0 }  
+            //  { lx, ly, lz, 0 }  
+            //  { px, py, pz, 1 }
+            //     vvvvvvvvvv
+            //  { rx, rz, ry, 0 }  
+            //  { lx, lz, ly, 0 }  
+            //  { ux, uz, uy, 0 }  
+            //  { px, pz, py, 1 }             
+            Eigen::Matrix4f out;                        
             out(0,0) = static_cast<float>(in.Get(0,0)); 
             out(0,1) = static_cast<float>(in.Get(0,2)); 
             out(0,2) = static_cast<float>(in.Get(0,1)); 
@@ -53,33 +56,48 @@ namespace gtl {
             out(3,1) = static_cast<float>(in.Get(3,2)); 
             out(3,2) = static_cast<float>(in.Get(3,1)); 
             out(3,3) = static_cast<float>(in.Get(3,3));             
-
             return out;
         }
 
-        inline Eigen::Vector4f convert_vector(fbxsdk::FbxVector4 const& in, float w) {                   
-            return Eigen::Vector4f{ static_cast<float>(in[0]), static_cast<float>(in[2]), -static_cast<float>(in[1]), w};                                     
+        inline 
+        Eigen::Vector4f convert_vector_handedness(fbxsdk::FbxVector4 const& in, float w) {                   
+            return Eigen::Vector4f{ static_cast<float>(in[0]), static_cast<float>(in[2]), static_cast<float>(in[1]), w};                                     
         }
 
         template <typename T>
-        inline void normalize_bones(T& bones) {
+        inline 
+        void normalize_bones(T& bones) {
             for (auto& e : bones) {
                 e.bone_weights_.normalize();
             }
         }
         
         template <typename T>
-        inline void flip_face_orientation(T& indices) {
+        inline 
+        void flip_face_orientation(T& indices) {
             for (int i = 0, sz = static_cast<int>(indices.size()); i < sz-2; i+=3) { 
-                std::swap(indices[i+1],indices[i+2]);
-                //auto tmp = o[i+1]; 
-                //o[i+1] = o[i+2]; 
-                //o[i+2] = tmp;   
+                std::swap(indices[i+1],indices[i+2]);        
             }
-        }
+        }   
     }
+    
+    struct mesh_loader::priv_impl {        
+        gtl::mesh::fbx::fbx_loader loader_;
+
+        decltype(auto) loader() { return loader_; }
+
+        priv_impl(std::string filename) 
+            : loader_(std::move(filename)) {}        
+    };
+
+    mesh_loader::mesh_loader(std::string filename, tags::mesh_format_fbx)
+        : impl_{std::make_unique<priv_impl>(std::move(filename))} 
+    {}
+    
+
 
     //### private implementation ########################
+    /*
     struct mesh_loader::priv_impl {            
     
         struct control_point_bone {
@@ -98,43 +116,26 @@ namespace gtl {
             unsigned current_bone{0};
         };
             
-        aligned_vector<Eigen::Vector4f> v_positions;
-        aligned_vector<Eigen::Vector4f> v_normals;
-        aligned_vector<Eigen::Vector2f> v_uvs;
-        aligned_vector<bone> v_bones;        
+        std::vector<Eigen::Vector4f> v_positions;
+        std::vector<Eigen::Vector4f> v_normals;
+        std::vector<Eigen::Vector2f> v_uvs;
+        std::vector<bone> v_bones;        
 
+        std::vector<control_point_bone> control_bones;    
+        std::vector<Eigen::Vector2f> control_uvs;   
 
-        aligned_vector<control_point_bone> control_bones;    
-        aligned_vector<Eigen::Vector2f> control_uvs;   
-
-        aligned_vector<Eigen::Matrix4f> bone_transforms;
+        std::vector<Eigen::Matrix4f> bone_transforms;
         
         std::vector<uint32_t> indices;        
            
         Eigen::Matrix4f mesh_transform;    
-        unsigned number_of_bones;
+        unsigned number_of_bones;        
 
         bool has_uvs;
     
-        //
+        void extract_mesh(FbxNode* child)                        
+        {                                                
 
-        priv_impl(std::string filename, gtl::tags::fbx_format)
-        {            
-            fbx_ptr<FbxManager> manager{FbxManager::Create()};
-            fbx_ptr<FbxIOSettings> ios{FbxIOSettings::Create(manager.get(), IOSROOT)};
-                manager->SetIOSettings(ios.get());
-            fbx_ptr<FbxImporter> importer{FbxImporter::Create(manager.get(), "")};
-                importer->Initialize(filename.c_str(), -1, manager->GetIOSettings());
-            fbx_ptr<FbxScene> scene{FbxScene::Create(manager.get(), "whatever")};
-                importer->Import(scene.get());
-            
-            FbxNode* root_node{scene->GetRootNode()};
-            FbxNode* child{root_node->GetChild(0)};
-    
-            auto m_type = child->GetNodeAttribute()->GetAttributeType();            
-                        
-            if (m_type == FbxNodeAttribute::eMesh)
-            {                                
                 mesh_transform = convert_matrix(child->EvaluateGlobalTransform());                
 
                 auto mesh_loader = static_cast<fbxsdk::FbxMesh*>(child->GetNodeAttribute());                                
@@ -155,13 +156,13 @@ namespace gtl {
                     bone_transforms.emplace_back(convert_matrix(trans_tmp * trans_link_tmp));                    
     
                     auto* index_ = cluster->GetControlPointIndices();
-                    auto* weight_ = cluster->GetControlPointWeights();                                                                                                  
+                    auto* weight_ = cluster->GetControlPointWeights();                                                                                                                      
 
                     for (int j = 0; j < cluster->GetControlPointIndicesCount(); ++j) {
                         control_bones[index_[j]].push_bone(bone_idx, static_cast<float>(weight_[j]));
                     }                    
                 }    
-                              
+
                 // load uvs..
                 has_uvs = mesh_loader->GetUVLayerCount() > 0;                 
 
@@ -174,7 +175,7 @@ namespace gtl {
                     
                     //FbxLayerElementArrayTemplate<fbxsdk::FbxVector2>* uvs_{};                                        
                     //mesh_loader->GetTextureUV(&uvs_);          
-        
+            
                     //std::cout << uv->GetMappingMode() << " mapping mode.. \n";
                     //std::cout << uv->GetReferenceMode() << " reference mode.. \n"; 
 
@@ -229,35 +230,59 @@ namespace gtl {
                     }
                 }                                      
 
-                flip_face_orientation(indices);
-            }
-            else
-            {
-                std::cout << "Not a mesh..\n";
-            }               
+                flip_face_orientation(indices);            
+        }
+
+
+        priv_impl(std::string filename, gtl::tags::mesh_format_fbx)
+        {            
+            fbx_ptr<FbxManager> manager{FbxManager::Create()};
+            fbx_ptr<FbxIOSettings> ios{FbxIOSettings::Create(manager.get(), IOSROOT)};
+            manager->SetIOSettings(ios.get());
+            
+            fbx_ptr<FbxImporter> importer{FbxImporter::Create(manager.get(), "")};
+            importer->Initialize(filename.c_str(), -1, manager->GetIOSettings());
+            
+            fbx_ptr<FbxScene> scene{FbxScene::Create(manager.get(), "whatever")};
+            importer->Import(scene.get());
+            
+            FbxNode* root_node{scene->GetRootNode()};
+            FbxNode* child{root_node->GetChild(0)};
+    
+            auto m_type = child->GetNodeAttribute()->GetAttributeType();            
+                        
+            if (m_type == FbxNodeAttribute::eMesh) extract_mesh(child);   
+
+            //FbxMesh* m;         
+            //m->GetDeformer(0,FbxDeformer::eSkin);
+          
+            //FbxSkin* s;
+            //FbxCluster* c;            
+            //auto v = m->GetElementVertexColor(0);
+
+            //v->Get
+            
+            //s->GetMappingMode();
+            //child->EvaluateGlobalBoundingBoxMinMaxCenter(vec4boxmin,vec4boxmax,vec4boxcent)
+            // if it is a mesh we should spin off a mesh loader at this point.. 
+            // if it is a skeleton we should spin off a skeleton loader.. etc
+            
         }
     };
 
-mesh_loader::mesh_loader(std::string filename, gtl::tags::fbx_format)
-    : impl_{std::make_unique<priv_impl>(std::move(filename), gtl::tags::fbx_format{})}
-{
-}
+*/
 
-size_t mesh_loader::bone_count() const
-{
-    return impl_->number_of_bones;
-}
-
-mesh_loader::aligned_vector<Eigen::Vector4f> mesh_loader::vertex_positions() const
-{
-    return impl_->v_positions;
-}
-
-mesh_loader::aligned_vector<Eigen::Vector2f> mesh_loader::vertex_uvs() const
-{
-    return impl_->v_uvs;
-}
-
+//size_t mesh_loader::bone_count() const {
+//    return static_cast<size_t>(impl_->bone_count());
+//}
+//
+//std::vector<Eigen::Vector4f> mesh_loader::vertex_positions() const {
+//    return impl_->vertex_positions();
+//}
+//
+//std::vector<Eigen::Vector2f> mesh_loader::vertex_uvs() const {
+//    return impl_->vertex_uvs();
+//}
 
 template <typename T, typename U, typename V>
 static T replace_vertex_origins_with_bones(T const& v_positions, U& v_bones, V const& bone_transforms) {
@@ -266,12 +291,12 @@ static T replace_vertex_origins_with_bones(T const& v_positions, U& v_bones, V c
 
     for (size_t i = 0; i < v_positions.size(); ++i) {
         
-        Eigen::Vector4f tmp{0.0f,0.0f,0.0f,0.0f},con{0.0f,0.0f,0.0f,1.0f};                
+        Eigen::Vector4f tmp{0.0f,0.0f,0.0f,0.0f},con{0.0f,0.0f,0.0f,1.0f};                  
 
-        tmp += (bone_transforms[v_bones[i].first[0]] * con) * v_bones[i].second[0];
-        tmp += (bone_transforms[v_bones[i].first[1]] * con) * v_bones[i].second[1];
-        tmp += (bone_transforms[v_bones[i].first[2]] * con) * v_bones[i].second[2];
-        tmp += (bone_transforms[v_bones[i].first[3]] * con) * v_bones[i].second[3];             
+        tmp += (bone_transforms.at(v_bones[i].first[0]).transform_ * con) * v_bones[i].second[0];
+        tmp += (bone_transforms.at(v_bones[i].first[1]).transform_ * con) * v_bones[i].second[1];
+        tmp += (bone_transforms.at(v_bones[i].first[2]).transform_ * con) * v_bones[i].second[2];
+        tmp += (bone_transforms.at(v_bones[i].first[3]).transform_ * con) * v_bones[i].second[3];             
                 
         tmp = tmp - v_positions[i];
         tmp.w() = 1.0f;
@@ -282,48 +307,53 @@ static T replace_vertex_origins_with_bones(T const& v_positions, U& v_bones, V c
     return new_positions;
 }
 
-mesh_loader::aligned_vector<vertex_type_bone> mesh_loader::bone_vertices() const
-{
-    std::vector<vertex_type_bone, Eigen::aligned_allocator<vertex_type_bone>> ret;
-
-    assert(impl_->v_positions.size() == impl_->v_normals.size() &&
-           impl_->v_positions.size() == impl_->v_uvs.size() && 
-           impl_->v_positions.size() == impl_->v_bones.size());
+std::vector<renderer_vertex_type> 
+mesh_loader::assembled_vertices() const {
     
-    for (auto&& e : impl_->v_bones) { if (e.second.norm() < 1.0f) { e.second.x() = 1.0f; } e.second.normalize(); }
-    impl_->v_positions = replace_vertex_origins_with_bones(impl_->v_positions,impl_->v_bones, impl_->bone_transforms);
+    std::vector<renderer_vertex_type> ret;
 
-    auto v_beg = begin(impl_->v_positions);
-    auto n_beg = begin(impl_->v_normals);
-    auto uv_beg = begin(impl_->v_uvs);    
+    auto convert_vector = [](auto const& v) { return decltype(v){v[0], v[2], -v[1], v[3]}; };
+    auto convert_uv = [](auto const& v) { return decltype(v){v[0], 1.0f - v[1]}; };
 
-    for (unsigned i = 0, j = static_cast<unsigned>(impl_->v_positions.size()); i < j; ++i, ++v_beg, ++n_beg, ++uv_beg)
+    auto positions = impl_->loader_.vertex_positions();
+    auto normals = impl_->loader_.vertex_normals();
+    auto bones = impl_->loader_.bones();    
+    auto uvs = impl_->loader_.uvs();
+
+    auto skeleton = impl_->loader_.convert_skeleton();
+
+    assert(positions.size() == normals.size() &&
+           positions.size() == uvs.size() && 
+           positions.size() == bones.size());
+        
+    // normalize vertex weights..
+    for (auto&& e : bones) { e.second.normalize(); }        
+
+    positions = replace_vertex_origins_with_bones(positions,bones,skeleton);    
+
+    auto v_beg = begin(positions);
+    auto n_beg = begin(normals);
+    auto uv_beg = begin(uvs);    
+
+    for (unsigned i = 0, sz = static_cast<unsigned>(positions.size()); i < sz; ++i, ++v_beg, ++n_beg, ++uv_beg)
     {
-        ret.emplace_back(vertex_type_bone{*v_beg, *n_beg, impl_->v_bones[i].first, impl_->v_bones[i].second, *uv_beg});
+        ret.emplace_back(renderer_vertex_type{convert_vector(*v_beg), convert_vector(*n_beg), bones[i].first, bones[i].second, convert_uv(*uv_beg)});
     }
     return ret;
 }
 
-mesh_loader::aligned_vector<mesh_loader::bone> mesh_loader::bones() const {
-    return impl_->v_bones;
-}
-
 std::vector<uint32_t> mesh_loader::indices() const
-{    
-    return impl_->indices;
+{   
+    auto indices = impl_->loader().indices();
+    flip_face_orientation(indices);
+    return indices;
 }
 
-mesh_loader::aligned_vector<Eigen::Matrix4f> mesh_loader::links() const
-{
-    return impl_->bone_transforms;
+boost::container::flat_map<bone::id_type,bone> 
+mesh_loader::skeleton() const {
+    return impl_->loader_.convert_skeleton();
 }
 
-Eigen::Matrix4f mesh_loader::mesh_transform() const
-{
-    return impl_->mesh_transform;
-}
+mesh_loader::~mesh_loader() {}  // needed for PIMPL
 
-mesh_loader::~mesh_loader()
-{
-}
-}
+}}

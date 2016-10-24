@@ -42,7 +42,7 @@ namespace d3d {
         std::vector<D3D12_INPUT_ELEMENT_DESC> layout_;
 
         gtl::d3d::resource_descriptor_heap vbuffer_descriptors_;
-        aligned_vector<gtl::entity::render_data> mutable mesh_;
+        std::vector<gtl::entity::render_data> mutable mesh_;
         std::array<gtl::d3d::constant_buffer, 3> mutable vbuffers_;
 
         std::array<gtl::d3d::resource_descriptor_heap, 3> cbheap_;

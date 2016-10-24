@@ -70,13 +70,13 @@ namespace gtl {
 namespace {    
     template <typename T, typename U>
     static void bullet_simulation_thread(vn::swap_object<T>& rend_data_, 
-                                         vn::single_consumer_queue<U,Eigen::aligned_allocator<U>>& physics_task_queue_,        
+                                         vn::single_consumer_queue<U>& physics_task_queue_,        
                                          std::atomic_flag& quit_, 
                                          gtl::draw_kit& b2d_adapter_);    
 }
 
 namespace physics {
-    bullet_simulation::bullet_simulation(vn::single_consumer_queue<gtl::physics::command_variant, Eigen::aligned_allocator<gtl::physics::command_variant>>& tasks_, 
+    bullet_simulation::bullet_simulation(vn::single_consumer_queue<gtl::physics::command_variant>& tasks_, 
                                          gtl::draw_kit& b2d_adapter_)
     {
         quit_.test_and_set();        
@@ -275,7 +275,7 @@ namespace {
         void visit(F func) { for (auto& e : participating_bodies_) { func(e.get_body()); } };
         bullet_body& head() { return participating_bodies_[0]; }
         
-        void render(std::vector<entity::render_data>& render_queue, std::vector<Eigen::Matrix4f, Eigen::aligned_allocator<Eigen::Matrix4f>>& transform_queue) {        
+        void render(std::vector<entity::render_data>& render_queue, std::vector<Eigen::Matrix4f>& transform_queue) {        
             render_queue.emplace_back(render_data_.pack_bone_offset(static_cast<uint16_t>(transform_queue.size())));                                    
             Eigen::Matrix4f tmp = Eigen::Matrix4f::Identity();
                         
@@ -328,7 +328,7 @@ namespace {
     template <typename T, typename U>
     static void bullet_simulation_thread(
         vn::swap_object<T>& rend_data_, 
-        vn::single_consumer_queue<U,Eigen::aligned_allocator<U>>& physics_task_queue_,        
+        vn::single_consumer_queue<U>& physics_task_queue_,        
         std::atomic_flag& quit_, 
         gtl::draw_kit& b2d_adapter_)
     {        

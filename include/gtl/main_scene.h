@@ -56,10 +56,10 @@ namespace scenes {
 
     class main_scene {        
         
-        template <typename T>
-        using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;
+        //template <typename T>
+        //using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;
 
-        vn::single_consumer_queue<gtl::physics::command_variant, Eigen::aligned_allocator<gtl::physics::command_variant>> mutable physics_task_queue_;
+        vn::single_consumer_queue<gtl::physics::command_variant> mutable physics_task_queue_;
 
         gtl::draw_kit mutable draw_kit_;
         gtl::d3d::draw_kit box2d_;         
@@ -76,6 +76,23 @@ namespace scenes {
 
         vn::single_consumer_queue<std::function<void()>> mutable draw_task_queue_;
         
+        auto new_box_generator() {
+
+            // mesh_group& g;
+            // 
+            // mesh_loader m{filename};
+            //
+            // g.add(m);
+            // 
+            // use(m.skeleton(),g.id(m)); 
+            //
+            // g.add(m);
+            //
+            //
+
+
+        }
+
         auto box_generator() {
             using namespace gtl::physics::commands;
             using namespace boost::units;
@@ -85,7 +102,7 @@ namespace scenes {
                 for (int y = 0; y < 40; y++)
                     grid.emplace_back(x * 3.0f, y * 3.0f);
 
-            aligned_vector<gtl::physics::command_variant> generators_;
+            std::vector<gtl::physics::command_variant> generators_;
 
             for (int i = 1; i < 200; ++i) {
                 generators_.emplace_back(dynamic_box{ {vn::math::rand_neg_one_one() * 10.0f,
@@ -99,7 +116,7 @@ namespace scenes {
             }   
             
             for (unsigned i = 1; i < 100; ++i) {
-                aligned_vector<dynamic_box> jointed_boxes_;
+                std::vector<dynamic_box> jointed_boxes_;
                 auto head_x = vn::math::rand_neg_one_one() * 3.0f;
                 auto head_y = vn::math::rand_zero_one() * 15.0f;
                 auto head_z = vn::math::rand_zero_one() * 15.0f + 10.0f;
@@ -119,7 +136,7 @@ namespace scenes {
             }
 
             for (unsigned i = 1; i < 200; ++i) {
-                aligned_vector<dynamic_box> jointed_boxes_;
+                std::vector<dynamic_box> jointed_boxes_;
                 auto head_x = vn::math::rand_neg_one_one() * 3.0f;
                 auto head_y = vn::math::rand_zero_one() * 15.0f;
                 auto head_z = vn::math::rand_zero_one() * 15.0f + 10.0f;

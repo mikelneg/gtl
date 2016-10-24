@@ -39,7 +39,7 @@ namespace d3d {
         font_atlas_glyph mutable font_definition;
 
         gtl::d3d::resource_descriptor_heap vbuffer_descriptors_;
-        aligned_vector<Vertex> mutable mesh_;
+        std::vector<Vertex> mutable mesh_;
         std::array<gtl::d3d::constant_buffer, 3> mutable vbuffers_;
 
         gtl::d3d::resource_descriptor_heap texture_descriptor_heap_;

@@ -46,7 +46,7 @@ namespace commands {
     };
 
     struct dynamic_jointed_boxes {
-        std::vector<dynamic_box,Eigen::aligned_allocator<dynamic_box>> boxes_;
+        std::vector<dynamic_box> boxes_;
         entity::render_data render_data_;
         entity::id id_;
     };

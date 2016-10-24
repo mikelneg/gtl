@@ -27,7 +27,7 @@ namespace physics {
 
     struct simulation_render_data {
         
-        std::vector<entity_transform, Eigen::aligned_allocator<entity_transform>> control_points_;  
+        std::vector<entity_transform> control_points_;  
         std::vector<entity::render_data> entities_;              
                                                         
         // "entities" are packs of data for the renderer, currently stored as 
