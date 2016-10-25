@@ -288,15 +288,18 @@ namespace d3d {
             };
 
             class vertex_buffer : public release_ptr<raw::Resource> {
+                D3D12_VERTEX_BUFFER_VIEW view_;
             public:
-                vertex_buffer(device&, command_queue&, char const* begin, size_t size);
-                void update(char const*, std::size_t);
+                vertex_buffer(command_queue&, char const* begin, size_t size, size_t stride);
+                decltype(auto) view() const { return view_; }
+                //void update(char const*, std::size_t);
             };
 
             class index_buffer : public release_ptr<raw::Resource> {
+                D3D12_INDEX_BUFFER_VIEW view_;
             public:
-                index_buffer(device&, command_queue&, char const* begin, size_t size);
-                void update(char const*, std::size_t);
+                index_buffer(command_queue&, char const* begin, size_t size, DXGI_FORMAT format);
+                decltype(auto) view() const { return view_; }
             };
 
             class depth_stencil_buffer : public release_ptr<raw::Resource> {

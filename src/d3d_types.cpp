@@ -401,103 +401,6 @@ namespace d3d {
             set_debug_name(*get(), L"root_sig");
         }
 
-        //  cb_root_signature::cb_root_signature(device& dev)
-        //  {
-        //      //
-        //      //  RootSig(Sampler, Table{SRV,2}, Table{SRV,2});
-        //      //           handler
-        //
-        //      set_debug_name(*get(),L"cbsig");
-        //  }
-        //
-        //  cb_root_signature::cb_root_signature(device& dev,int)
-        //  {
-        //      //
-        //      //  RootSig(Sampler, Table{SRV,2}, Table{SRV,2});
-        //      //           handler
-        //
-        //            //
-        //      //  RootSig(Sampler, Table{SRV,2}, Table{SRV,2});
-        //      //           handler
-        //
-        //      std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
-        //	std::vector<CD3DX12_ROOT_PARAMETER> params_;
-        //
-        //      ranges.resize(3);
-        //      params_.resize(2);
-        //
-        //      ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SRV, 1, 0);
-        //      ranges[1].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
-        //      ranges[2].Init(D3D12_DESCRIPTOR_RANGE_TYPE_SAMPLER, 1, 0);
-        //      params_[0].InitAsDescriptorTable(2, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
-        //      params_[1].InitAsDescriptorTable(1, &ranges[2], D3D12_SHADER_VISIBILITY_ALL);
-        //
-        //	// Allow input layout and deny uneccessary access to certain pipeline stages.
-        //	D3D12_ROOT_SIGNATURE_FLAGS flags_ =
-        ////		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-        //		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-        //		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-        //		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-        //		//D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
-        //
-        //	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-        //	rootSignatureDesc.Init(static_cast<UINT>(params_.size()), params_.data(), 0, nullptr,
-        //                              flags_);
-        //
-        //      release_ptr<D3DBlob> signature;
-        //      release_ptr<D3DBlob> error;
-        //
-        //	win::throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1,
-        //&signature, &error)
-        //                    ,__func__);
-        //	win::throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(),
-        //signature->GetBufferSize(),
-        //                                              __uuidof(type), expose_as_void_pp(*this))
-        //                    ,__func__);
-        //      set_debug_name(*get(),L"cbsig");
-        //  }
-        //
-        //  cs_root_signature::cs_root_signature(device& dev)
-        //  {
-        //      //
-        //      //  RootSig(Sampler, Table{SRV,2}, Table{SRV,2});
-        //      //           handler
-        //
-        //      std::vector<CD3DX12_DESCRIPTOR_RANGE> ranges;
-        //	std::vector<CD3DX12_ROOT_PARAMETER> params_;
-        //
-        //      ranges.resize(1);
-        //      params_.resize(1);
-        //
-        //      ranges[0].Init(D3D12_DESCRIPTOR_RANGE_TYPE_UAV, 1, 0);
-        //      params_[0].InitAsDescriptorTable(1, &ranges[0], D3D12_SHADER_VISIBILITY_ALL);
-        //      //params_[0].InitAsUnorderedAccessView(0);
-        //
-        //	// Allow input layout and deny uneccessary access to certain pipeline stages.
-        //	D3D12_ROOT_SIGNATURE_FLAGS flags_ =
-        ////		D3D12_ROOT_SIGNATURE_FLAG_ALLOW_INPUT_ASSEMBLER_INPUT_LAYOUT |
-        //		D3D12_ROOT_SIGNATURE_FLAG_DENY_HULL_SHADER_ROOT_ACCESS |
-        //		D3D12_ROOT_SIGNATURE_FLAG_DENY_DOMAIN_SHADER_ROOT_ACCESS |
-        //		D3D12_ROOT_SIGNATURE_FLAG_DENY_GEOMETRY_SHADER_ROOT_ACCESS;
-        //		//D3D12_ROOT_SIGNATURE_FLAG_DENY_PIXEL_SHADER_ROOT_ACCESS;
-        //
-        //	CD3DX12_ROOT_SIGNATURE_DESC rootSignatureDesc;
-        //	rootSignatureDesc.Init(static_cast<UINT>(params_.size()), params_.data(), 0, nullptr,
-        //                              flags_);
-        //
-        //      release_ptr<D3DBlob> signature;
-        //      release_ptr<D3DBlob> error;
-        //
-        //	win::throw_on_fail(D3D12SerializeRootSignature(&rootSignatureDesc, D3D_ROOT_SIGNATURE_VERSION_1,
-        //&signature, &error)
-        //                    ,__func__);
-        //	win::throw_on_fail(dev->CreateRootSignature(0, signature->GetBufferPointer(),
-        //signature->GetBufferSize(),
-        //                                              __uuidof(type), expose_as_void_pp(*this))
-        //                    ,__func__);
-        //      set_debug_name(*get(),L"cbsig");
-        //  }
-
         vertex_shader::vertex_shader(std::wstring path)
         {
             win::throw_on_fail(D3DReadFileToBlob(path.c_str(), &expose_ptr()), __func__);
@@ -518,9 +421,10 @@ namespace d3d {
             win::throw_on_fail(D3DReadFileToBlob(path.c_str(), &expose_ptr()), __func__);
         }
 
-        vertex_buffer::vertex_buffer(device& dev, command_queue& cqueue_, char const* begin_, size_t size_)
+        vertex_buffer::vertex_buffer(command_queue& cqueue_, char const* begin_, size_t size_, size_t stride_)
         {
             release_ptr<raw::Resource> upload_vbuffer_;
+            auto dev = get_device_from(cqueue_);
 
             HRESULT result2 = dev->CreateCommittedResource(
                 &raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
@@ -562,12 +466,17 @@ namespace d3d {
 
             cqueue_.synchronize();
 
+            view_.BufferLocation = get()->GetGPUVirtualAddress();
+            view_.SizeInBytes = static_cast<UINT>(size_);
+            view_.StrideInBytes = static_cast<UINT>(stride_);
+
             set_debug_name(*get(), L"vbuffer");
         }
 
-        index_buffer::index_buffer(device& dev, command_queue& cqueue_, char const* begin_, size_t size_)
+        index_buffer::index_buffer(command_queue& cqueue_, char const* begin_, size_t size_, DXGI_FORMAT format_)
         {
             resource upload_ibuffer_;
+            auto dev = get_device_from(cqueue_);
 
             HRESULT result2 = dev->CreateCommittedResource(
                 &raw::cx::HeapProperties(D3D12_HEAP_TYPE_DEFAULT), D3D12_HEAP_FLAG_NONE,
@@ -608,6 +517,10 @@ namespace d3d {
             cqueue_->ExecuteCommandLists(_countof(ppCommandLists), ppCommandLists);
 
             cqueue_.synchronize();
+
+            view_.BufferLocation = get()->GetGPUVirtualAddress();
+            view_.SizeInBytes = static_cast<UINT>(size_);
+            view_.Format = format_;
 
             set_debug_name(*get(), L"ibuffer");
         }

@@ -184,8 +184,8 @@ namespace d3d {
                   }                  
                   return ret;
                 }()},
-              vbuffer_{dev, cqueue, mesh_group_.vertex_data(), mesh_group_.vertex_data_size()},
-              index_buffer_{dev, cqueue, mesh_group_.index_data(), mesh_group_.index_data_size()},
+              vbuffer_{cqueue, mesh_group_.vertex_data(), mesh_group_.vertex_data_size(), sizeof(renderer_vertex_type)},
+              index_buffer_{cqueue, mesh_group_.index_data(), mesh_group_.index_data_size(), DXGI_FORMAT_R32_UINT},
               ibuffer_descriptors_{dev, 3, gtl::d3d::tags::shader_visible{}},
               instance_buffers_{dev, ibuffer_descriptors_.get_handle(0), MAX_ENTITIES * sizeof(gtl::entity::render_data)},
               cbheap_{dev, 3, gtl::d3d::tags::shader_visible{}},
@@ -239,17 +239,11 @@ namespace d3d {
             auto heaps = {sampler_heap_.get(), texture_descriptor_heap_.get()};
 
             cl->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());
-
             cl->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-
             cl->SetGraphicsRootConstantBufferView(0, (cbuffer_.resource())->GetGPUVirtualAddress());
-
             cl->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
-
             cl->SetGraphicsRootDescriptorTable(2, texture_descriptor_heap_->GetGPUDescriptorHandleForHeapStart());
-
             cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);
-
             cl->SetGraphicsRootShaderResourceView(4, (bone_buffer_.resource())->GetGPUVirtualAddress());
 
             auto viewports = {std::addressof(viewport)};
@@ -272,19 +266,15 @@ namespace d3d {
             unsigned starter{};
 
             D3D12_VERTEX_BUFFER_VIEW iaviews_[]
-                = {{vbuffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_group_.vertex_data_size()), sizeof(renderer_vertex_type)},
+                = {vbuffer_.view(),//{vbuffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_group_.vertex_data_size()), sizeof(renderer_vertex_type)},
                    {instance_buffers_.resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(gtl::entity::render_data)), sizeof(gtl::entity::render_data)}};
 
-            D3D12_INDEX_BUFFER_VIEW ibv{index_buffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_group_.index_data_size()), DXGI_FORMAT_R32_UINT};
+            //D3D12_INDEX_BUFFER_VIEW ibv{index_buffer_->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_group_.index_data_size()), DXGI_FORMAT_R32_UINT};
 
-            cl->IASetIndexBuffer(&ibv);
+            cl->IASetIndexBuffer(&index_buffer_.view());
             cl->IASetVertexBuffers(0, 2, iaviews_);
 
-            mesh_group_.apply([&](auto const& mesh) {
-                //auto& positions_ = render_data_.entities_;
-
-                //auto weights_per_vertex = static_cast<uint32_t>(mesh.weights_per_vertex);
-                //cl->SetGraphicsRoot32BitConstants(5, 1, std::addressof(weights_per_vertex), 0);
+            mesh_group_.apply([&](auto const& mesh) {             
                 cl->SetGraphicsRoot32BitConstant(5, static_cast<uint32_t>(mesh.weights_per_vertex), 0);
 
                 cl->DrawIndexedInstanced(static_cast<unsigned>(mesh.index_count), // indexcountperinstance
