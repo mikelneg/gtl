@@ -214,8 +214,8 @@ namespace fbx {
                     fbxsdk::FbxVector4 tmp_normal{0.0,0.0,0.0,0.0}; 
                     mesh->GetPolygonVertexNormal(i,j,tmp_normal);
 
-                    positions_.emplace_back(convert_vector(mesh->GetControlPointAt(control_point_index),1.0f)); // w == 1.0f                        
-                    normals_.emplace_back(convert_vector(tmp_normal,0.0f)); // w == 0.0f; also, if normals are not mapped tmp_normal remains unchanged                                                                                
+                    positions_.emplace_back(convert_vector_handedness(mesh->GetControlPointAt(control_point_index),1.0f)); // w == 1.0f                        
+                    normals_.emplace_back(convert_vector_handedness(tmp_normal,0.0f)); // w == 0.0f; also, if normals are not mapped tmp_normal remains unchanged                                                                                
                     indices_.emplace_back(j + (i * sz)); // control_point_index );   // ignoring actual index for now..                                                                                                   
                     
                     if (vertex_bone_data_) {
@@ -226,7 +226,7 @@ namespace fbx {
             }                                       
         };
 
-        node->GenerateNormals(true,true,true); // Generates normals, vertex order is clockwise
+        node->GenerateNormals(true,true,false); // Generates normals, vertex order is clockwise -- try counterclockwise..
                                                        
         vertex_bone_data_ = get_vertex_bone_data(*node);
         bone_names_ = get_bone_names(*node);                
@@ -326,8 +326,8 @@ namespace fbx {
         auto convert_bone = 
             [&](fbx_bone const& b) -> gtl::mesh::bone {               
                 auto parent_id_ = names_.count(b.parent_) > 0 ? names_.at(b.parent_) : gtl::mesh::bone::root_id(); 
-                gtl::mesh::bone return_bone{convert_matrix_handedness(b.g_transform_),
-                                            convert_vector(b.head_and_tail().second,1.0f), 
+                gtl::mesh::bone return_bone{convert_matrix(b.g_transform_),
+                                            convert_vector_handedness(b.head_and_tail().second,1.0f), 
                                             parent_id_};
                 for (auto&& c : b.children_) {                     
                     return_bone.add_child(names_.at(c)); 

@@ -18,7 +18,7 @@ MIT license. See LICENSE.txt in project root for details.
 
 #include <gtl/d3d_draw_kit.h>
 #include <gtl/draw_kit.h>
-
+#include <gtl/mesh_group.h>
 #include <gtl/physics/bullet/simulation_impl.h>
 #include <gtl/physics/generators/simple_boundary.h>
 #include <gtl/physics/common_types.h>
@@ -59,10 +59,12 @@ namespace scenes {
         //template <typename T>
         //using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;
 
+        gtl::mesh_group<renderer_vertex_type, uint32_t, std::string> mesh_group_;
+
         vn::single_consumer_queue<gtl::physics::command_variant> mutable physics_task_queue_;
 
         gtl::draw_kit mutable draw_kit_;
-        gtl::d3d::draw_kit box2d_;         
+        gtl::d3d::draw_kit debug_draw_;         
 
         std::unique_ptr<gtl::physics::simulation> physics_;
         gtl::camera physics_camera_;
@@ -74,7 +76,7 @@ namespace scenes {
 
         std::atomic<int> mutable focus_id_{};
 
-        vn::single_consumer_queue<std::function<void()>> mutable draw_task_queue_;
+        vn::single_consumer_queue<std::function<void()>> mutable draw_task_queue_;        
         
         auto new_box_generator() {
 
@@ -92,7 +94,7 @@ namespace scenes {
 
 
         }
-
+        
         auto box_generator() {
             using namespace gtl::physics::commands;
             using namespace boost::units;
@@ -104,18 +106,18 @@ namespace scenes {
 
             std::vector<gtl::physics::command_variant> generators_;
 
-            for (int i = 1; i < 200; ++i) {
+            for (int i = 1; i < 10; ++i) {
                 generators_.emplace_back(dynamic_box{ {vn::math::rand_neg_one_one() * 10.0f,
                                                        vn::math::rand_zero_one() * 10.0f,
                                                        vn::math::rand_zero_one() * 10.0f + 10.f}, 
                                                        {1.0f,1.0f,1.0f},
                                                        Eigen::Quaternionf::Identity(),
-                                                       gtl::entity::render_data{}.pack_entity_id(i).pack_mesh_id(1),
+                                                       gtl::entity::render_data{}.pack_entity_id(i).pack_mesh_id( mesh_group_.index_of_mesh("eyeball") ),
                                                        gtl::entity::id(i),
                                                        10.0f * si::kilograms });
             }   
             
-            for (unsigned i = 1; i < 100; ++i) {
+            for (unsigned i = 1; i < 10; ++i) {
                 std::vector<dynamic_box> jointed_boxes_;
                 auto head_x = vn::math::rand_neg_one_one() * 3.0f;
                 auto head_y = vn::math::rand_zero_one() * 15.0f;
@@ -126,16 +128,29 @@ namespace scenes {
                     jointed_boxes_.emplace_back(dynamic_box{ {head_x, head_y, head_z - (j * 1.0f)}, 
                                                              {1.0f,1.0f,1.0f},
                                                              Eigen::Quaternionf::Identity(),                                                             
-                                                             gtl::entity::render_data{}.pack_entity_id(i+200).pack_mesh_id(0),
+                                                             gtl::entity::render_data{}.pack_entity_id(i+200).pack_mesh_id( mesh_group_.index_of_mesh("cone") ),
                                                              gtl::entity::id(i+200),
                                                              10.0f * si::kilograms});
                 }
                 generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_),
-                                                               gtl::entity::render_data{}.pack_entity_id(i+200).pack_mesh_id(0),
+                                                               gtl::entity::render_data{}.pack_entity_id(i+200).pack_mesh_id( mesh_group_.index_of_mesh("cone") ),
                                                                gtl::entity::id(i+200)});
             }
 
-            for (unsigned i = 1; i < 200; ++i) {
+            for (unsigned i = 1; i < 1; ++i) {
+                auto head_x = vn::math::rand_neg_one_one() * 3.0f;
+                auto head_y = vn::math::rand_zero_one() * 15.0f;
+                auto head_z = vn::math::rand_zero_one() * 15.0f + 10.0f;
+                
+                generators_.emplace_back(dynamic_armature{mesh_group_.armature("body"),
+                                                          Eigen::Quaternionf::Identity(),
+                                                          {head_x,head_y,head_z - (i * 1.0f)},
+                                                          gtl::entity::render_data{}.pack_entity_id(i+600).pack_mesh_id( mesh_group_.index_of_mesh("body") ),
+                                                          gtl::entity::id(i+600),
+                                                          10.0f * si::kilograms});
+            }
+
+            for (unsigned i = 1; i < 10; ++i) {
                 std::vector<dynamic_box> jointed_boxes_;
                 auto head_x = vn::math::rand_neg_one_one() * 3.0f;
                 auto head_y = vn::math::rand_zero_one() * 15.0f;
@@ -146,14 +161,16 @@ namespace scenes {
                     jointed_boxes_.emplace_back(dynamic_box{ {head_x, head_y, head_z - (j * 1.0f)}, 
                                                              {1.0f,1.0f,1.0f},
                                                              Eigen::Quaternionf::Identity(),                                                             
-                                                             gtl::entity::render_data{}.pack_entity_id(i+600).pack_mesh_id(2),
-                                                             gtl::entity::id(i+600),
+                                                             gtl::entity::render_data{}.pack_entity_id(i+700).pack_mesh_id( mesh_group_.index_of_mesh("rectangle") ),
+                                                             gtl::entity::id(i+700),
                                                              10.0f * si::kilograms});
                 }
                 generators_.emplace_back(dynamic_jointed_boxes{std::move(jointed_boxes_),
-                                                               gtl::entity::render_data{}.pack_entity_id(i+600).pack_mesh_id(2),
-                                                               gtl::entity::id(i+600)});
+                                                               gtl::entity::render_data{}.pack_entity_id(i+700).pack_mesh_id( mesh_group_.index_of_mesh("rectangle") ),
+                                                               gtl::entity::id(i+700)});
             }
+
+
 
             return generators_;
         }
@@ -260,16 +277,39 @@ namespace scenes {
 
     public:
         main_scene(gtl::d3d::device& dev, gtl::d3d::swap_chain& swchain, gtl::d3d::command_queue& cqueue)
-            : physics_task_queue_{box_generator()},
+            : mesh_group_{[]()
+               {
+                 decltype(mesh_group_) ret;
+                 { gtl::mesh::mesh_loader m{"data\\meshes\\cone.fbx", gtl::tags::mesh_format_fbx{}};
+                   ret.add_mesh("cone", m.assembled_vertices(), m.indices(), m.bone_count());
+                   ret.add_armature("cone",m.armature());
+                 }                  
+                 { gtl::mesh::mesh_loader m{"data\\meshes\\eyeball.fbx", gtl::tags::mesh_format_fbx{}};
+                   ret.add_mesh("eyeball", m.assembled_vertices(), m.indices(), m.bone_count());
+                   ret.add_armature("eyeball",m.armature());
+                 }                                    
+                 {                    
+                    gtl::mesh::mesh_loader m{"data\\meshes\\bodyskeleton.fbx", gtl::tags::mesh_format_fbx{}};
+                    ret.add_mesh("body", m.assembled_vertices(), m.indices(), m.bone_count());
+                    ret.add_armature("body",m.armature());                   
+                 }                  
+                 {                    
+                    gtl::mesh::mesh_loader m{"data\\meshes\\correct_armature.fbx", gtl::tags::mesh_format_fbx{}};
+                    ret.add_mesh("rectangle", m.assembled_vertices(), m.indices(), m.bone_count());
+                    ret.add_armature("rectangle",m.armature());                   
+                 }                  
+                 return ret;
+               }()},            
+              physics_task_queue_{box_generator()},
               physics_camera_{{1.0f * boost::units::si::meters, 1.0f * boost::units::si::meters},
                               gtl::physics::angle<float>{45.0f * boost::units::degree::degree},
                               {0.01f * boost::units::si::meters},
                               {2000.0f * boost::units::si::meters}},
               camera_height_{10.0f * boost::units::si::meters},
               physics_{std::make_unique<gtl::physics::bullet_simulation>(physics_task_queue_, draw_kit_)},
-              swirl_effect_{dev, swchain, cqueue, *physics_},
+              swirl_effect_{dev, swchain, cqueue, *physics_, mesh_group_},
               draw_kit_{},
-              box2d_{dev, swchain, cqueue, draw_kit_}
+              debug_draw_{dev, swchain, cqueue, draw_kit_}
         // imgui_adapter_{},
         // imgui_{dev, swchain, cqueue, imgui_adapter_}
         {
@@ -290,13 +330,13 @@ namespace scenes {
                                       }.matrix();                                               
 
                 //Eigen::Matrix4f rot = Eigen::Affine3f{ Eigen::AngleAxisf{vn::math::deg_to_rad( -25.0f), Eigen::Vector3f{1.0f, 0.0f, 0.0f}} }.matrix();
-
+          
                 Eigen::Matrix4f m = (physics_camera_.matrix() * cam_transform_).transpose();
 
                 draw_task_queue_.consume([](auto&& f) { f(); }); // execute our waiting tasks..
 
                 swirl_effect_.draw(ps..., current_id_, m);                                
-                box2d_.draw(ps..., m);
+                debug_draw_.draw(ps..., m);
 
                 //physics_task_queue_.insert(gtl::physics::generators::polymorphic_generator{std::make_unique<render_box2d>(draw_kit_)});                            
             });

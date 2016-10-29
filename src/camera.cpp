@@ -68,7 +68,7 @@ namespace {
          matrix_ <<  (1.0f/ar) * s, 0.0f, 0.0f,           0.0, 
                               0.0f,    s, 0.0f,           0.0f, 
                               0.0f, 0.0f, zf/(zf-zn), ((zn*zf)/(zn-zf)), 
-                              0.0f, 0.0f, 1.0f,           0.0f;
+                              0.0f, 0.0f, 1.0f,           0.0f;         
         //    matrix_ <<   zn, 0.0f, 0.0f, 0.0f,
         //                 0.0f, zn, 0.0f, 0.0f,
         //                 0.0f, 0.0f, zf / zf - zn, 1.0f,

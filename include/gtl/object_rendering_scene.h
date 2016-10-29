@@ -43,9 +43,11 @@ namespace d3d {
         template <typename T>
         using aligned_vector = std::vector<T, Eigen::aligned_allocator<T>>;        
 
-        gtl::mesh_group<renderer_vertex_type, uint32_t, std::string> mesh_group_;
+        //gtl::mesh_group<renderer_vertex_type, uint32_t, std::string> mesh_group_;
 
         std::vector<D3D12_INPUT_ELEMENT_DESC> layout_;
+
+        gtl::mesh_group<renderer_vertex_type,uint32_t,std::string>& mesh_group_;
 
         gtl::d3d::vertex_buffer vbuffer_;
         gtl::d3d::index_buffer index_buffer_;
@@ -168,22 +170,23 @@ namespace d3d {
         object_rendering_scene(object_rendering_scene&&) = default;
         object_rendering_scene& operator=(object_rendering_scene&&) = default;
 
-        object_rendering_scene(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, gtl::d3d::root_signature& rsig, gtl::physics::simulation& physics_)
-            : layout_(vertex_layout()),
-              mesh_group_{[]()
-                {
-                  decltype(mesh_group_) ret;
-                  { gtl::mesh::mesh_loader m{"data\\meshes\\cone.fbx", gtl::tags::mesh_format_fbx{}};
-                    ret.add_mesh("cone", m.assembled_vertices(), m.indices(), m.bone_count());
-                  }                  
-                  { gtl::mesh::mesh_loader m{"data\\meshes\\eyeball.fbx", gtl::tags::mesh_format_fbx{}};
-                    ret.add_mesh("eyeball", m.assembled_vertices(), m.indices(), m.bone_count());
-                  }                                    
-                  { gtl::mesh::mesh_loader m{"data\\meshes\\correct_armature.fbx", gtl::tags::mesh_format_fbx{}};
-                    ret.add_mesh("rectangle", m.assembled_vertices(), m.indices(), m.bone_count());
-                  }                  
-                  return ret;
-                }()},
+        object_rendering_scene(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, gtl::d3d::root_signature& rsig, gtl::physics::simulation& physics_, gtl::mesh_group<renderer_vertex_type,uint32_t,std::string>& mesh_group_)
+            : mesh_group_{mesh_group_},
+              layout_(vertex_layout()),              
+              //mesh_group_{[]()
+              //  {
+              //    decltype(mesh_group_) ret;
+              //    { gtl::mesh::mesh_loader m{"data\\meshes\\cone.fbx", gtl::tags::mesh_format_fbx{}};
+              //      ret.add_mesh("cone", m.assembled_vertices(), m.indices(), m.bone_count());
+              //    }                  
+              //    { gtl::mesh::mesh_loader m{"data\\meshes\\eyeball.fbx", gtl::tags::mesh_format_fbx{}};
+              //      ret.add_mesh("eyeball", m.assembled_vertices(), m.indices(), m.bone_count());
+              //    }                                    
+              //    { gtl::mesh::mesh_loader m{"data\\meshes\\correct_armature.fbx", gtl::tags::mesh_format_fbx{}};
+              //      ret.add_mesh("rectangle", m.assembled_vertices(), m.indices(), m.bone_count());
+              //    }                  
+              //    return ret;
+              //  }()},
               vbuffer_{cqueue, mesh_group_.vertex_data(), mesh_group_.vertex_data_size(), sizeof(renderer_vertex_type)},
               index_buffer_{cqueue, mesh_group_.index_data(), mesh_group_.index_data_size(), DXGI_FORMAT_R32_UINT},
               ibuffer_descriptors_{dev, 3, gtl::d3d::tags::shader_visible{}},

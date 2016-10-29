@@ -23,6 +23,7 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/d3d_types.h>
 #include <gtl/gtl_window.h>
 
+#include <gtl/mesh_group.h>
 #include <gtl/gui_rect_draw.h>
 #include <gtl/object_rendering_scene.h>
 
@@ -190,7 +191,8 @@ namespace scenes {
             }
 
         public:
-            swirl_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, gtl::physics::simulation& physics_)
+            template <typename M>
+            swirl_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, gtl::physics::simulation& physics_, M& mesh_group_)
                 : vshader_{L"skybox_vs.cso"},
                   pshader_{L"skybox_ps.cso"},
                   root_sig_{dev_, vshader_},
@@ -215,7 +217,7 @@ namespace scenes {
                   sampler_heap_{dev_, 1},
                   sampler_{dev_, sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
                   gui_rects_{dev_, cqueue_, root_sig_, physics_},
-                  object_effect_{dev_, cqueue_, root_sig_, physics_}
+                  object_effect_{dev_, cqueue_, root_sig_, physics_,mesh_group_}
             // imgui_{dev_, swchain_, cqueue_}
             {
                 //

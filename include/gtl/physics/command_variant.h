@@ -15,11 +15,14 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/entity/entity_id.h>
 #include <gtl/entity/render_data.h>
 
+#include <gtl/common_mesh.h>
+
 #include <Eigen/Geometry>
 
 #include <vector>
 #include <memory>
 
+#include <boost/container/flat_map.hpp>
 #include <boost/optional.hpp>
 #include <boost/mpl/begin_end.hpp>
 #include <boost/variant.hpp>
@@ -49,6 +52,15 @@ namespace commands {
         std::vector<dynamic_box> boxes_;
         entity::render_data render_data_;
         entity::id id_;
+    };
+
+    struct dynamic_armature {                
+        gtl::mesh::armature armature_;
+        Eigen::Quaternionf orientation_;
+        Eigen::Vector3f xyz_;
+        entity::render_data render_data_;
+        entity::id id_;
+        mass<float> mass_;
     };
 
     struct static_rectangle {
@@ -107,6 +119,7 @@ namespace commands {
                                               static_box,
                                               dynamic_box,
                                               dynamic_jointed_boxes,
+                                              dynamic_armature,
                                               static_rectangle, 
                                               dynamic_rectangle, 
                                               dynamic_jointed_rectangles, 

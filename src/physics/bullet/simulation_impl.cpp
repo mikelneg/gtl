@@ -53,6 +53,7 @@ MIT license. See LICENSE.txt in project root for details.
 
 #pragma warning(disable : 4305)
 #include <btBulletDynamicsCommon.h>
+#include <btBulletWorldImporter.h>
 
 // Notes on stepping: http://www.bulletphysics.org/mediawiki-1.5.8/index.php?title=Stepping_The_World
 //
@@ -68,6 +69,27 @@ MIT license. See LICENSE.txt in project root for details.
 
 namespace gtl {
 namespace {    
+
+
+    inline 
+    btTransform convert_matrix_handedness(btTransform const& in) {                                                   
+            //  { rx, ry, rz, 0 }  
+            //  { ux, uy, uz, 0 }  
+            //  { lx, ly, lz, 0 }  
+            //  { px, py, pz, 1 }
+            //     vvvvvvvvvv
+            //  { rx, rz, ry, 0 }  
+            //  { lx, lz, ly, 0 }  
+            //  { ux, uz, uy, 0 }  
+            //  { px, pz, py, 1 }                         
+            
+            btMatrix3x3 const conv{1,0,0,0,0,1,0,1,0};
+            btTransform out{conv * in.getBasis(), btVector3{in.getOrigin().x(),in.getOrigin().z(),in.getOrigin().y()}};
+                        
+            
+            return out;
+        }
+
     template <typename T, typename U>
     static void bullet_simulation_thread(vn::swap_object<T>& rend_data_, 
                                          vn::single_consumer_queue<U>& physics_task_queue_,        
@@ -155,11 +177,15 @@ namespace {
                                                           });                                                       
                }
 
+               std::vector<std::pair<int,int>> links_;
+               for (int i = 0, sz = static_cast<int>(local_bodies_.size()); i < sz-1; ++i) { links_.emplace_back(i,i+1); }
+
                entities.emplace(boost::unordered::piecewise_construct,
                                 std::forward_as_tuple(o.id_),
                                 std::forward_as_tuple(world,
                                                       o.render_data_,
-                                                      std::move(local_bodies_)));
+                                                      std::move(local_bodies_),
+                                                      std::move(links_)));
                
                entities.at(o.id_).visit(
                    [](auto& b){
@@ -170,7 +196,60 @@ namespace {
 
                shapes.emplace(shape_enum::BOX, std::move(my_shape));
                return true;
-           }                                                
+           }                                           
+        ,[&](commands::dynamic_armature const& o) 
+           {                              
+               using namespace boost::units;
+
+               std::vector<std::tuple<btScalar, btCollisionShape*, btTransform>> local_bodies_;
+
+               for (auto&& e : o.armature_) {                                       
+                   
+                   auto my_shape = std::make_unique<btBoxShape>(btVector3{1.0f,1.0f,1.0f});               
+                   Eigen::Quaternionf or_{Eigen::Matrix3f{e.second.transform_.block(0,0,3,3)}};                       
+                   or_ *= o.orientation_;
+                   btQuaternion orientation = btQuaternion::getIdentity();//{or_.x(),or_.y(),or_.z(),or_.w()};
+                   Eigen::Vector4f newpos = e.second.transform_ * Eigen::Vector4f{0.0f,0.0f,0.0f,1.0f}; 
+                   btVector3 position{newpos.x()+o.xyz_.x(),newpos.y()+o.xyz_.y(),newpos.z()+o.xyz_.z()};
+              
+                   local_bodies_.emplace_back(o.mass_ / si::kilograms, my_shape.get(), 
+                                              btTransform{ orientation,
+                                                           position}); 
+                   
+                   shapes.emplace(shape_enum::BOX, std::move(my_shape));
+               }
+              
+               std::vector<std::pair<int,int>> links_;
+               for (auto&& e : o.armature_) {
+                   for (auto&& x : e.second.children_ids_) {
+                       links_.emplace_back(e.first,x);
+                   }
+               }
+               //for (int i = 0, sz = static_cast<int>(o.armature_.size()); i < sz-1; ++i) {                
+               //    links_.emplace_back(i,i+1); 
+               // }
+  
+              
+              
+
+
+
+               entities.emplace(boost::unordered::piecewise_construct,
+                                std::forward_as_tuple(o.id_),
+                                std::forward_as_tuple(world,
+                                                      o.render_data_,
+                                                      std::move(local_bodies_),
+                                                      std::move(links_)));
+               
+               entities.at(o.id_).visit(
+                   [](auto& b){
+                       b.setRestitution(0.4f);
+                       b.setDamping(0.1f,0.1f);
+                       b.activate();
+                   });                
+
+               return true;
+           }
         ,[&](commands::destroy_object_implode const& o)
            { 
                if (entities.count(o.id_) > 0)
@@ -183,7 +262,7 @@ namespace {
                if (entities.count(o.id_) > 0) {
                    btRigidBody& b = entities.at(o.id_).head().get_body();
                    b.activate();
-                   b.applyImpulse(btVector3{ 0.0f,1000.0f,0.0f }, btVector3{ 0.0f,0.0f,0.0f });
+                   b.applyImpulse(btVector3{ 0.0f,0.0f,1000.0f }, btVector3{ 0.0f,0.0f,0.0f });
                }
                return true;  
            }
@@ -212,7 +291,7 @@ namespace {
             body_(btRigidBody::btRigidBodyConstructionInfo{mass, this, shape_ptr, [&]{ shape_ptr->calculateLocalInertia(mass, inertia); return inertia; }()})                
         {}          
         
-        bullet_body(bullet_body&&) = delete;        
+        //bullet_body(bullet_body&&) = delete;        
 
         ~bullet_body() final {}
 
@@ -224,8 +303,11 @@ namespace {
     };
     
     class bullet_entity {
-        boost::container::static_vector<bullet_body, 4> participating_bodies_;
-        boost::container::static_vector<btConeTwistConstraint, 3> constraints_;
+        //boost::container::static_vector<bullet_body, 4> participating_bodies_;
+        //boost::container::static_vector<btConeTwistConstraint, 3> constraints_;
+        std::vector<bullet_body> participating_bodies_;
+        std::vector<btConeTwistConstraint> constraints_;
+        
         entity::render_data render_data_;
         btDynamicsWorld& world_;
     
@@ -236,17 +318,21 @@ namespace {
 
     public:
 
-        bullet_entity(btDynamicsWorld& world, entity::render_data r, std::vector<std::tuple<btScalar, btCollisionShape*, btTransform>> ci) 
+        bullet_entity(btDynamicsWorld& world, entity::render_data r, std::vector<std::tuple<btScalar, btCollisionShape*, btTransform>> ci,
+                                                                     std::vector<std::pair<int,int>> constraints) 
             : render_data_{r}, 
               world_{world}
         {                        
-            for (auto&& e : ci) { 
-                participating_bodies_.emplace_back(std::get<0>(e),std::get<1>(e),std::get<2>(e)); // throws if it goes beyond capacity                
-            }
+            participating_bodies_.reserve(ci.size());
+            constraints_.reserve(ci.size());
 
-            for (int i = 0, sz = static_cast<int>(participating_bodies_.size()); i < sz-1; ++i) {                
-                btConeTwistConstraint constraint_{participating_bodies_[i].get_body(), 
-                                                  participating_bodies_[i+1].get_body(), 
+            for (auto&& e : ci) {
+                participating_bodies_.emplace_back(std::get<0>(e),std::get<1>(e),std::get<2>(e));
+            }
+        
+            for (auto&& e : constraints) {
+                btConeTwistConstraint constraint_{participating_bodies_[e.first].get_body(), 
+                                                  participating_bodies_[e.second].get_body(), 
                                                   btTransform{btQuaternion::getIdentity(),btVector3{0.0f,0.0f,-1.0f}}, 
                                                   btTransform{btQuaternion::getIdentity(),btVector3{0.0f,0.0f,1.0f}}};
                 
@@ -256,7 +342,7 @@ namespace {
             }
             std::cout << "multiple object " << r.entity_id() << "," << participating_bodies_.size() << "," << constraints_.size() << "\n"; 
             load();
-        }
+        }        
 
         bullet_entity(btDynamicsWorld& world, entity::render_data r, btScalar mass, btCollisionShape* shape, btTransform transform) 
             : render_data_{r}, 
@@ -290,8 +376,7 @@ namespace {
         }
 
     };
-
-
+    
 
 //###########################################################
 //###########################################################
@@ -338,13 +423,26 @@ namespace {
         btSequentialImpulseConstraintSolver solver{};
         btDiscreteDynamicsWorld dynamicsWorld{&dispatcher, &broadphase, &solver, &collisionConfiguration};            
 
-        dynamicsWorld.setGravity(btVector3{0.0f, -8.0f, 0.0f});
+        auto fileLoader = std::make_unique<btBulletWorldImporter>(&dynamicsWorld);
+        fileLoader->setVerboseMode(true);        
+        fileLoader->loadFile("data\\physics\\correct_armature_bullet.bullet");    
+                int body_count = fileLoader->getNumRigidBodies();
+                std::cout << "btBulletWorldImporter loaded " << body_count << " bodies..\n"; 
 
-        btStaticPlaneShape groundShape{btVector3(0.0f, 1.0f, 0.0f), 1.0f};        
+        for (int i = 0; i < body_count; ++i) {
+            auto b = fileLoader->getRigidBodyByIndex(i);
+            auto v = b->getWorldTransform();
+            
+            //b->setWorldTransform(convert_matrix_handedness(v));
+        }
+
+        dynamicsWorld.setGravity(btVector3{0.0f, 0.0f, -8.0f});
+
+        btStaticPlaneShape groundShape{btVector3(0.0f, 0.0f, 1.0f), 1.0f};        
         //btSphereShape fallShape{1.0f};
         btBoxShape fallShape{btVector3{1.0f,1.0f,1.0f}};
 
-        btDefaultMotionState groundMotionState{btTransform(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f), btVector3(0.0f, -1.0f, 0.0f))};
+        btDefaultMotionState groundMotionState{btTransform(btQuaternion(0.0f, 0.0f, 0.0f, 1.0f), btVector3(0.0f, 0.0f, -1.0f))};
         btRigidBody::btRigidBodyConstructionInfo
             groundRigidBodyCI{0, &groundMotionState, &groundShape};
         
@@ -369,12 +467,30 @@ namespace {
                 local_debug_render_data_.draw_line({a.x(),a.y(),a.z()},{b.x(),b.y(),b.z()},{color.x(),color.y(),color.z()});
             });         
         
-        //dynamicsWorld.setDebugDrawer(&debug_draw);                      
+        dynamicsWorld.setDebugDrawer(&debug_draw);                      
 
         gtl::rate_limiter rate_limiter_{std::chrono::milliseconds(15)};                     
 
         int counter{};
 
+
+        std::vector<btRigidBody> bodies_; bodies_.reserve(1000);
+
+        //auto load_bodies_from_file = [&](std::string filename){                
+                //for (int i = 0; i < body_count; ++i)                                         
+                 //   auto b = fileLoader->getRigidBodyByIndex(i);                                       
+               // }
+//        };
+
+                //fileLoader->setDynamicsWorldInfo(btVector3{0.0f,-8.0f,0.0f},&solver);                
+
+        std::cout << dynamicsWorld.getNumCollisionObjects() << " bodies in the world..\n"; 
+
+
+        for (int i = 0; i < dynamicsWorld.getNumCollisionObjects(); ++i) {
+            dynamicsWorld.applyGravity();
+        }
+        
         while (quit_.test_and_set(std::memory_order_acq_rel))
         {
             rate_limiter_.sleepy_invoke([&](auto dt){
@@ -385,7 +501,7 @@ namespace {
                 debug_draw.clear();
                 
                 physics_task_queue_.consume([&](auto&& e){ my_command_visitor(e); });                
-                
+                                
                 counter++;
                 if (counter > 100) {
                     std::cout << std::chrono::duration<float>(dt).count() << " seconds for dt..\n";
@@ -394,13 +510,15 @@ namespace {
 
                 dynamicsWorld.stepSimulation(std::chrono::duration<float>(dt).count(), 5);                                
                 local_debug_render_data_.draw_axes();
-                local_debug_render_data_.draw_triangle({0.0f,0.0f,0.0f,1.0f},{0.0f,1.0f,0.0f,1.0f},{1.0f,0.0f,0.0f,1.0f});                
+                local_debug_render_data_.draw_triangle({0.0f,0.0f,0.0f,1.0f},
+                                                       {0.0f,0.0f,1.0f,1.0f},
+                                                       {1.0f,0.0f,0.0f,1.0f});                
           
-                //dynamicsWorld.debugDrawWorld();
+                dynamicsWorld.debugDrawWorld();
 
                 b2d_adapter_.render(local_debug_render_data_);                
 
-                for (auto&& e : entities_) { 
+               for (auto&& e : entities_) { 
                     e.second.render(local_render_data_.entities_, local_render_data_.control_points_); 
                 }
 

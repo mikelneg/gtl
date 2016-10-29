@@ -62,7 +62,8 @@ namespace fbx {
         fbx_vertex_bone_data() = default;
 
         void push_bone(unsigned id, float weight) {
-            if (id > 3) { // TODO check for too many/too few bones..                            
+            if (weight < 0.0001f) return; 
+            if (current_bone_ > 3) { // TODO check for too many/too few bones..                            
                 return; 
             } 
             indices_[current_bone_] = id;

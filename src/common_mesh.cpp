@@ -61,7 +61,7 @@ namespace mesh {
 
         inline 
         Eigen::Vector4f convert_vector_handedness(fbxsdk::FbxVector4 const& in, float w) {                   
-            return Eigen::Vector4f{ static_cast<float>(in[0]), static_cast<float>(in[2]), static_cast<float>(in[1]), w};                                     
+            return Eigen::Vector4f{ static_cast<float>(in[0]), static_cast<float>(in[1]), static_cast<float>(in[2]), w};                                     
         }
 
         template <typename T>
@@ -298,7 +298,7 @@ static T replace_vertex_origins_with_bones(T const& v_positions, U& v_bones, V c
         tmp += (bone_transforms.at(v_bones[i].first[2]).transform_ * con) * v_bones[i].second[2];
         tmp += (bone_transforms.at(v_bones[i].first[3]).transform_ * con) * v_bones[i].second[3];             
                 
-        tmp = tmp - v_positions[i];
+        tmp = v_positions[i] - tmp;
         tmp.w() = 1.0f;
         
         new_positions.emplace_back(tmp);
@@ -312,7 +312,7 @@ mesh_loader::assembled_vertices() const {
     
     std::vector<renderer_vertex_type> ret;
 
-    auto convert_vector = [](auto const& v) { return decltype(v){v[0], v[2], -v[1], v[3]}; };
+    auto convert_vector = [](auto const& v) { return decltype(v){v[0], v[2], v[1], v[3]}; };
     auto convert_uv = [](auto const& v) { return decltype(v){v[0], 1.0f - v[1]}; };
 
     auto positions = impl_->loader_.vertex_positions();
@@ -329,15 +329,18 @@ mesh_loader::assembled_vertices() const {
     // normalize vertex weights..
     for (auto&& e : bones) { e.second.normalize(); }        
 
-    positions = replace_vertex_origins_with_bones(positions,bones,armature);    
+    //std::transform(begin(positions),end(positions),begin(positions),convert_vector);
+    //std::transform(begin(normals),end(normals),begin(normals),convert_vector);
 
+    positions = replace_vertex_origins_with_bones(positions,bones,armature);    
+    
     auto v_beg = begin(positions);
     auto n_beg = begin(normals);
     auto uv_beg = begin(uvs);    
 
     for (unsigned i = 0, sz = static_cast<unsigned>(positions.size()); i < sz; ++i, ++v_beg, ++n_beg, ++uv_beg)
     {
-        ret.emplace_back(renderer_vertex_type{convert_vector(*v_beg), convert_vector(*n_beg), bones[i].first, bones[i].second, convert_uv(*uv_beg)});
+        ret.emplace_back(renderer_vertex_type{*v_beg, *n_beg, bones[i].first, bones[i].second, convert_uv(*uv_beg)});
     }
     return ret;
 }

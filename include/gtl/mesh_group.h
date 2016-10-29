@@ -86,6 +86,12 @@ public:
         return static_cast<unsigned>(std::distance(begin(offset_data),it));
     }
 
+    auto armature(K const& key) const { 
+        auto it = find_if(begin(armature_data), end(armature_data), [&](auto const& e) { return e.first == key; });
+        if (it == end(armature_data)) throw std::runtime_error{"mesh_group::armature() key not found..\n"};                
+        return it->second;
+    }
+
     auto vertex_data() const noexcept
     {
         return reinterpret_cast<char const*>(vertex_buffer.data());

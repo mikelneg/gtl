@@ -62,6 +62,11 @@ OutputType vs_main(in uint v_id
 {
     OutputType output_ = (OutputType)0;
 
+      const float4x4 conv = {1.0f, 0.0f, 0.0f, 0.0f, 
+                             0.0f, 1.0f, 0.0f, 0.0f,
+                             0.0f, 0.0f, 1.0f, 0.0f,
+                             0.0f, 0.0f, 0.0f, 1.0f};
+
     //Vertex v = vertices_[indices_[v_id].idx];
 
 //    float L = -20.0f * screen_ratio(); // viewport.x;
@@ -76,8 +81,9 @@ OutputType vs_main(in uint v_id
 //    };
 
     //output_.pos = float4((v.position*2.0f)-1.0f,1.0f,1.0f);
+        
+    output_.pos = mul(input.pos.xzyw, view);    
     
-    output_.pos = mul(input.pos, view);    
     //output_.pos = input.pos;
     output_.pos.y *= screen_ratio();
 
