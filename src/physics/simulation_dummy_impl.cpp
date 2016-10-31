@@ -531,7 +531,7 @@ namespace {
             auto rot = worldTrans.getRotation();
             my_transform_ = (Eigen::Affine3f{
                           Eigen::Translation3f{Eigen::Vector3f{worldTrans.getOrigin().x(), worldTrans.getOrigin().y(), worldTrans.getOrigin().z()}}}                                     
-                        * Eigen::Affine3f{Eigen::Quaternionf{rot.x(),rot.y(),rot.z(),rot.w()}}).matrix().transpose();                                  
+                        * Eigen::Affine3f{Eigen::Quaternionf{rot.x(),rot.y(),rot.z(),rot.w()}}).matrix();//.transpose();                                  
         }               
 
         void render() {        

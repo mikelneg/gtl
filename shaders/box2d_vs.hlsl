@@ -37,6 +37,7 @@ struct ps_output {
 cbuffer per_frame : register(b0)
 {
     float4x4 view;
+    float4x4 proj;
 };
 
 cbuffer per_frame_also : register(b0, space2)
@@ -62,61 +63,16 @@ OutputType vs_main(in uint v_id
 {
     OutputType output_ = (OutputType)0;
 
-      const float4x4 conv = {1.0f, 0.0f, 0.0f, 0.0f, 
-                             0.0f, 1.0f, 0.0f, 0.0f,
-                             0.0f, 0.0f, 1.0f, 0.0f,
-                             0.0f, 0.0f, 0.0f, 1.0f};
-
-    //Vertex v = vertices_[indices_[v_id].idx];
-
-//    float L = -20.0f * screen_ratio(); // viewport.x;
-//    float R =  20.0f * screen_ratio(); // viewport.x + viewport.z;
-//    float B =  20.0f; // viewport.y + viewport.w;
-//    float T = -20.0f; // viewport.y;
-//    float4x4 mvp = {
-//        {2.0f / (R - L), 0.0f, 0.0f, 0.0f},
-//        {0.0f, 2.0f / (T - B), 0.0f, 0.0f},
-//        {0.0f, 0.0f, 0.5f, 0.0f},
-//        {(R + L) / (L - R), (T + B) / (B - T), 0.5f, 1.0f},
-//    };
-
-    //output_.pos = float4((v.position*2.0f)-1.0f,1.0f,1.0f);
-        
-    output_.pos = mul(input.pos.xzyw, view);    
+     static const float4x4 swap_z_y = {1.0f, 0.0f, 0.0f, 0.0f, 
+                                       0.0f, 0.0f, 1.0f, 0.0f,
+                                       0.0f, 1.0f, 0.0f, 0.0f,
+                                       0.0f, 0.0f, 0.0f, 1.0f};
     
-    //output_.pos = input.pos;
+    static const float4x4 trans = mul(view,mul(proj,swap_z_y));        
+
+    output_.pos = mul(trans,input.pos);            
     output_.pos.y *= screen_ratio();
-
-    //output_.pos = float4(float2(v.x, v.y), 0.1f, 1.0f);    
-
-    output_.color = input.color;// * output_.pos.z;
-
-    //    float4 box[] = { {-1.0f,1.0f,1.0f,1.0f},
-    //                     {1.0f,1.0f,1.0f,1.0f},
-    //                     {-1.0f,-1.0f,1.0f,1.0f},
-    //
-    //                     {1.0f,1.0f,1.0f,1.0f},
-    //                     {1.0f,-1.0f,1.0f,1.0f},
-    //                     {-1.0f,-1.0f,1.0f,1.0f},
-    //                   };
-    //
-    //    float4 box2[] = {
-    //                     {0.0f,0.0f,1.0f,1.0f},
-    //                     {1.0f,0.0f,1.0f,1.0f},
-    //                     {0.0f,1.0f,1.0f,1.0f},
-    //
-    //                     {1.0f,0.0f,1.0f,1.0f},
-    //                     {1.0f,1.0f,1.0f,1.0f},
-    //                     {0.0f,1.0f,1.0f,1.0f},
-    //                   };
-    //
-    //
-    //    output_.pos = box[v_id];
-    //    //output_.pos.z = 1.0f;
-    //    //output_.pos.w = 1.0f;
-    //    output_.color = float4(1.0f,1.0f,1.0f,1.0f);//v.color;
-    //    output_.uv = box2[v_id].xy;// * 2;//float2(v.u,v.v);
-
+    output_.color = input.color;    
     return output_;
 }
 
@@ -124,7 +80,7 @@ ps_output ps_main(OutputType input)
 {
     ps_output out_;
 
-    out_.color = input.color;// * color_texture_.Sample(sampler_, input.uv).r;
+    out_.color = input.color; 
     out_.id = 0;
     return out_;
 }

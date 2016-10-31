@@ -322,7 +322,7 @@ namespace scenes {
         void draw_callback(F func) const
         {
             func([&](auto&&... ps) {
-                Eigen::Matrix4f cam_transform_
+                Eigen::Matrix4f view_
                     = Eigen::Affine3f{  Eigen::Translation3f{0.0f,-(camera_height_ / boost::units::si::meter),60.0f} 
                                      //* Eigen::Scaling(1.0f / (camera_height_ / boost::units::si::meter))                                      
                                       * Eigen::AngleAxisf{vn::math::deg_to_rad( -20.0f), Eigen::Vector3f{1.0f, 0.0f, 0.0f}} 
@@ -331,12 +331,14 @@ namespace scenes {
 
                 //Eigen::Matrix4f rot = Eigen::Affine3f{ Eigen::AngleAxisf{vn::math::deg_to_rad( -25.0f), Eigen::Vector3f{1.0f, 0.0f, 0.0f}} }.matrix();
           
-                Eigen::Matrix4f m = (physics_camera_.matrix() * cam_transform_).transpose();
+                Eigen::Matrix4f m = (physics_camera_.matrix() * view_).transpose();
 
                 draw_task_queue_.consume([](auto&& f) { f(); }); // execute our waiting tasks..
 
-                swirl_effect_.draw(ps..., current_id_, m);                                
-                debug_draw_.draw(ps..., m);
+                swirl_effect_.draw(ps..., current_id_, physics_camera_.matrix(), view_); 
+                debug_draw_.draw(ps..., physics_camera_.matrix(), view_); 
+                //swirl_effect_.draw(ps..., current_id_, m);                                
+                //debug_draw_.draw(ps..., m);
 
                 //physics_task_queue_.insert(gtl::physics::generators::polymorphic_generator{std::make_unique<render_box2d>(draw_kit_)});                            
             });

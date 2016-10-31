@@ -259,7 +259,7 @@ namespace scenes {
             }
 
             void draw(std::vector<ID3D12CommandList*>& v, int idx, float f, D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle, std::atomic<uint32_t>& id_,
-                      Eigen::Matrix4f const& camera) const
+                      Eigen::Matrix4f const& camera, Eigen::Matrix4f const& proj) const
             {
 
                 update(cbuf_, viewport_.Width / viewport_.Height);
@@ -319,7 +319,7 @@ namespace scenes {
                 gui_rect_clist_[idx]->SetGraphicsRootSignature(root_sig_.get());
 
                 // gui_rect_(idx,f,gui_rect_clist_[idx],viewport_,scissor_,camera,handles);
-                object_effect_(idx, f, gui_rect_clist_[idx], viewport_, scissor_, camera, handles, std::addressof(dbview_));
+                object_effect_(idx, f, gui_rect_clist_[idx], viewport_, scissor_, camera, proj, handles, std::addressof(dbview_));
 
                 D3D12_TEXTURE_COPY_LOCATION src{id_layer_, D3D12_TEXTURE_COPY_TYPE_SUBRESOURCE_INDEX};
                 D3D12_TEXTURE_COPY_LOCATION dst{id_readback_, D3D12_TEXTURE_COPY_TYPE_PLACED_FOOTPRINT,

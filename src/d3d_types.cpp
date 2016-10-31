@@ -1046,7 +1046,7 @@ namespace d3d {
 
         void constant_buffer::update(char const* src, std::size_t count, std::size_t offset)
         {
-            std::memcpy(cbv_data_ptr, src + offset, count);
+            std::memcpy(cbv_data_ptr + offset, src, count);
         }
 
         sampler::sampler(device& dev, raw::CpuDescriptorHandle handle_)

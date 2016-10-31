@@ -191,8 +191,8 @@ namespace d3d {
               index_buffer_{cqueue, mesh_group_.index_data(), mesh_group_.index_data_size(), DXGI_FORMAT_R32_UINT},
               ibuffer_descriptors_{dev, 3, gtl::d3d::tags::shader_visible{}},
               instance_buffers_{dev, ibuffer_descriptors_.get_handle(0), MAX_ENTITIES * sizeof(gtl::entity::render_data)},
-              cbheap_{dev, 3, gtl::d3d::tags::shader_visible{}},
-              cbuffer_{dev, cbheap_.get_handle(0), sizeof(gtl::camera)},
+              cbheap_{dev, 1, gtl::d3d::tags::shader_visible{}},
+              cbuffer_{dev, cbheap_.get_handle(0), sizeof(Eigen::Matrix4f) * 2},
               bone_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},
               bone_buffer_{dev, bone_heap_.get_handle(0), MAX_BONES * sizeof(Eigen::Matrix4f), gtl::d3d::tags::shader_view{}},
               texture_descriptor_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},
@@ -229,9 +229,11 @@ namespace d3d {
         }
 
         void operator()(unsigned idx, float, gtl::d3d::graphics_command_list& cl, gtl::d3d::raw::Viewport const& viewport, gtl::d3d::raw::ScissorRect const& scissor,
-                        Eigen::Matrix4f const& camera, D3D12_CPU_DESCRIPTOR_HANDLE* rtv_handle, D3D12_CPU_DESCRIPTOR_HANDLE const* dbv_handle) const
+                        Eigen::Matrix4f const& camera, Eigen::Matrix4f const& proj, 
+                        D3D12_CPU_DESCRIPTOR_HANDLE* rtv_handle, D3D12_CPU_DESCRIPTOR_HANDLE const* dbv_handle) const
         {
-            cbuffer_.update(reinterpret_cast<const char*>(&camera), sizeof(gtl::camera));
+            cbuffer_.update(reinterpret_cast<const char*>(camera.data()), sizeof(camera));
+            cbuffer_.update(reinterpret_cast<const char*>(proj.data()), sizeof(proj),sizeof(camera));            
 
             auto& positions_ = render_data_.entities_;            
             

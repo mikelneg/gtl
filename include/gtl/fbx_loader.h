@@ -89,7 +89,7 @@ namespace fbx {
         boost::optional<std::vector<Eigen::Vector2f>> uvs_;  
 
         void load_mesh(FbxMesh*);
-        void load_armature(FbxNode*);
+        void load_armature(FbxNode*,fbxsdk::FbxAMatrix const&);
 
     public:
         fbx_loader(std::string filename);

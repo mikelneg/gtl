@@ -313,7 +313,7 @@ mesh_loader::assembled_vertices() const {
     std::vector<renderer_vertex_type> ret;
 
     auto convert_vector = [](auto const& v) { return decltype(v){v[0], v[2], v[1], v[3]}; };
-    auto convert_uv = [](auto const& v) { return decltype(v){v[0], 1.0f - v[1]}; };
+    auto convert_uv = [](auto const& v) { return decltype(v){v[0],1.0f - v[1]}; };
 
     auto positions = impl_->loader_.vertex_positions();
     auto normals = impl_->loader_.vertex_normals();

@@ -151,7 +151,7 @@ namespace d3d {
 
         draw_kit(gtl::d3d::device& dev, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue, gtl::draw_kit& draw_data_)
             : cbheap_{dev, 3, gtl::d3d::tags::shader_visible{}},
-              cbuffer_{dev, cbheap_.get_handle(0), sizeof(gtl::camera)},
+              cbuffer_{dev, cbheap_.get_handle(0), sizeof(Eigen::Matrix4f) * 2},
               layout_{vertex_layout()},
               vert_descriptor_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},
               vert_buffers_{{{dev, vert_descriptor_heap_.get_handle(0), MAX_VERTS * sizeof(vertex_type), gtl::d3d::tags::shader_view{}},
@@ -225,12 +225,14 @@ namespace d3d {
             //            vtx_count = draw_data->TotalVtxCount;
         }
 
-        void draw(std::vector<ID3D12CommandList*>& v, unsigned idx, float, D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle, Eigen::Matrix4f camera) const
+        void draw(std::vector<ID3D12CommandList*>& v, unsigned idx, float, D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle, 
+                  Eigen::Matrix4f const& camera, Eigen::Matrix4f const& proj) const
         {
             update(idx);
 
             //
-            cbuffer_.update(reinterpret_cast<const char*>(&camera), sizeof(gtl::camera));                   
+            cbuffer_.update(reinterpret_cast<const char*>(&camera), sizeof(camera));                   
+            cbuffer_.update(reinterpret_cast<const char*>(&proj), sizeof(proj), sizeof(camera));                   
 
 
             calloc_[idx]->Reset();

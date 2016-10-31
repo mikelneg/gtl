@@ -206,7 +206,7 @@ namespace fbx {
         };
 
 
-        auto get_vertex_data = [&](FbxMesh* mesh) {
+        auto get_vertex_data = [&](FbxMesh* mesh) {            
             for (int i = 0; i < mesh->GetPolygonCount(); ++i) {
                 for (int j = 0, sz = mesh->GetPolygonSize(i); j < sz; ++j) {                    
                     auto control_point_index = mesh->GetPolygonVertex(i,j);                                                                       
@@ -214,7 +214,7 @@ namespace fbx {
                     fbxsdk::FbxVector4 tmp_normal{0.0,0.0,0.0,0.0}; 
                     mesh->GetPolygonVertexNormal(i,j,tmp_normal);
 
-                    positions_.emplace_back(convert_vector_handedness(mesh->GetControlPointAt(control_point_index),1.0f)); // w == 1.0f                        
+                    positions_.emplace_back(convert_vector(mesh->GetControlPointAt(control_point_index),1.0f)); // w == 1.0f                        
                     normals_.emplace_back(convert_vector_handedness(tmp_normal,0.0f)); // w == 0.0f; also, if normals are not mapped tmp_normal remains unchanged                                                                                
                     indices_.emplace_back(j + (i * sz)); // control_point_index );   // ignoring actual index for now..                                                                                                   
                     
@@ -236,12 +236,16 @@ namespace fbx {
         get_vertex_data(node);
     }
 
-    void fbx_loader::load_armature(FbxNode* p) {
+    void fbx_loader::load_armature(FbxNode* p, fbxsdk::FbxAMatrix const& mesh_transform) {
 
         std::vector<FbxNode*> children_;
         
         auto add_entry = [&](auto* node, auto const& parent_id) {
-            armature_.try_emplace(node->GetName(),node->EvaluateGlobalTransform(),node->EvaluateLocalTransform(),node->GetSkeleton()->LimbLength.Get(),parent_id);                          
+            armature_.try_emplace(node->GetName(),
+                                  node->EvaluateGlobalTransform(),
+                                  node->EvaluateLocalTransform(),
+                                  node->GetSkeleton()->LimbLength.Get(),
+                                  parent_id);                          
         };
 
         auto add_children = [&](auto* parent) {                
@@ -293,8 +297,8 @@ namespace fbx {
             }
         };   
 
-        add_children(root_node);
-                    
+        add_children(root_node);                           
+
         while (!children_.empty()) {                
             auto back = children_.back(); children_.pop_back();
             auto m_type = back->GetNodeAttribute()->GetAttributeType();                                                 
@@ -303,7 +307,7 @@ namespace fbx {
             switch(m_type) {
             case FbxNodeAttribute::EType::eSkeleton : 
                 {
-                    load_armature(back);
+                    load_armature(back,back->EvaluateGlobalTransform());
                 }   break;                
             case FbxNodeAttribute::EType::eMesh :
                 {
