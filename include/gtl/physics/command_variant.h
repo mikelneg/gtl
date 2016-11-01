@@ -48,12 +48,20 @@ namespace commands {
         mass<float> mass_;
     };
 
+    struct demo_file_object {
+        boost::container::flat_map<std::string,mesh::bone::id_type> armature_ids_;
+        Eigen::Vector3f xyz_;
+        Eigen::Quaternionf orientation_;
+        entity::render_data render_data_;
+        entity::id id_;
+    };    
+
     struct dynamic_jointed_boxes {
         std::vector<dynamic_box> boxes_;
         entity::render_data render_data_;
         entity::id id_;
     };
-
+    
     struct dynamic_armature {                
         gtl::mesh::armature armature_;
         Eigen::Quaternionf orientation_;
@@ -119,6 +127,7 @@ namespace commands {
                                               static_box,
                                               dynamic_box,
                                               dynamic_jointed_boxes,
+                                              demo_file_object,
                                               dynamic_armature,
                                               static_rectangle, 
                                               dynamic_rectangle, 

@@ -197,6 +197,41 @@ namespace {
                shapes.emplace(shape_enum::BOX, std::move(my_shape));
                return true;
            }                                           
+        ,[&](commands::demo_file_object const& o) 
+           {
+                //auto fileLoader = std::make_unique<btBulletWorldImporter>();
+                ////fileLoader->setVerboseMode(true);        
+                //fileLoader->loadFile("data\\physics\\correct_armature_bullet.bullet");    
+                //
+                //std::vector<std::tuple<btScalar, btCollisionShape*, btTransform>> local_bodies_;
+                //std::vector<std::pair<int,int>> links_;
+                //
+                //
+                //
+                ////int body_count = fileLoader->getNumRigidBodies();
+                ////std::cout << "btBulletWorldImporter loaded " << body_count << " bodies..\n"; 
+                //                
+                //
+                ////for (int i = 0; i < body_count; ++i) {
+                ////    auto b = fileLoader->getRigidBodyByIndex(i);                                      
+                ////    std::cout << fileLoader->getNameForPointer(b) << ": body name\n";                     
+                ////}
+                //
+                //entities.emplace(boost::unordered::piecewise_construct,
+                //                std::forward_as_tuple(o.id_),
+                //                std::forward_as_tuple(world,
+                //                                      o.render_data_,
+                //                                      std::move(local_bodies_),
+                //                                      std::move(links_)));               
+                //entities.at(o.id_).visit(
+                //    [](auto& b){
+                //        b.setRestitution(0.4f);
+                //        b.setDamping(0.1f,0.1f);
+                //        b.activate();
+                //    });   
+                //
+                return true; 
+           }
         ,[&](commands::dynamic_armature const& o) 
            {                              
                using namespace boost::units;
@@ -316,7 +351,7 @@ namespace {
         void  unload() { for (auto&& e : constraints_) { world_.removeConstraint(&e); }
                          for (auto&& e : participating_bodies_) { world_.removeRigidBody(&e.get_body()); } }        
 
-    public:
+    public:     
 
         bullet_entity(btDynamicsWorld& world, entity::render_data r, std::vector<std::tuple<btScalar, btCollisionShape*, btTransform>> ci,
                                                                      std::vector<std::pair<int,int>> constraints) 
@@ -423,18 +458,19 @@ namespace {
         btSequentialImpulseConstraintSolver solver{};
         btDiscreteDynamicsWorld dynamicsWorld{&dispatcher, &broadphase, &solver, &collisionConfiguration};            
 
-        auto fileLoader = std::make_unique<btBulletWorldImporter>(&dynamicsWorld);
-        fileLoader->setVerboseMode(true);        
-        fileLoader->loadFile("data\\physics\\correct_armature_bullet.bullet");    
-                int body_count = fileLoader->getNumRigidBodies();
-                std::cout << "btBulletWorldImporter loaded " << body_count << " bodies..\n"; 
-
-        for (int i = 0; i < body_count; ++i) {
-            auto b = fileLoader->getRigidBodyByIndex(i);
-            auto v = b->getWorldTransform();
-            
-            //b->setWorldTransform(convert_matrix_handedness(v));
-        }
+        //auto fileLoader = std::make_unique<btBulletWorldImporter>(&dynamicsWorld);
+        //fileLoader->setVerboseMode(true);        
+        //fileLoader->loadFile("data\\physics\\correct_armature_bullet.bullet");    
+        //        int body_count = fileLoader->getNumRigidBodies();
+        //        std::cout << "btBulletWorldImporter loaded " << body_count << " bodies..\n"; 
+        //
+        //for (int i = 0; i < body_count; ++i) {
+        //    auto b = fileLoader->getRigidBodyByIndex(i);
+        //    auto v = b->getWorldTransform();
+        //    
+        //    std::cout << fileLoader->getNameForPointer(b) << ": body name\n"; 
+        //    //b->setWorldTransform(convert_matrix_handedness(v));
+        //}
 
         dynamicsWorld.setGravity(btVector3{0.0f, 0.0f, -8.0f});
 

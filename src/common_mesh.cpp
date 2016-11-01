@@ -357,6 +357,11 @@ mesh_loader::armature() const {
     return impl_->loader_.convert_armature();
 }
 
+boost::container::flat_map<std::string, mesh::bone::id_type> 
+mesh_loader::armature_ids() const {
+    return impl_->loader_.armature_ids();
+}
+
 mesh_loader::~mesh_loader() {}  // needed for PIMPL
 
 }}

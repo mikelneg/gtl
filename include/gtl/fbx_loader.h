@@ -101,6 +101,9 @@ namespace fbx {
         
         gtl::mesh::armature convert_armature() const;
 
+        auto armature_ids() const { if (!bone_names_) { throw std::runtime_error{"fbx_loader::armature_ids() requires bone_names_"}; }
+                                    else return *bone_names_; }
+
         std::vector<Eigen::Vector2f> uvs() const { if (uvs_) return *uvs_; else return {}; }
         std::vector<Eigen::Vector4f> colors() const { if (colors_) return *colors_; else return {}; }
 

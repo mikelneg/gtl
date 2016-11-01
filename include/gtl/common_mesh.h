@@ -75,6 +75,8 @@ namespace mesh {
         mesh_loader(std::string filename, tags::mesh_format_fbx);
         ~mesh_loader();
     
+           
+        boost::container::flat_map<std::string, mesh::bone::id_type> armature_ids() const;
         boost::container::flat_map<bone::id_type,bone> armature() const;        
         std::vector<renderer_vertex_type> assembled_vertices() const;
         std::vector<uint32_t> indices() const;   
