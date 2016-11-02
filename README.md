@@ -20,6 +20,7 @@ Currently includes:
 * Mesh loading with FBXSDK
 * Qt adapter (works with Direct3D12, but early and not part of the working demo)
 
+
 Older videos:
 
 [![gtl-demo-app video (Sept 10)](https://img.youtube.com/vi/XNLS5wE2rkA/0.jpg)](https://youtu.be/XNLS5wE2rkA)
