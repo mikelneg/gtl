@@ -36,7 +36,10 @@ struct ps_output {
   uint id : SV_Target1;
 };
 
-cbuffer per_frame : register(b0) { float4x4 view; };
+cbuffer per_frame : register(b0) { 
+    float4x4 view; 
+    float4x4 proj;
+};
 
 cbuffer per_frame_also : register(b0, space2) { uint bone_count; };
 
@@ -60,51 +63,54 @@ OutputType vs_main(in uint instance_id
                      InstanceInputType instance_) {
   OutputType output_ = (OutputType)0;
 
-  float4 pos = 0;
-  float3 norm = 0;
+  static const float4x4 swap_z_y = {1.0f, 0.0f, 0.0f, 0.0f, 
+                                    0.0f, 0.0f, 1.0f, 0.0f,
+                                    0.0f, 1.0f, 0.0f, 0.0f,
+                                    0.0f, 0.0f, 0.0f, 1.0f};
 
-  for (uint i = 0; i < bone_count; ++i) {
-    pos +=
-        mul(input_.position, bones_[instance_.info.x + input_.bone_ids[i]].t) *
-        input_.bone_weights[i];
-    norm += mul(input_.normal.xyz,
-                (float3x3)bones_[instance_.info.x + input_.bone_ids[i]].t) *
-            input_.bone_weights[i];
-    // pos += mul(input_.position,bones_[instance_.info.x+i].t) *
-    // input_.bone_weights[i];
-    // norm += mul(input_.normal.xyz,(float3x3)bones_[instance_.info.x+i].t) *
-    // input_.bone_weights[i];
+  float4 pos = float4(0.0f,0.0f,0.0f,1.0f);
+  float4 norm = float4(0.0f,0.0f,0.0f,0.0f);   
+  
+  for (uint i = 0; i < bone_count; ++i) { 
+    pos += mul(input_.position, bones_[instance_.info.x + input_.bone_ids[i] ].t) * input_.bone_weights[i];
+    norm += mul(input_.normal,  bones_[instance_.info.x + input_.bone_ids[i] ].t) * input_.bone_weights[i];
   }
 
-  // output_.color.rgb =
-  // smoothstep(float3(-20,-20,-20),float3(20,20,20),pos.xyz); //
-  // output_.pos.xyz / output_.pos.w;
-  // output_.color.b = 0.0f;
-  // output_.color.r = 0.0f;
+  pos.w = 1.0f;
+  norm.w = 0.0f;
 
-  output_.pos = mul(pos, view);
-  output_.pos.y *= screen_ratio();
-  output_.color.rgb = output_.pos.zzz / 200.0f; //(norm + 1.0f) / 2.0f; // for normals
+  static const float4x4 trans = mul(view,mul(proj,swap_z_y));
+  
+  output_.pos = mul(trans,pos);      
+  output_.pos.y *= screen_ratio();  
+  
+ 
+  // logarithmic depth buffer 
+  
+  // float coef = 2.0 / log2(far_z + 1.0f);
+  // output_.pos.z = log(max(0.00001f,output_.pos.w + 1)) / log(200.0f + 1) * output_.pos.w; //log2(max(0.0001f, 1.0 + output_.pos.w)) * coef - 1.0;            
+
+  output_.color = normalize(mul(norm,view));
+
+  output_.color += 1.0f; 
+  output_.color *= 0.5f;
+
   output_.uv = input_.uv;
-  output_.color.a = 1.0f;
   output_.id = instance_.info.z;
-  float fcoef = 2.0 / log2(200.0f + 1.0f);
-  output_.pos.z = log2(max(0.0001f, 1.0 + output_.pos.w)) * fcoef - 1.0;
-
-  // float fcoef = 2.0 / log2(200.0f + 1.0f);
-
-  // out_.depth = log2(input.logz) * 0.5f * fcoef;
-
-  // output_.logz = logoutput_.pos.w + 1;
-
   return output_;
 }
 
 ps_output ps_main(OutputType input) {
   ps_output out_;
+  
+  float4 samp = color_texture_.Sample(sampler_, input.uv);  
 
-  out_.color = input.color; // 0.2f * color_texture_.Sample(sampler_, input.uv)
-                            // + input.color;
+  out_.color.rgb = (1.0f-samp.a) * pow(dot(input.color.rgb,float3(-1,-1,1)),2) + input.color.rgb * (samp.a);  
+  //out_.color.rgb = input.color.rgb * (1.0f - samp.a) + (samp.a) * pow(dot(input.color.rgb + samp.xyz,float3(-1.0f,-1.0f,1.0f)),7);    
+  //out_.color.rgb = pow(dot(input.color.rgb,float3(-1.0f,-1.0f,1.0f)),2) * samp * 0.4f + samp * 0.3f + input.color.rgb * 0.3f;
+  //out_.color.rgb = samp * 0.2f + pow(dot(input.color.rgb + (samp.xyz * samp.a),float3(-1.0f,-1.0f,1.0f)),6) * 0.3f + 0.6f * input.color.rgb;
+  //out_.color *= float4(0.4,0.7,0.9,1.0);
+  out_.color.a = 1.0f;
   out_.id = input.id;
   return out_;
 }

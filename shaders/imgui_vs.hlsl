@@ -62,11 +62,9 @@ SamplerState sampler_ : register(s0)
 OutputType vs_main(in uint v_id
                    : SV_VertexID, Vertex input)
 {
-    OutputType output_ = (OutputType)0;
+    OutputType output_ = (OutputType)0;    
 
-    //Vertex v = vertices_[indices_[v_id].idx];
-
-    float L = viewport.x;
+    float L = viewport.x; 
     float R = viewport.x + viewport.z;
     float B = viewport.y + viewport.w;
     float T = viewport.y;
@@ -80,36 +78,9 @@ OutputType vs_main(in uint v_id
     //output_.pos = float4((v.position*2.0f)-1.0f,1.0f,1.0f);
 
     output_.pos = mul(float4(input.pos, 0.0f, 1.0f), mvp);
-    //output_.pos = float4(float2(v.x, v.y), 0.1f, 1.0f);
+    
     output_.uv = input.uv;
     output_.color = input.color;
-
-    //    float4 box[] = { {-1.0f,1.0f,1.0f,1.0f},
-    //                     {1.0f,1.0f,1.0f,1.0f},
-    //                     {-1.0f,-1.0f,1.0f,1.0f},
-    //
-    //                     {1.0f,1.0f,1.0f,1.0f},
-    //                     {1.0f,-1.0f,1.0f,1.0f},
-    //                     {-1.0f,-1.0f,1.0f,1.0f},
-    //                   };
-    //
-    //    float4 box2[] = {
-    //                     {0.0f,0.0f,1.0f,1.0f},
-    //                     {1.0f,0.0f,1.0f,1.0f},
-    //                     {0.0f,1.0f,1.0f,1.0f},
-    //
-    //                     {1.0f,0.0f,1.0f,1.0f},
-    //                     {1.0f,1.0f,1.0f,1.0f},
-    //                     {0.0f,1.0f,1.0f,1.0f},
-    //                   };
-    //
-    //
-    //    output_.pos = box[v_id];
-    //    //output_.pos.z = 1.0f;
-    //    //output_.pos.w = 1.0f;
-    //    output_.color = float4(1.0f,1.0f,1.0f,1.0f);//v.color;
-    //    output_.uv = box2[v_id].xy;// * 2;//float2(v.u,v.v);
-
     return output_;
 }
 
