@@ -10,9 +10,9 @@ Early phase demo; major interfaces are still WIP.
 Currently includes:
 * Multi-threaded engine
 * Direct3D12 graphics pipeline with RAII wrapper types (central WIP)
-* Bullet physics 
-* Vertex skinning using Bullet physics objects as control points
-~~* Vertex skinning with Box2D objects as control points~~
+* Bullet physics (new)
+* Vertex skinning using Bullet physics objects as control points (new)
+* ~~Vertex skinning with Box2D objects as control points~~
 * Object selection/interaction handled via an "id layer" in the graphics pipeline
 * Dear imgui overlay (early)
 * Audio effects and controller/input support via DirectXTK (early)
