@@ -152,7 +152,8 @@ namespace d3d {
         font_atlas(font_atlas&&) = default;
         font_atlas& operator=(font_atlas&&) = default;
 
-        font_atlas(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, gtl::d3d::root_signature& rsig, std::wstring definition_filename, gtl::d3d::tags::xml_format tag)
+        font_atlas(gtl::d3d::device& dev, gtl::d3d::command_queue& cqueue, gtl::d3d::root_signature& rsig, std::wstring definition_filename,
+                   gtl::d3d::tags::xml_format tag)
             : layout_(vertex_layout()),
               font_definition{definition_filename, tag},
               vbuffer_descriptors_{dev, 3, gtl::d3d::tags::shader_visible{}},
@@ -194,7 +195,8 @@ namespace d3d {
             cl->SetGraphicsRoot32BitConstants(3, 4, std::addressof(viewport), 0);
             cl->SetGraphicsRoot32BitConstants(3, 1, std::addressof(font_scale), 4);
 
-            D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_.size() * sizeof(Vertex)), sizeof(Vertex)};
+            D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(mesh_.size() * sizeof(Vertex)),
+                                          sizeof(Vertex)};
             cl->IASetVertexBuffers(0, 1, &cbv_);
 
             auto viewports = {std::addressof(viewport)};

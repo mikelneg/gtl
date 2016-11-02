@@ -67,24 +67,23 @@ namespace {
 void stage::present(gtl::d3d::swap_chain& swchain_, DXGI_PRESENT_PARAMETERS dxgi_pp)
 {
     using hrc = std::chrono::high_resolution_clock;
-    thread_local auto local_time = hrc::now();        
+    thread_local auto local_time = hrc::now();
 
-    //frame_rate_limiter_.skip_or_invoke([&swchain_, &dxgi_pp, this](auto dt) { //todo sleepy?
-        
-        auto curr_time = hrc::now();
+    // frame_rate_limiter_.skip_or_invoke([&swchain_, &dxgi_pp, this](auto dt) { //todo sleepy?
 
-        //imgui_adapter_.render(std::chrono::duration<float>{dt}.count());
-        imgui_adapter_.render(std::chrono::duration<float>(curr_time - local_time).count());
-        
+    auto curr_time = hrc::now();
 
-        local_time = curr_time;
+    // imgui_adapter_.render(std::chrono::duration<float>{dt}.count());
+    imgui_adapter_.render(std::chrono::duration<float>(curr_time - local_time).count());
 
-        draw_thread_.if_available(
-            [&](auto& frame_state_) { // (auto& state_){  // consumes itself if not consumed..
-                swchain_->Present1(0, 0, std::addressof(dxgi_pp)); // potentially blocking
-                consume_and_notify(frame_state_);
-            },
-            [] {});
+    local_time = curr_time;
+
+    draw_thread_.if_available(
+        [&](auto& frame_state_) {                              // (auto& state_){  // consumes itself if not consumed..
+            swchain_->Present1(0, 0, std::addressof(dxgi_pp)); // potentially blocking
+            consume_and_notify(frame_state_);
+        },
+        [] {});
 
     //});
 }

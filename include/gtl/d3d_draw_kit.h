@@ -38,7 +38,7 @@ namespace d3d {
 
         static constexpr unsigned MAX_VERTS = 20000;
         static constexpr unsigned MAX_INDICES = 50000;
-        
+
         std::vector<D3D12_INPUT_ELEMENT_DESC> layout_;
 
         gtl::d3d::resource_descriptor_heap cbheap_;
@@ -50,7 +50,7 @@ namespace d3d {
         d3d::resource_descriptor_heap idx_descriptor_heap_;
         std::array<gtl::d3d::constant_buffer, 3> mutable idx_buffers_;
 
-        gtl::d3d::resource_descriptor_heap texture_descriptor_heap_;        
+        gtl::d3d::resource_descriptor_heap texture_descriptor_heap_;
 
         gtl::d3d::vertex_shader vshader_;
         gtl::d3d::pixel_shader pshader_;
@@ -80,9 +80,8 @@ namespace d3d {
         auto vertex_layout()
         {
             return std::vector<D3D12_INPUT_ELEMENT_DESC>{
-                {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},                
-                {"COLOR",    0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}                
-            };
+                {"POSITION", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 0, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0},
+                {"COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, D3D12_APPEND_ALIGNED_ELEMENT, D3D12_INPUT_CLASSIFICATION_PER_VERTEX_DATA, 0}};
         }
 
         auto pso_desc(gtl::d3d::device&, gtl::d3d::root_signature& rsig, gtl::d3d::vertex_shader& vs, gtl::d3d::pixel_shader& ps)
@@ -147,7 +146,8 @@ namespace d3d {
     public:
         draw_kit(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue, gtl::draw_kit& draw_data_)
             : draw_kit(get_device_from(swchain_), swchain_, cqueue, draw_data_)
-        {}
+        {
+        }
 
         draw_kit(gtl::d3d::device& dev, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue, gtl::draw_kit& draw_data_)
             : cbheap_{dev, 3, gtl::d3d::tags::shader_visible{}},
@@ -161,8 +161,8 @@ namespace d3d {
               idx_buffers_{{{dev, idx_descriptor_heap_.get_handle(0), MAX_INDICES * sizeof(index_type), gtl::d3d::tags::shader_view{}},
                             {dev, idx_descriptor_heap_.get_handle(1), MAX_INDICES * sizeof(index_type), gtl::d3d::tags::shader_view{}},
                             {dev, idx_descriptor_heap_.get_handle(2), MAX_INDICES * sizeof(index_type), gtl::d3d::tags::shader_view{}}}},
-              texture_descriptor_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},              
-              vshader_{L"box2d_vs.cso"},    // HACK change name
+              texture_descriptor_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},
+              vshader_{L"box2d_vs.cso"}, // HACK change name
               pshader_{L"box2d_ps.cso"},
               root_sig_{dev, vshader_},
               pso_{dev, pso_desc(dev, root_sig_, vshader_, pshader_)},
@@ -181,10 +181,10 @@ namespace d3d {
 
             initialize_null_descriptor_srv(dev, texture_descriptor_heap_.get_handle(1));
             initialize_null_descriptor_uav(dev, texture_descriptor_heap_.get_handle(2));
-        }      
+        }
 
         void resize(int w, int h, gtl::d3d::command_queue& cqueue_)
-        { // needs dev cqueue etc            
+        { // needs dev cqueue etc
             viewport_.Width = static_cast<float>(w);
             viewport_.Height = static_cast<float>(h);
             scissor_ = gtl::d3d::raw::ScissorRect{0, 0, w, h};
@@ -225,15 +225,14 @@ namespace d3d {
             //            vtx_count = draw_data->TotalVtxCount;
         }
 
-        void draw(std::vector<ID3D12CommandList*>& v, unsigned idx, float, D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle, 
-                  Eigen::Matrix4f const& camera, Eigen::Matrix4f const& proj) const
+        void draw(std::vector<ID3D12CommandList*>& v, unsigned idx, float, D3D12_CPU_DESCRIPTOR_HANDLE rtv_handle, Eigen::Matrix4f const& camera,
+                  Eigen::Matrix4f const& proj) const
         {
             update(idx);
 
             //
-            cbuffer_.update(reinterpret_cast<const char*>(&camera), sizeof(camera));                   
-            cbuffer_.update(reinterpret_cast<const char*>(&proj), sizeof(proj), sizeof(camera));                   
-
+            cbuffer_.update(reinterpret_cast<const char*>(&camera), sizeof(camera));
+            cbuffer_.update(reinterpret_cast<const char*>(&proj), sizeof(proj), sizeof(camera));
 
             calloc_[idx]->Reset();
             clist_[idx]->Reset(calloc_[idx].get(), nullptr);
@@ -246,7 +245,7 @@ namespace d3d {
             clist_[idx]->SetDescriptorHeaps(static_cast<unsigned>(heaps.size()), heaps.begin());
             // clist_[idx]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
             // clist_[idx]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLESTRIP);
-            clist_[idx]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);                   
+            clist_[idx]->IASetPrimitiveTopology(D3D_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
             clist_[idx]->SetGraphicsRootConstantBufferView(0, (cbuffer_.resource())->GetGPUVirtualAddress());
             clist_[idx]->SetGraphicsRootDescriptorTable(1, sampler_heap_->GetGPUDescriptorHandleForHeapStart());
@@ -271,7 +270,8 @@ namespace d3d {
 
             D3D12_VERTEX_BUFFER_VIEW vview{vert_buffers_[idx].resource()->GetGPUVirtualAddress(), vtx_count * sizeof(vertex_type), sizeof(vertex_type)};
 
-            D3D12_INDEX_BUFFER_VIEW ibv{idx_buffers_[idx].resource()->GetGPUVirtualAddress(), idx_count * sizeof(index_type), DXGI_FORMAT_R16_UINT}; // DXGI_FORMAT_R32_UINT};
+            D3D12_INDEX_BUFFER_VIEW ibv{idx_buffers_[idx].resource()->GetGPUVirtualAddress(), idx_count * sizeof(index_type),
+                                        DXGI_FORMAT_R16_UINT}; // DXGI_FORMAT_R32_UINT};
 
             clist_[idx]->IASetVertexBuffers(0, 1, &vview);
             clist_[idx]->IASetIndexBuffer(&ibv);

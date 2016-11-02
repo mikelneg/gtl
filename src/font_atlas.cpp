@@ -32,10 +32,10 @@ namespace d3d {
         //<char id = "73" x = "510" y = "218" width = "12" height = "88" xoffset = "11.81" yoffset = "6.69" xadvance =
         //"35.56" page = "0" chnl = "15"/>
 
-        arr[2] = Eigen::Vector4f{static_cast<float>(g.x_offset), static_cast<float>(g.y_offset),
-                                 static_cast<float>(g.x_offset), static_cast<float>(g.y_offset + g.height)};
-        arr[3] = Eigen::Vector4f{static_cast<float>(g.x_offset + g.width), static_cast<float>(g.y_offset),
-                                 static_cast<float>(g.x_offset + g.width), static_cast<float>(g.y_offset + g.height)};
+        arr[2] = Eigen::Vector4f{static_cast<float>(g.x_offset), static_cast<float>(g.y_offset), static_cast<float>(g.x_offset),
+                                 static_cast<float>(g.y_offset + g.height)};
+        arr[3] = Eigen::Vector4f{static_cast<float>(g.x_offset + g.width), static_cast<float>(g.y_offset), static_cast<float>(g.x_offset + g.width),
+                                 static_cast<float>(g.y_offset + g.height)};
 
         arr[4] = Eigen::Vector4f{g.x_advance, 0.0f, 0.0f, 0.0f};
 
@@ -53,21 +53,20 @@ namespace d3d {
         //      \   \
     //    0   2   4
 
-        std::array<Eigen::Vector4f, 9> arr{
-            {//{0.0f, -g.height,         1.0f,1.0f},    // vertex coordinates in pt space
-             //{0.0f,0.0f,              1.0f,1.0f},
-             //{g.width, -g.height,      1.0f,1.0f},
-             //{g.width, 0.0f,          1.0f,1.0f},
-             {g.x_offset, g.y_offset + g.height, 1.0f, 1.0f}, // vertex coordinates in pt space
-             {g.x_offset, g.y_offset, 1.0f, 1.0f},
-             {g.x_offset + g.width, g.y_offset + g.height, 1.0f, 1.0f},
-             {g.x_offset + g.width, g.y_offset, 1.0f, 1.0f},
+        std::array<Eigen::Vector4f, 9> arr{{//{0.0f, -g.height,         1.0f,1.0f},    // vertex coordinates in pt space
+                                            //{0.0f,0.0f,              1.0f,1.0f},
+                                            //{g.width, -g.height,      1.0f,1.0f},
+                                            //{g.width, 0.0f,          1.0f,1.0f},
+                                            {g.x_offset, g.y_offset + g.height, 1.0f, 1.0f}, // vertex coordinates in pt space
+                                            {g.x_offset, g.y_offset, 1.0f, 1.0f},
+                                            {g.x_offset + g.width, g.y_offset + g.height, 1.0f, 1.0f},
+                                            {g.x_offset + g.width, g.y_offset, 1.0f, 1.0f},
 
-             {g.u, g.v + g.height, 0.0f, 0.0f}, // uv coordinates in texture space
-             {g.u, g.v, 0.0f, 0.0f},
-             {g.u + g.width, g.v + g.height, 0.0f, 0.0f},
-             {g.u + g.width, g.v, 0.0f, 0.0f},
-             {g.x_advance, 0.0f, 0.0f, 0.0f}}};
+                                            {g.u, g.v + g.height, 0.0f, 0.0f}, // uv coordinates in texture space
+                                            {g.u, g.v, 0.0f, 0.0f},
+                                            {g.u + g.width, g.v + g.height, 0.0f, 0.0f},
+                                            {g.u + g.width, g.v, 0.0f, 0.0f},
+                                            {g.x_advance, 0.0f, 0.0f, 0.0f}}};
         return arr;
     }
 
@@ -193,29 +192,23 @@ namespace d3d {
                 }
             }
 
-            mesh_.emplace_back(
-                Vertex{Eigen::Vector4f{uv_array[2].x() * lwidth + coord.x(), -uv_array[2].y() * lheight, 1.0f, 1.0f},
-                       Eigen::Vector4f{uv_array[0].x(), uv_array[0].y(), 0.0f, 0.0f}});
+            mesh_.emplace_back(Vertex{Eigen::Vector4f{uv_array[2].x() * lwidth + coord.x(), -uv_array[2].y() * lheight, 1.0f, 1.0f},
+                                      Eigen::Vector4f{uv_array[0].x(), uv_array[0].y(), 0.0f, 0.0f}});
 
-            mesh_.emplace_back(
-                Vertex{Eigen::Vector4f{uv_array[2].x() * lwidth + coord.x(), -uv_array[2].w() * lheight, 1.0f, 1.0f},
-                       Eigen::Vector4f{uv_array[0].x(), uv_array[0].w(), 0.0f, 0.0f}});
+            mesh_.emplace_back(Vertex{Eigen::Vector4f{uv_array[2].x() * lwidth + coord.x(), -uv_array[2].w() * lheight, 1.0f, 1.0f},
+                                      Eigen::Vector4f{uv_array[0].x(), uv_array[0].w(), 0.0f, 0.0f}});
 
-            mesh_.emplace_back(
-                Vertex{Eigen::Vector4f{uv_array[3].x() * lwidth + coord.x(), -uv_array[3].y() * lheight, 1.0f, 1.0f},
-                       Eigen::Vector4f{uv_array[1].x(), uv_array[0].y(), 0.0f, 0.0f}});
+            mesh_.emplace_back(Vertex{Eigen::Vector4f{uv_array[3].x() * lwidth + coord.x(), -uv_array[3].y() * lheight, 1.0f, 1.0f},
+                                      Eigen::Vector4f{uv_array[1].x(), uv_array[0].y(), 0.0f, 0.0f}});
 
-            mesh_.emplace_back(
-                Vertex{Eigen::Vector4f{uv_array[3].x() * lwidth + coord.x(), -uv_array[3].y() * lheight, 1.0f, 1.0f},
-                       Eigen::Vector4f{uv_array[1].x(), uv_array[0].y(), 0.0f, 0.0f}});
+            mesh_.emplace_back(Vertex{Eigen::Vector4f{uv_array[3].x() * lwidth + coord.x(), -uv_array[3].y() * lheight, 1.0f, 1.0f},
+                                      Eigen::Vector4f{uv_array[1].x(), uv_array[0].y(), 0.0f, 0.0f}});
 
-            mesh_.emplace_back(
-                Vertex{Eigen::Vector4f{uv_array[2].x() * lwidth + coord.x(), -uv_array[2].w() * lheight, 1.0f, 1.0f},
-                       Eigen::Vector4f{uv_array[0].z(), uv_array[0].w(), 0.0f, 0.0f}});
+            mesh_.emplace_back(Vertex{Eigen::Vector4f{uv_array[2].x() * lwidth + coord.x(), -uv_array[2].w() * lheight, 1.0f, 1.0f},
+                                      Eigen::Vector4f{uv_array[0].z(), uv_array[0].w(), 0.0f, 0.0f}});
 
-            mesh_.emplace_back(
-                Vertex{Eigen::Vector4f{uv_array[3].x() * lwidth + coord.x(), -uv_array[2].w() * lheight, 1.0f, 1.0f},
-                       Eigen::Vector4f{uv_array[1].z(), uv_array[1].w(), 0.0f, 0.0f}});
+            mesh_.emplace_back(Vertex{Eigen::Vector4f{uv_array[3].x() * lwidth + coord.x(), -uv_array[2].w() * lheight, 1.0f, 1.0f},
+                                      Eigen::Vector4f{uv_array[1].z(), uv_array[1].w(), 0.0f, 0.0f}});
 
             coord.x() += uv_array[4].x() * lwidth;
         }

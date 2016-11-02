@@ -87,8 +87,8 @@ public:
         using inv_transition_scene = scenes::detail::inverse_transition_scene<scene_type>;
         auto handle_events_v = vn::make_lambda_visitor([&](auto& v) { return v.handle_events(yield); });
         auto handle_events = [&](auto& x) { return boost::apply_visitor(handle_events_v, x); }; //[&](scene_type& s) { return
-                                                                                                //boost::apply_visitor(handle_events_v,s); };
-                                                                                                //
+                                                                                                // boost::apply_visitor(handle_events_v,s); };
+        //
 
         scene_type& s = current_scene_;
 

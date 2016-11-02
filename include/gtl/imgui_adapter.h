@@ -15,6 +15,8 @@ MIT license. See LICENSE.txt in project root for details.
 
 #include <algorithm>
 #include <string>
+#include <unordered_map>
+#include <functional>
 
 #define IMGUI_DISABLE_OBSOLETE_FUNCTIONS
 
@@ -57,6 +59,8 @@ private:
     // TODO implement copy-free buffer updating (instead of swap_object<vector> or whatever)
     vn::swap_object<imgui_data> output_buffer_;
 
+    std::unordered_map<std::string, std::function<void()>> callbacks_; // just testing..
+
     imgui_data local_data_;
 
     std::vector<char> text_box_a_;
@@ -70,7 +74,7 @@ private:
     std::string debugger_button{"Enable###"};
 
 public:
-    imgui_adapter()
+    imgui_adapter(std::unordered_map<std::string, std::function<void()>> c) : callbacks_{std::move(c)}
     {
         std::string s{"hi there.."};
         text_box_a_.insert(end(text_box_a_), begin(s), end(s));
@@ -179,7 +183,7 @@ public:
 
         if (ImGui::Begin("Controller Stick"))
         {
-            ImGui::Text("SomeText..");                      
+            ImGui::Text("SomeText..");
 
             ImDrawList* draw_list = ImGui::GetWindowDrawList();
 
@@ -199,7 +203,6 @@ public:
             col32 = ImColor{1.0f, 0.0f, 0.4f, 1.0f};
 
             draw_list->AddCircle(winpos, 5.0f, col32, 4, 0.6f);
-            
 
             // draw_list->AddCircle(ImVec2(x+sz*0.5f, y+sz*0.5f), sz*0.5f, col32, 20, thickness); x += sz+spacing;
             // draw_list->AddRect(ImVec2(x, y), ImVec2(x+sz, y+sz), col32, 0.0f, ~0, thickness); x += sz+spacing;
@@ -210,27 +213,37 @@ public:
             // draw_list->AddLine(ImVec2(x, y), ImVec2(x,    y+sz), col32, thickness); x += spacing;
             // draw_list->AddBezierCurve(ImVec2(x, y), ImVec2(x+sz*1.3f,y+sz*0.3f), ImVec2(x+sz-sz*1.3f,y+sz-sz*0.3f), ImVec2(x+sz, y+sz), col32, thickness);
             // x = p.x + 4;
-            // y += sz+spacing;            
+            // y += sz+spacing;
         }
 
         ImGui::End();
 
-        if (ImGui::Begin("Box2D Debugger")) {
+        if (ImGui::Begin("Graphics Debugger"))
+        {
 
             ImGui::PushID(77);
-            if (ImGui::Button(debugger_button.c_str())) { 
-                debugger_enabled = !debugger_enabled; 
-                if (debugger_enabled) { debugger_button = "Disable###"; } else { debugger_button = "Enable###"; }
+            if (ImGui::Button(debugger_button.c_str()))
+            {
+                debugger_enabled = !debugger_enabled;
+                if (debugger_enabled)
+                {
+                    debugger_button = "Disable###";
+                }
+                else
+                {
+                    debugger_button = "Enable###";
+                }
+
+                callbacks_.at("phys_debug")(); // just testing..
             }
-            ImGui::PopID();            
+            ImGui::PopID();
 
             auto func = [](void* p, int idx) -> float { return static_cast<float>(idx); };
             auto func_wave = [](void* p, int idx) -> float { return static_cast<float>(idx % 4); };
 
             ImGui::Text("Entity Count");
-            ImGui::PlotHistogram("hist",func,nullptr,5);
-            ImGui::PlotLines("lines",func_wave,nullptr,16);
-      
+            ImGui::PlotHistogram("hist", func, nullptr, 5);
+            ImGui::PlotLines("lines", func_wave, nullptr, 16);
         }
         ImGui::End();
 

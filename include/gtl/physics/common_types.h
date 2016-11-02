@@ -8,7 +8,7 @@ MIT license. See LICENSE.txt in project root for details.
 #ifndef URUWOZOBBASFFW_GTL_PHYSICS_COMMON_TYPES_H_
 #define URUWOZOBBASFFW_GTL_PHYSICS_COMMON_TYPES_H_
 
-/*-------------------------------------------------------------    
+/*-------------------------------------------------------------
 ---------------------------------------------------------------*/
 
 //#include <cstdint>
@@ -20,22 +20,22 @@ MIT license. See LICENSE.txt in project root for details.
 namespace gtl {
 namespace physics {
 
-    using Matrix4f = Eigen::Matrix<float,4,4,Eigen::RowMajor>;    
+    using Matrix4f = Eigen::Matrix<float, 4, 4, Eigen::RowMajor>;
 
-    //Moved .... using entity_transform = Eigen::Matrix4f;
+    // Moved .... using entity_transform = Eigen::Matrix4f;
     //
-    //Moved .... struct simulation_render_data {
-    //    
-    //    std::vector<entity::render_data> entities_;      
-    //    std::vector<entity_transform> control_points_;  
-    //                                                    
-    //    // "entities" are packs of data for the renderer, currently stored as 
+    // Moved .... struct simulation_render_data {
+    //
+    //    std::vector<entity::render_data> entities_;
+    //    std::vector<entity_transform> control_points_;
+    //
+    //    // "entities" are packs of data for the renderer, currently stored as
     //    //      <control_point_offset, material_id, entity_id, mesh_id>
     //    //
     //    // control_points are just transforms; the <control_point_offset> element of the entity
     //    // refers to an index in this vector, and the <mesh_id> element (eventually) determines
-    //    // the number of (sequential) tranforms that are used in rendering the entity        
-    //    // 
+    //    // the number of (sequential) tranforms that are used in rendering the entity
+    //    //
     //
     //    friend void swap(simulation_render_data& lhs, simulation_render_data& rhs)
     //    {
@@ -86,7 +86,6 @@ namespace physics {
     //        return lhs.entity_data_ < rhs.entity_data_;
     //    }
     //};
-
 }
 } // namespace
 #endif

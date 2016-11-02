@@ -18,13 +18,13 @@ namespace gtl {
 namespace win {
 
     class gamepad_event_adapter {
-        
+
         struct thumbstick_state {
-            float left_x,left_y;
+            float left_x, left_y;
         } thumbstick_state_;
 
         std::unique_ptr<DirectX::GamePad> gamepad;
-        DirectX::GamePad::ButtonStateTracker button_state;        
+        DirectX::GamePad::ButtonStateTracker button_state;
 
     public:
         gamepad_event_adapter();

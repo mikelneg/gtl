@@ -75,7 +75,7 @@ class stage {
 
     gtl::imgui_adapter mutable imgui_adapter_;
     gtl::d3d::imgui_adapter imgui_;
-    
+
     // gtl::event_generator<gtl::command_variant> event_generator_;
 
 public:
@@ -153,7 +153,7 @@ stage::stage(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, u
                                // swchain_.rtv_heap()); });
                                scene_.draw_callback([&](auto f) { f(draw_queue_, static_cast<int>(current_index), 1.0f, swchain_.get_current_handle()); });
 
-                               imgui_.draw(draw_queue_, static_cast<int>(current_index), 1.0f, swchain_.get_current_handle());                                                            
+                               imgui_.draw(draw_queue_, static_cast<int>(current_index), 1.0f, swchain_.get_current_handle());
 
                                draw_queue_.emplace_back(cla.get());
 
@@ -196,8 +196,8 @@ stage::stage(gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, u
 
           scene_.handle_events(handler_, yield);
       }},
-      imgui_adapter_{},
-      imgui_{swchain_, cqueue_, imgui_adapter_}      
+      imgui_adapter_{std::unordered_map<std::string, std::function<void()>>{{"phys_debug", [&]() { scene_.toggle_debug(); }}}},
+      imgui_{swchain_, cqueue_, imgui_adapter_}
 {
     assert(num_buffers > 1);
     event_handler_.dispatch_event(gtl::events::none{});

@@ -46,8 +46,7 @@ namespace file {
         return get_file_blob_helper<std::vector<char>>(full_path_filename);
     }
 
-    std::vector<char, gtl::allocators::no_trivial_init<char>> get_file_blob(gtl::tags::no_initialization,
-                                                                            std::string full_path_filename)
+    std::vector<char, gtl::allocators::no_trivial_init<char>> get_file_blob(gtl::tags::no_initialization, std::string full_path_filename)
     {
         return get_file_blob_helper<std::vector<char, gtl::allocators::no_trivial_init<char>>>(full_path_filename);
     }
@@ -57,8 +56,7 @@ namespace file {
         return get_file_blob_helper<std::vector<char>>(full_path_filename);
     }
 
-    std::vector<char, gtl::allocators::no_trivial_init<char>> get_file_blob(gtl::tags::no_initialization,
-                                                                            std::wstring full_path_filename)
+    std::vector<char, gtl::allocators::no_trivial_init<char>> get_file_blob(gtl::tags::no_initialization, std::wstring full_path_filename)
     {
         return get_file_blob_helper<std::vector<char, gtl::allocators::no_trivial_init<char>>>(full_path_filename);
     }

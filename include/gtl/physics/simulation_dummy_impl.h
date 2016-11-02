@@ -34,29 +34,26 @@ namespace physics {
 
     class simulation_dummy_impl : public simulation {
         using entity_type = entity::render_data;
-    
+
         vn::swap_object<simulation_render_data> render_data_;
-    
+
         std::atomic_flag quit_;
         std::thread thread_;
-    
-    public:
 
-        simulation_dummy_impl(vn::single_consumer_queue<gtl::physics::command_variant>&, 
-                              gtl::draw_kit&);
-    
-        bool extract_render_data(simulation_render_data& c) final 
+    public:
+        simulation_dummy_impl(vn::single_consumer_queue<gtl::physics::command_variant>&, gtl::draw_kit&);
+
+        bool extract_render_data(simulation_render_data& c) final
         {
             return render_data_.swap_out(c);
         }
-    
+
         ~simulation_dummy_impl() final
         {
             quit_.clear();
             thread_.join();
         }
     };
-
 }
 } // namespace
 #endif

@@ -51,8 +51,7 @@ namespace d3d {
             auto factory = get_dxgi_factory();
             release_ptr<raw::Adapter> ptr;
             std::vector<raw::AdapterDesc> adapters;
-            for (unsigned i = 0; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters1(i, std::addressof(ptr.expose_ptr()));
-                 ++i)
+            for (unsigned i = 0; DXGI_ERROR_NOT_FOUND != factory->EnumAdapters1(i, std::addressof(ptr.expose_ptr())); ++i)
             {
                 raw::AdapterDesc desc{};
                 ptr->GetDesc1(std::addressof(desc));
@@ -87,8 +86,7 @@ namespace d3d {
         void report_live_objects(device& dev)
         {
             gtl::d3d::release_ptr<raw::DebugDevice> debug_device;
-            win::throw_on_fail(dev->QueryInterface(__uuidof(raw::DebugDevice), expose_as_void_pp(debug_device)),
-                               __func__);
+            win::throw_on_fail(dev->QueryInterface(__uuidof(raw::DebugDevice), expose_as_void_pp(debug_device)), __func__);
             debug_device->ReportLiveDeviceObjects(D3D12_RLDO_DETAIL);
         }
 
@@ -110,35 +108,33 @@ namespace d3d {
             wait_for_gpu(get_device_from(cqueue_), cqueue_);
         }
 
-        void initialize_null_descriptor_srv(device& dev, raw::CpuDescriptorHandle handle_) 
-        {            
-                raw::SrvDesc srv_desc{};
+        void initialize_null_descriptor_srv(device& dev, raw::CpuDescriptorHandle handle_)
+        {
+            raw::SrvDesc srv_desc{};
 
-                srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
-                srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-                srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-                srv_desc.Texture2D.MipLevels = 1;
-                srv_desc.Texture2D.MostDetailedMip = 0;
-                srv_desc.Texture2D.ResourceMinLODClamp = 0.0f;
-         
-                dev->CreateShaderResourceView(nullptr,&srv_desc,handle_);
+            srv_desc.ViewDimension = D3D12_SRV_DIMENSION_TEXTURE2D;
+            srv_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            srv_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            srv_desc.Texture2D.MipLevels = 1;
+            srv_desc.Texture2D.MostDetailedMip = 0;
+            srv_desc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+            dev->CreateShaderResourceView(nullptr, &srv_desc, handle_);
         }
 
-        
-        void initialize_null_descriptor_uav(device& dev, raw::CpuDescriptorHandle handle_) 
-        {            
-                raw::UavDesc uav_desc{};
+        void initialize_null_descriptor_uav(device& dev, raw::CpuDescriptorHandle handle_)
+        {
+            raw::UavDesc uav_desc{};
 
-                uav_desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
-                //uav_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
-                uav_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
-                //uav_desc.Texture2D.MipLevels = 1;
-                //uav_desc.Texture2D.MostDetailedMip = 0;
-                //uav_desc.Texture2D.ResourceMinLODClamp = 0.0f;
-         
-                dev->CreateUnorderedAccessView(nullptr,nullptr,&uav_desc,handle_);
+            uav_desc.ViewDimension = D3D12_UAV_DIMENSION_TEXTURE2D;
+            // uav_desc.Shader4ComponentMapping = D3D12_DEFAULT_SHADER_4_COMPONENT_MAPPING;
+            uav_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+            // uav_desc.Texture2D.MipLevels = 1;
+            // uav_desc.Texture2D.MostDetailedMip = 0;
+            // uav_desc.Texture2D.ResourceMinLODClamp = 0.0f;
+
+            dev->CreateUnorderedAccessView(nullptr, nullptr, &uav_desc, handle_);
         }
-
 
         // release_ptr<raw::Blob> dummy_rootsig_1()
         //{

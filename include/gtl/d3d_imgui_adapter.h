@@ -217,7 +217,9 @@ namespace d3d {
 
         imgui_adapter(gtl::d3d::device& dev, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue, gtl::imgui_adapter& imgui_)
             : cbheap_{dev, 3, gtl::d3d::tags::shader_visible{}},
-              cbuffer_{{{dev, cbheap_.get_handle(0), sizeof(gtl::camera)}, {dev, cbheap_.get_handle(1), sizeof(gtl::camera)}, {dev, cbheap_.get_handle(2), sizeof(gtl::camera)}}},
+              cbuffer_{{{dev, cbheap_.get_handle(0), sizeof(gtl::camera)},
+                        {dev, cbheap_.get_handle(1), sizeof(gtl::camera)},
+                        {dev, cbheap_.get_handle(2), sizeof(gtl::camera)}}},
 
               layout_{vertex_layout()},
               vert_descriptor_heap_{dev, 3, gtl::d3d::tags::shader_visible{}},
@@ -261,8 +263,8 @@ namespace d3d {
 
         void resize(int w, int h, gtl::d3d::command_queue& cqueue_)
         { // needs dev cqueue etc
-            font_texture_
-                = gtl::d3d::srv{get_device_from(cqueue_), {texture_descriptor_heap_.get_handle(0)}, cqueue_, gtl::imgui_adapter::get_font_bitmap(std::make_pair(w, h))};
+            font_texture_ = gtl::d3d::srv{
+                get_device_from(cqueue_), {texture_descriptor_heap_.get_handle(0)}, cqueue_, gtl::imgui_adapter::get_font_bitmap(std::make_pair(w, h))};
             viewport_.Width = static_cast<float>(w);
             viewport_.Height = static_cast<float>(h);
             scissor_ = gtl::d3d::raw::ScissorRect{0, 0, w, h};
@@ -342,7 +344,8 @@ namespace d3d {
 
             D3D12_VERTEX_BUFFER_VIEW vview{vert_buffers_[idx].resource()->GetGPUVirtualAddress(), vtx_count * sizeof(vertex_type), sizeof(vertex_type)};
 
-            D3D12_INDEX_BUFFER_VIEW ibv{idx_buffers_[idx].resource()->GetGPUVirtualAddress(), idx_count * sizeof(index_type), DXGI_FORMAT_R16_UINT}; // DXGI_FORMAT_R32_UINT};
+            D3D12_INDEX_BUFFER_VIEW ibv{idx_buffers_[idx].resource()->GetGPUVirtualAddress(), idx_count * sizeof(index_type),
+                                        DXGI_FORMAT_R16_UINT}; // DXGI_FORMAT_R32_UINT};
 
             clist_[idx]->IASetVertexBuffers(0, 1, &vview);
             clist_[idx]->IASetIndexBuffer(&ibv);

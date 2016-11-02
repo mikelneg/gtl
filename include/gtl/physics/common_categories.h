@@ -12,19 +12,19 @@ MIT license. See LICENSE.txt in project root for details.
 
 namespace gtl {
 namespace physics {
-         
-    // common collision categories for Box2D    
+
+    // common collision categories for Box2D
     // underlying_type is uint16_t to match Box2D's implementation
 
-    struct collision_category {   
-        enum category : uint16_t {     
-        
+    struct collision_category {
+        enum category : uint16_t {
+
             BOUNDARY = 1,
-            ENTITY   = 2,
-            SENSORY  = 4    
+            ENTITY = 2,
+            SENSORY = 4
 
         };
-    };  
-
-}} // namespace
+    };
+}
+} // namespace
 #endif

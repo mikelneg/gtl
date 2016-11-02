@@ -15,14 +15,15 @@ MIT license. See LICENSE.txt in project root for details.
 #include <gtl/physics/simulation_render_data.h>
 
 namespace gtl {
-namespace physics {        
-    
+namespace physics {
+
     class simulation {
     public:
         virtual bool extract_render_data(simulation_render_data&) = 0; // returns true if extract succeeds
-        virtual ~simulation() {}
+        virtual ~simulation()
+        {
+        }
     };
-
 }
 } // namespaces
 #endif

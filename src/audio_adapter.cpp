@@ -29,8 +29,7 @@ namespace win {
         uninitialize_in_dtor = (result == S_OK || result == S_FALSE);
     }
 
-    audio_adapter::audio_adapter(gtl::tags::debug)
-        : audio_engine{std::make_unique<priv_impl>(DirectX::AudioEngine_Default | DirectX::AudioEngine_Debug)}
+    audio_adapter::audio_adapter(gtl::tags::debug) : audio_engine{std::make_unique<priv_impl>(DirectX::AudioEngine_Default | DirectX::AudioEngine_Debug)}
     {
         auto result = CoInitializeEx(nullptr, COINIT_MULTITHREADED);
         uninitialize_in_dtor = (result == S_OK || result == S_FALSE);
@@ -54,8 +53,7 @@ namespace win {
     {
         if (audio_engine->sound_effects.count(name) == 0)
         {
-            audio_engine->sound_effects.emplace(
-                name, DirectX::SoundEffect{std::addressof(audio_engine->audio_engine), wav_file.c_str()});
+            audio_engine->sound_effects.emplace(name, DirectX::SoundEffect{std::addressof(audio_engine->audio_engine), wav_file.c_str()});
         }
     }
 

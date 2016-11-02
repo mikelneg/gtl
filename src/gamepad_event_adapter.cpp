@@ -19,9 +19,7 @@ MIT license. See LICENSE.txt in project root for details.
 namespace gtl {
 namespace win {
 
-    gamepad_event_adapter::gamepad_event_adapter() 
-        : thumbstick_state_{},
-          gamepad{std::make_unique<DirectX::GamePad>()}
+    gamepad_event_adapter::gamepad_event_adapter() : thumbstick_state_{}, gamepad{std::make_unique<DirectX::GamePad>()}
     {
         button_state.Reset();
     }
@@ -34,18 +32,18 @@ namespace win {
 
         auto const append = [&](gtl::event e) { event_queue.emplace_back(e); };
 
-        auto const diff = [](float f, float g) { return std::fabs(f-g) > std::numeric_limits<float>::epsilon(); };
+        auto const diff = [](float f, float g) { return std::fabs(f - g) > std::numeric_limits<float>::epsilon(); };
 
         if (diff(state.thumbSticks.leftX, thumbstick_state_.left_x) || diff(state.thumbSticks.leftY, thumbstick_state_.left_y))
         {
-            thumbstick_state_.left_x = state.thumbSticks.leftX; 
+            thumbstick_state_.left_x = state.thumbSticks.leftX;
             thumbstick_state_.left_y = state.thumbSticks.leftY;
             append(gtl::events::dpad_pressed{thumbstick_state_.left_x, thumbstick_state_.left_y});
         }
 
-        //Eigen::Vector2f dpad_vec{state.thumbSticks.leftX, state.thumbSticks.leftY};
-        
-        //bool dpad_pressed = dpad_vec.squaredNorm() > 0.0f;
+        // Eigen::Vector2f dpad_vec{state.thumbSticks.leftX, state.thumbSticks.leftY};
+
+        // bool dpad_pressed = dpad_vec.squaredNorm() > 0.0f;
 
         // dpad_vec =
 
@@ -59,7 +57,7 @@ namespace win {
         // if (state.IsLeftThumbStickLeft()) { dpad_pressed = true; dpad_vec += Eigen::Vector2f{-1.0f,0.0f}; }
         // if (state.IsLeftThumbStickRight()) { dpad_pressed = true; dpad_vec += Eigen::Vector2f{1.0f,0.0f}; }
 
-        //if (dpad_pressed)
+        // if (dpad_pressed)
         //    append(gtl::events::dpad_pressed{dpad_vec.x() * 0.01f, dpad_vec.y() * 0.01f});
     }
 }

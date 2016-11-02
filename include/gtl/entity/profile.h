@@ -10,7 +10,7 @@ MIT license. See LICENSE.txt in project root for details.
 
 /*-------------------------------------------------------------
 
-    gtl::entity::profile     
+    gtl::entity::profile
 
 ---------------------------------------------------------------*/
 
@@ -29,7 +29,6 @@ MIT license. See LICENSE.txt in project root for details.
 
 namespace gtl {
 namespace entity {
-    
 }
 } // namespace
 #endif

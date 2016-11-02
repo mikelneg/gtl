@@ -63,7 +63,8 @@ namespace scenes {
                   vshader_{L"skybox_vs.cso"},
                   pshader_{L"skybox_ps.cso"},
                   root_sig_{dev_, vshader_},
-                  cbheap_{{{dev_, 1, gtl::d3d::tags::shader_visible{}}, {dev_, 1, gtl::d3d::tags::shader_visible{}}, {dev_, 1, gtl::d3d::tags::shader_visible{}}}},
+                  cbheap_{
+                      {{dev_, 1, gtl::d3d::tags::shader_visible{}}, {dev_, 1, gtl::d3d::tags::shader_visible{}}, {dev_, 1, gtl::d3d::tags::shader_visible{}}}},
                   cbuf_{960.0f / 540.0f},
                   cbuffer_{{{dev_, cbheap_[0], sizeof(cbuf_)}, {dev_, cbheap_[1], sizeof(cbuf_)}, {dev_, cbheap_[2], sizeof(cbuf_)}}},
                   pso_{dev_, root_sig_, vshader_, pshader_},

@@ -25,47 +25,52 @@ MIT license. See LICENSE.txt in project root for details.
 
 namespace gtl {
 namespace physics {
-namespace detail {
+    namespace detail {
 
-    template <typename World, typename Map>
-    struct bullet_command_visitor {
+        template <typename World, typename Map>
+        struct bullet_command_visitor {
 
-        World& world_;
-        Map& map_;        
+            World& world_;
+            Map& map_;
 
-        template <typename T>
-        bool operator()(T const&) const { assert(false); return true; } // shouldn't be called
-          
-        bool operator()(commands::static_rectangle const& o)
-           { 
-               return true;  
-           }
-        bool operator()(commands::dynamic_jointed_rectangles const& o) const
-           { 
-               return true;  
-           }
-        bool operator()(commands::dynamic_rectangle const& o) const           
-           {   
-               return true;  
-           }
-        bool operator()(commands::destroy_object_implode const& o) const
-           { 
-               return true;  
-           }
-        bool operator()(commands::boost_object const& o) const
-           { 
-               std::cout << "impl dudes!\n"; 
-               return true;  
-           }
-        bool operator()(commands::boost_object_vec const& o) const   
-           { 
-               return true;  
-           }
-        bool operator()(commands::drive_object_vec const& o) const
-           { 
-               return true;  
-           }        
-    };                        
+            template <typename T>
+            bool operator()(T const&) const
+            {
+                assert(false);
+                return true;
+            } // shouldn't be called
 
-}}}   // namespace
+            bool operator()(commands::static_rectangle const& o)
+            {
+                return true;
+            }
+            bool operator()(commands::dynamic_jointed_rectangles const& o) const
+            {
+                return true;
+            }
+            bool operator()(commands::dynamic_rectangle const& o) const
+            {
+                return true;
+            }
+            bool operator()(commands::destroy_object_implode const& o) const
+            {
+                return true;
+            }
+            bool operator()(commands::boost_object const& o) const
+            {
+                std::cout << "impl dudes!\n";
+                return true;
+            }
+            bool operator()(commands::boost_object_vec const& o) const
+            {
+                return true;
+            }
+            bool operator()(commands::drive_object_vec const& o) const
+            {
+                return true;
+            }
+        };
+    }
+}
+} // namespace
 #endif

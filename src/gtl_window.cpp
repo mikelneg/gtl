@@ -46,20 +46,17 @@ namespace win {
             int dy = static_cast<int>((height_px - client_rect_.bottom) / 2);
 
             InflateRect(&window_rect_, dx, dy);
-            SetWindowPos(hwnd, HWND_TOP, 200, 0, window_rect_.right - window_rect_.left,
-                         window_rect_.bottom - window_rect_.top, SWP_SHOWWINDOW | SWP_NOZORDER);
+            SetWindowPos(hwnd, HWND_TOP, 200, 0, window_rect_.right - window_rect_.left, window_rect_.bottom - window_rect_.top, SWP_SHOWWINDOW | SWP_NOZORDER);
         }
 
-        static HWND CreateFullscreenWindow(HWND hwnd, HINSTANCE hinst, const char* class_name, const char* caption,
-                                           void* sneaky)
+        static HWND CreateFullscreenWindow(HWND hwnd, HINSTANCE hinst, const char* class_name, const char* caption, void* sneaky)
         { // adapted from Raymond Chen: http://blogs.msdn.com/b/oldnewthing/archive/2005/05/05/414910.aspx
             HMONITOR hmon = MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
             MONITORINFO mi = {sizeof(mi)};
             if (!GetMonitorInfo(hmon, &mi))
                 return NULL;
-            return CreateWindow(class_name, caption, WS_POPUP | WS_VISIBLE, mi.rcMonitor.left, mi.rcMonitor.top,
-                                mi.rcMonitor.right - mi.rcMonitor.left, mi.rcMonitor.bottom - mi.rcMonitor.top, hwnd,
-                                NULL, hinst, sneaky);
+            return CreateWindow(class_name, caption, WS_POPUP | WS_VISIBLE, mi.rcMonitor.left, mi.rcMonitor.top, mi.rcMonitor.right - mi.rcMonitor.left,
+                                mi.rcMonitor.bottom - mi.rcMonitor.top, hwnd, NULL, hinst, sneaky);
         }
 
     } // unnamed namespace

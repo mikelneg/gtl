@@ -20,36 +20,33 @@ MIT license. See LICENSE.txt in project root for details.
 
 #include <gtl/physics/common_types.h>
 #include <gtl/physics/command_variant.h>
-#include <gtl/draw_kit.h>               // HACK change this..
+#include <gtl/draw_kit.h> // HACK change this..
 #include <Eigen/StdVector>
 
 namespace gtl {
 namespace physics {
 
     class bullet_simulation : public simulation {
-        
+
         vn::swap_object<simulation_render_data> render_data_;
-    
+
         std::atomic_flag quit_;
         std::thread thread_;
-    
-    public:
 
-        bullet_simulation(vn::single_consumer_queue<gtl::physics::command_variant>&, 
-                          gtl::draw_kit&);
-    
-        bool extract_render_data(simulation_render_data& c) final 
+    public:
+        bullet_simulation(vn::single_consumer_queue<gtl::physics::command_variant>&, gtl::draw_kit&);
+
+        bool extract_render_data(simulation_render_data& c) final
         {
             return render_data_.swap_out(c);
         }
-    
+
         ~bullet_simulation() final
         {
             quit_.clear();
             thread_.join();
         }
     };
-
 }
 } // namespace
 #endif

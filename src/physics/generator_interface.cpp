@@ -8,5 +8,3 @@ MIT license. See LICENSE.txt in project root for details.
 #include "gtl/physics/generator_interface.h"
 
 // not currently used..
-
-

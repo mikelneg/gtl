@@ -29,120 +29,106 @@ MIT license. See LICENSE.txt in project root for details.
 
 namespace gtl {
 namespace physics {
-namespace commands {
+    namespace commands {
 
-    struct static_box {
-        Eigen::Vector3f xyz_; // center 
-        Eigen::Vector3f half_extents_;
-        Eigen::Quaternionf orientation_;
-        boost::optional<entity::render_data> render_data_;
-        boost::optional<entity::id> id_;
-    };
+        struct static_box {
+            Eigen::Vector3f xyz_; // center
+            Eigen::Vector3f half_extents_;
+            Eigen::Quaternionf orientation_;
+            boost::optional<entity::render_data> render_data_;
+            boost::optional<entity::id> id_;
+        };
 
-    struct dynamic_box {
-        Eigen::Vector3f xyz_; // center
-        Eigen::Vector3f half_extents_;
-        Eigen::Quaternionf orientation_;
-        entity::render_data render_data_;
-        entity::id id_;
-        mass<float> mass_;
-    };
+        struct dynamic_box {
+            Eigen::Vector3f xyz_; // center
+            Eigen::Vector3f half_extents_;
+            Eigen::Quaternionf orientation_;
+            entity::render_data render_data_;
+            entity::id id_;
+            mass<float> mass_;
+        };
 
-    struct demo_file_object {
-        boost::container::flat_map<std::string,mesh::bone::id_type> armature_ids_;
-        Eigen::Vector3f xyz_;
-        Eigen::Quaternionf orientation_;
-        entity::render_data render_data_;
-        entity::id id_;
-    };    
+        struct demo_file_object {
+            boost::container::flat_map<std::string, mesh::bone::id_type> armature_ids_;
+            Eigen::Vector3f xyz_;
+            Eigen::Quaternionf orientation_;
+            entity::render_data render_data_;
+            entity::id id_;
+        };
 
-    struct dynamic_jointed_boxes {
-        std::vector<dynamic_box> boxes_;
-        entity::render_data render_data_;
-        entity::id id_;
-    };
-    
-    struct dynamic_armature {                
-        gtl::mesh::armature armature_;
-        Eigen::Quaternionf orientation_;
-        Eigen::Vector3f xyz_;
-        entity::render_data render_data_;
-        entity::id id_;
-        mass<float> mass_;
-    };
+        struct dynamic_jointed_boxes {
+            std::vector<dynamic_box> boxes_;
+            entity::render_data render_data_;
+            entity::id id_;
+        };
 
-    struct static_rectangle {
-        position<float> xy_;
-        dimensions<float> wh_;
-        angle<float> angle_;
-        // uint32_t id;
-        entity::render_data info_;
-    };
+        struct dynamic_armature {
+            gtl::mesh::armature armature_;
+            Eigen::Quaternionf orientation_;
+            Eigen::Vector3f xyz_;
+            entity::render_data render_data_;
+            entity::id id_;
+            mass<float> mass_;
+        };
 
-    struct dynamic_rectangle {
-        position<float> xy_;
-        dimensions<float> wh_;
-        angle<float> angle_;
-        // uint32_t id;
-        entity::render_data info_;
-    };
+        struct static_rectangle {
+            position<float> xy_;
+            dimensions<float> wh_;
+            angle<float> angle_;
+            // uint32_t id;
+            entity::render_data info_;
+        };
 
-    struct dynamic_jointed_rectangles {
-        std::vector<dynamic_rectangle> boxes_;
-        entity::render_data info_;
-    };
+        struct dynamic_rectangle {
+            position<float> xy_;
+            dimensions<float> wh_;
+            angle<float> angle_;
+            // uint32_t id;
+            entity::render_data info_;
+        };
 
-    struct static_circle {
-        float x, y, r, a;
-        entity::render_data info_;
-    };
+        struct dynamic_jointed_rectangles {
+            std::vector<dynamic_rectangle> boxes_;
+            entity::render_data info_;
+        };
 
-    struct destroy_object_implode {
-        entity::id id_;
-        //uint16_t id;
-    };
+        struct static_circle {
+            float x, y, r, a;
+            entity::render_data info_;
+        };
 
-    struct boost_object {
-        //uint16_t id;
-        entity::id id_;
-    };
+        struct destroy_object_implode {
+            entity::id id_;
+            // uint16_t id;
+        };
 
-    struct boost_object_vec {
-        uint16_t id;
-        float x, y;
-    };
+        struct boost_object {
+            // uint16_t id;
+            entity::id id_;
+        };
 
-    struct drive_object_vec {
-        uint16_t id;
-        float x, y;
-    };
+        struct boost_object_vec {
+            uint16_t id_;
+            float x, y;
+        };
 
-    struct polymorphic_generator {
-        std::unique_ptr<gtl::physics::generator> generator_;    // HACK could be problematic.. see if the other generator types are sufficient, 
-                                                                // or if it makes sense to have a distinct polymorphic_generator type with its own
-                                                                // queue given to an implementation..         
-    };
-    
-    using command_mpl_seq_ = typename boost::mpl::list<
-                                              static_box,
-                                              dynamic_box,
-                                              dynamic_jointed_boxes,
-                                              demo_file_object,
-                                              dynamic_armature,
-                                              static_rectangle, 
-                                              dynamic_rectangle, 
-                                              dynamic_jointed_rectangles, 
-                                              static_circle, 
-                                              destroy_object_implode, 
-                                              boost_object, 
-                                              boost_object_vec, 
-                                              drive_object_vec,
-                                              polymorphic_generator
-                                              >::type;    
+        struct drive_object_vec {
+            uint16_t id_;
+            float x, y;
+        };
+
+        struct polymorphic_generator {
+            std::unique_ptr<gtl::physics::generator> generator_; // HACK could be problematic.. see if the other generator types are sufficient,
+                                                                 // or if it makes sense to have a distinct polymorphic_generator type with its own
+                                                                 // queue given to an implementation..
+        };
+
+        using command_mpl_seq_ = typename boost::mpl::list<static_box, dynamic_box, dynamic_jointed_boxes, demo_file_object, dynamic_armature, static_rectangle,
+                                                           dynamic_rectangle, dynamic_jointed_rectangles, static_circle, destroy_object_implode, boost_object,
+                                                           boost_object_vec, drive_object_vec, polymorphic_generator>::type;
+    }
+
+    using command_variant = typename boost::make_variant_over<commands::command_mpl_seq_>::type;
 }
-
-using command_variant = typename boost::make_variant_over<commands::command_mpl_seq_>::type;
-
-
-}} // namespace
+} // namespace
 #endif

@@ -68,8 +68,8 @@ namespace scenes {
     }
 
     template <typename... Ts>
-    using scene_variant =
-        typename boost::make_recursive_variant<detail::empty_scene, Ts..., detail::transition_scene<boost::recursive_variant_>, detail::inverse_transition_scene<boost::recursive_variant_>>::type;
+    using scene_variant = typename boost::make_recursive_variant<detail::empty_scene, Ts..., detail::transition_scene<boost::recursive_variant_>,
+                                                                 detail::inverse_transition_scene<boost::recursive_variant_>>::type;
 
     template <typename VariantType>
     bool has_same_type(VariantType const& lhs, VariantType const& rhs)

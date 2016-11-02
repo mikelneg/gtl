@@ -159,7 +159,7 @@ namespace d3d {
             desc_.SampleDesc.Count = 1;
             return desc_;
         }
-        
+
         auto sampler_desc()
         {
             D3D12_SAMPLER_DESC sampler_{};
@@ -269,8 +269,8 @@ namespace d3d {
 
             auto& positions_ = render_data_.entities_;
 
-            D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(), static_cast<unsigned>(positions_.size() * sizeof(gtl::entity::render_data)),
-                                          sizeof(gtl::entity::render_data)};
+            D3D12_VERTEX_BUFFER_VIEW cbv_{vbuffers_[idx].resource()->GetGPUVirtualAddress(),
+                                          static_cast<unsigned>(positions_.size() * sizeof(gtl::entity::render_data)), sizeof(gtl::entity::render_data)};
             cl->IASetVertexBuffers(0, 1, &cbv_);
 
             auto viewports = {std::addressof(viewport)};

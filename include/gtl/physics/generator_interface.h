@@ -13,16 +13,20 @@ MIT license. See LICENSE.txt in project root for details.
 ---------------------------------------------------------------*/
 
 // forward
-class b2World;  // 
+class b2World; //
 
 namespace gtl {
-namespace physics {        
+namespace physics {
 
     class generator {
     public:
-        virtual void apply(b2World&) const {}
-        virtual ~generator() {}
+        virtual void apply(b2World&) const
+        {
+        }
+        virtual ~generator()
+        {
+        }
     };
-
-}} // namespaces
+}
+} // namespaces
 #endif

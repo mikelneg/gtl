@@ -72,7 +72,8 @@ namespace scenes {
             //  recommended that you graph this with your near/far values to examine
             //  the scale
 
-            matrix_ << s / aspect_ratio, 0.0f, 0.0f, 0.0f, 0.0f, s, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f / (z_far - z_near), 1.0f, 0.0f, 0.0f, -z_near / (z_far - z_near), 0.0f;
+            matrix_ << s / aspect_ratio, 0.0f, 0.0f, 0.0f, 0.0f, s, 0.0f, 0.0f, 0.0f, 0.0f, 1.0f / (z_far - z_near), 1.0f, 0.0f, 0.0f,
+                -z_near / (z_far - z_near), 0.0f;
             return matrix_;
         }
 
@@ -192,7 +193,8 @@ namespace scenes {
 
         public:
             template <typename M>
-            swirl_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, gtl::physics::simulation& physics_, M& mesh_group_)
+            swirl_effect(gtl::d3d::device& dev_, gtl::d3d::swap_chain& swchain_, gtl::d3d::command_queue& cqueue_, gtl::physics::simulation& physics_,
+                         M& mesh_group_)
                 : vshader_{L"skybox_vs.cso"},
                   pshader_{L"skybox_ps.cso"},
                   root_sig_{dev_, vshader_},
@@ -217,7 +219,7 @@ namespace scenes {
                   sampler_heap_{dev_, 1},
                   sampler_{dev_, sampler_heap_->GetCPUDescriptorHandleForHeapStart()},
                   gui_rects_{dev_, cqueue_, root_sig_, physics_},
-                  object_effect_{dev_, cqueue_, root_sig_, physics_,mesh_group_}
+                  object_effect_{dev_, cqueue_, root_sig_, physics_, mesh_group_}
             // imgui_{dev_, swchain_, cqueue_}
             {
                 //

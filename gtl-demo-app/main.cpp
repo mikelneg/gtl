@@ -45,10 +45,10 @@ int main(HINSTANCE hinst, HINSTANCE, LPSTR, int)
 
             audio_adapter.update();
             gamepad.append_state_events(event_queue_);
-            
-            //for (auto&& e : event_queue_)
+
+            // for (auto&& e : event_queue_)
             //{
-                stage.dispatch_events(event_queue_);
+            stage.dispatch_events(event_queue_);
             //}
 
             stage.present(swchain);

@@ -121,9 +121,8 @@ namespace d3d {
             do
             {
                 kerning_map.emplace(extract_from_string<unsigned>(kerning_node->first_attribute("first")->value()),
-                                    std::pair<uint8_t, float>{
-                                        extract_from_string<unsigned>(kerning_node->first_attribute("second")->value()),
-                                        extract_from_string<float>(kerning_node->first_attribute("amount")->value())});
+                                    std::pair<uint8_t, float>{extract_from_string<unsigned>(kerning_node->first_attribute("second")->value()),
+                                                              extract_from_string<float>(kerning_node->first_attribute("amount")->value())});
             } while (kerning_node = kerning_node->next_sibling());
         }
     }
@@ -137,8 +136,7 @@ namespace d3d {
 
     std::ostream& operator<<(std::ostream& s, font_atlas_glyph& f)
     {
-        std::cout << "padding = " << f.padding[0] << "," << f.padding[1] << "," << f.padding[2] << "," << f.padding[3]
-                  << "\n";
+        std::cout << "padding = " << f.padding[0] << "," << f.padding[1] << "," << f.padding[2] << "," << f.padding[3] << "\n";
         std::cout << "face_name = " << f.face_name << "\n";
         std::cout << "texture_file = " << f.texture_file << "\n";
         std::cout << "size = " << f.size << "\n";
@@ -154,8 +152,7 @@ namespace d3d {
 
         for (auto&& e : f.kerning_map)
         {
-            std::cout << static_cast<unsigned>(e.first) << "," << static_cast<unsigned>(e.second.first) << " = "
-                      << e.second.second << "\n";
+            std::cout << static_cast<unsigned>(e.first) << "," << static_cast<unsigned>(e.second.first) << " = " << e.second.second << "\n";
         }
 
         return s;
